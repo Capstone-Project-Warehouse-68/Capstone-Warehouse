@@ -3,9 +3,11 @@ package main
 import (
 	"net/http"
 	"github.com/gin-gonic/gin"
-	"github.com/project_capstone/config"
-	"github.com/project_capstone/middlewares"
+	"github.com/project_capstone/WareHouse/config"
+	"github.com/project_capstone/WareHouse/middlewares"
 )
+
+const PORT = "8000"
 
 func main() {
 	// open connection database
@@ -26,10 +28,11 @@ func main() {
 	}
 
 	r.GET("/", func(c *gin.Context) {
-		c.String(http.StatusOK, "API RUNNING...")
-	})
+        c.String(http.StatusOK, "API RUNNING... PORT: %s", PORT)
+    })
 
-	r.Run()
+    // Run the server
+    r.Run("localhost:" + PORT)
 }
 
 func CORSMiddleware() gin.HandlerFunc {
