@@ -1,4 +1,4 @@
-module github.com/project_capstone
+module github.com/project_capstone/WareHouse
 
 go 1.22.5
 
