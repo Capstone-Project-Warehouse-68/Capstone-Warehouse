@@ -30,7 +30,7 @@ func SignIn(c *gin.Context) {
 
 	employeeFound := config.DB().Where("email = ?", payload.Email).First(&employee).Error == nil
 
-	if !employeeFound && !memberFound {
+	if !employeeFound  {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ไม่พบ email นี้ในระบบ"})
 		return
 	}
