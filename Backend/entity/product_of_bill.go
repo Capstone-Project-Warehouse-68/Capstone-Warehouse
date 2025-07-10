@@ -8,6 +8,8 @@ type ProductOfBill struct {
 	ProductByCode     Product `gorm:"foreignKey:SupplyProductCode"`
 	ProductID         uint
 	ProductByID       Product `gorm:"foreignKey:ProductID"`
+	BillID         uint
+	Bill       Bill `gorm:"foreignKey:BillID"`
 	ManufacturerCode  string
 	Quantity          int
 	PricePerPiece     float32

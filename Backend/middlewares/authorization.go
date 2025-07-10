@@ -4,7 +4,7 @@ import (
     "net/http"
     "time"
     "strings"
-    "github.com/project_capstone/services"
+    "github.com/project_capstone/WareHouse/services"
     "github.com/gin-gonic/gin"
 )
 

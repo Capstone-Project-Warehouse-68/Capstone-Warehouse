@@ -9,6 +9,6 @@ type OrderProduct struct {
 	UnitPerQuantityID uint
 	UnitPerQuantity   UnitPerQuantity `gorm:"foreignKey:UnitPerQuantityID"`
 	Quantity          int
-	OrderBIllID       uint
-	OrderBill         OrderBill `gorm:"foreignKey:OrderBIllID"`
+	OrderBillID       uint
+	OrderBill         OrderBill `gorm:"foreignKey:OrderBillID"`
 }

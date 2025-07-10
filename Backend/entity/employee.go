@@ -8,6 +8,7 @@ type Employee struct {
 	LastName          string
 	NationalID        string
 	Email             string
+	Profile			  string `gorm:"type:longtext"`
 	Password          string
 	BankTypeID        uint
 	BankType          BankType `gorm:"foreignKey:BankTypeID"`
