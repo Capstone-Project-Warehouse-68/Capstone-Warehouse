@@ -25,7 +25,7 @@ func CreateProductOfBill(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&ProductOfBilldata); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ข้อมูลสินค้าในใบสั่งซื้อไม่ถูกต้อง",
+			"error": "เกิดข้อผิดพลาดในการส่งข้อมูลใบสั่งซื้อสินค้า",
 		})
 		return
 	}
@@ -88,7 +88,7 @@ func UpdateProductOfBill(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&ProductOfBilldata); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request, unable to map payload"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "เกิดข้อผิดพลาดในการดึงข้อมูล"})
 		return
 	}
 
