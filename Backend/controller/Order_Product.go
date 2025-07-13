@@ -152,6 +152,7 @@ func UpdateOrderBill(c *gin.Context) {
 			if err := db.Save(&orderProduct).Error; err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "แก้ไขสินค้าในคำสั่งซื้อไม่ได้"})
 				return
+				
 			}
 		}
 	}
