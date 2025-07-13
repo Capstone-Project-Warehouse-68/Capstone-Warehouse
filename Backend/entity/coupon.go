@@ -4,7 +4,7 @@ import "gorm.io/gorm"
 
 type Coupon struct {
 	gorm.Model
-	Code     string
-	Discount float32
-	Cart     []Cart `gorm:"foreignKey:CouponID"`
+	Code     string		`valid:"required~code is required"`
+	Discount float32	`valid:"required~discount is required"`
+	Cart     []Cart 	`gorm:"foreignKey:CouponID"`
 }

@@ -6,19 +6,19 @@ import (
 
 type Product struct {
 	gorm.Model
-	SupplyProductCode string
-	ProductCode       string
-	ProductName       string
-	Description       string
-	Picture           string
-	Quantity          int
-	UnitPerQuantityID uint
+	SupplyProductCode string	`valid:"required~SupplyProductCode is required"`
+	ProductCode       string	`valid:"required~ProductCode is required"`
+	ProductName       string	`valid:"required~ProductName is required"`
+	Description       string	`valid:"required~Description is required"`
+	Picture           string	
+	Quantity          int		`valid:"required~Quantity is required"`
+	UnitPerQuantityID uint		`valid:"required~UnitPerQuantityID is required"`
 	UnitPerQuantity   UnitPerQuantity `gorm:"foreignKey:UnitPerQuantityID"`
-	LimitQuantity     int
-	SalePrice         float32
-	CategoryID        uint
+	LimitQuantity     int		`valid:"required~LimitQuantity is required"`
+	SalePrice         float32	`valid:"required~SalePrice is required"`
+	CategoryID        uint		`valid:"required~CategoryID is required"`
 	Category          Category `gorm:"foreignKey:CategoryID"`
-	ShelfID           uint
+	ShelfID           uint		`valid:"required~ShelfID is required"`
 	Shelf             Shelf `gorm:"foreignKey:ShelfID"`
 
 	OrderProduct        []OrderProduct  `gorm:"foreignKey:ProductID"`
