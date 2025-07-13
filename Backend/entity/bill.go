@@ -8,10 +8,10 @@ import (
 
 type Bill struct {
 	gorm.Model
-	SupplyID     uint
+	SupplyID     uint		`valid:"required~SupplyID is required"`
 	Supply       Supply `gorm:"foreignKey:SupplyID"`
-	DateImport   time.Time
-	SummaryPrice float32
+	DateImport   time.Time	`valid:"required~DateImport is required"`
+	SummaryPrice float32	`valid:"required~SummaryPrice is required"`
 
 	ProductOfBill []ProductOfBill `gorm:"foreignKey:BillID"`
 }

@@ -6,6 +6,6 @@ import (
 
 type Zone struct {
 	gorm.Model
-	ZoneName string
-	Shelf    []Shelf `gorm:"foreignKey:ZoneID"`
+	ZoneName string		`valid:"required~ZoneName is required"`
+	Shelf    []Shelf 	`gorm:"foreignKey:ZoneID"`
 }
