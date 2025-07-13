@@ -23,6 +23,12 @@ type ProductResponse struct {
 	ShelfID           uint    `json:"ShelfID"`
 }
 
+type Limituantity struct{
+	ProductID uint `json:"product_id"`
+	LimitQuantity uint `json:"limit_quantity"`
+}
+
+
 func CreateProduct(c *gin.Context) {
 	var Productdata ProductResponse
 
@@ -162,3 +168,32 @@ func UpdateProduct(c *gin.Context) {
 
 // 	c.JSON(http.StatusOK, gin.H{"message": "ลบข้อมูลอาจารย์สำเร็จ (Soft Delete พร้อมสำรองข้อมูล)"})
 // }
+
+
+func UpdateLimitQuantity(c *gin.Context) {
+	db := config.DB()
+	var LimituantityAPI Limituantity
+
+	if err := c.ShouldBindJSON(&LimituantityAPI); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ข้อมูลไม่ถูกต้อง"})
+		return
+	}
+	var product entity.Product
+	if err := db.First(&product, LimituantityAPI.ProductID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบสินค้า"})
+		return
+	}
+
+	// อัปเดตค่า LimitQuantity
+	product.LimitQuantity = int(LimituantityAPI.LimitQuantity)
+	if err := db.Save(&product).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถอัปเดต LimitQuantity ได้"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":        "อัปเดต LimitQuantity สำเร็จ",
+		"product_id":     product.ID,
+		"limit_quantity": product.LimitQuantity,
+	})
+}
