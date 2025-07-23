@@ -1,10 +1,13 @@
 package controller
 
 import (
+	"net/http"
+	"time"
+
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 	"github.com/project_capstone/WareHouse/config"
 	"github.com/project_capstone/WareHouse/entity"
-	"net/http"
 )
 
 func GetAllEmployee(c *gin.Context) {
@@ -15,14 +18,42 @@ func GetAllEmployee(c *gin.Context) {
 }
 
 func DeleteEmployee(c *gin.Context) {
-	EmployeeID := c.Param("id")
+	id := c.Param("id")
+
 	db := config.DB()
 
-	if tx := db.Exec("DELETE FROM employees WHERE id = ?", EmployeeID); tx.RowsAffected == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ไม่ข้อมูลพนักงาน"})
+	var employee entity.Employee
+	if err := db.First(&employee, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบพนักงาน"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "ลบข้อมูลพนักงานเสร็จสิ้น"})
+
+	tx := db.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
+		return
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Transaction failed: "})
+		}
+	}()
+
+	// Soft delete member
+	if err := tx.Model(&employee).Update("deleted_at", time.Now()).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ลบข้อมูลไม่สำเร็จ"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "ลบข้อมูลสำเร็จ"})
 }
 
 func UpdateEmployee(c *gin.Context) {
@@ -52,17 +83,60 @@ func UpdateEmployee(c *gin.Context) {
 }
 
 func CreateEmployee(c *gin.Context) {
-	var createemployee entity.Employee
+	var employee entity.Employee
 
-	if err := c.ShouldBindJSON(&createemployee); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "เกิดข้อผิดพลาดในการดึงข้อมูล"})
+	// bind เข้าตัวแปร employee
+	if err := c.ShouldBindJSON(&employee); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// ✅ ตรวจสอบความถูกต้องด้วย govalidator ก่อนทำงานต่อ
+	if ok, err := govalidator.ValidateStruct(employee); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	db := config.DB()
-	if err := db.Create(&createemployee).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "เกิดข้อผิดพลาดในการสร้างข้อมูลพนักงาน"})
+
+	// ค้นหา banktype ด้วย id
+	var banktype entity.BankType
+	db.First(&banktype, employee.BankType)
+	if banktype.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบเพศ"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "สร้างข้อมูลพนักงานเสร็จสิ้น", "employee": createemployee})
+
+	// ค้นหา role ด้วย id
+	var role entity.Role
+	db.First(&role, employee.RoleID)
+	if role.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบตำแหน่ง"})
+		return
+	}
+
+	hashedPassword, _ := config.HashPassword(employee.Password)
+
+	// สร้าง Employee
+	e := entity.Employee{
+		FirstName:         employee.FirstName,
+		LastName:          employee.LastName,
+		Email:             employee.Email,
+		NationalID:        employee.NationalID,
+		PhoneNumber:       employee.PhoneNumber,
+		Password:          hashedPassword,
+		Profile:           employee.Profile,
+		RoleID:            employee.RoleID,
+		Role:              role,
+		BankAccountNumber: employee.BankAccountNumber,
+		BankTypeID:        employee.BankTypeID,
+		BankType:          banktype,
+	}
+
+	if err := db.Create(&e).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"message": "ลงทะเบียนพนักงานสำเร็จ"})
+
 }

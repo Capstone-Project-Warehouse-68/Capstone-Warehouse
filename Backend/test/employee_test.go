@@ -15,6 +15,7 @@ func TestEmployee(t *testing.T){
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
 			NationalID: "1223344556678",
+			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "12345",
@@ -33,6 +34,7 @@ func TestEmployee(t *testing.T){
 			FirstName: "", //ผิดตรงนี้
 			LastName: "Yangngam",
 			NationalID: "1223344556678",
+			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "12345",
@@ -53,6 +55,7 @@ func TestEmployee(t *testing.T){
 			FirstName: "Thanawit",
 			LastName: "", //ผิดตรงนี้
 			NationalID: "1223344556678",
+			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "12345",
@@ -73,6 +76,7 @@ func TestEmployee(t *testing.T){
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
 			NationalID: "", //ผิดตรงนี้
+			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "12345",
@@ -87,12 +91,34 @@ func TestEmployee(t *testing.T){
 		g.Expect(err).NotTo(BeNil())
 		g.Expect(err.Error()).To(Equal("NationalID is required"))
 	})
+
+	t.Run(`phone_number is required`, func(t *testing.T) {
+		e := entity.Employee{
+			FirstName: "Thanawit",
+			LastName: "Yangngam",
+			NationalID: "1223344556678",
+			PhoneNumber: "",//ผิดตรงนี้
+			Email: "Th@gmail.com",
+			Profile: "longtext",
+			Password: "12345",
+			BankTypeID:	uint(1),
+			BankAccountNumber: "1234567890",
+			RoleID: uint(1),
+		}
+
+		ok, err := govalidator.ValidateStruct(e)
+
+		g.Expect(ok).NotTo(BeTrue())
+		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("PhoneNumber is required"))
+	})
  
 	t.Run(`email is required`, func(t *testing.T) {
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
 			NationalID: "1223344556678",
+			PhoneNumber: "0123456789",
 			Email: "", //ผิดตรงนี้
 			Profile: "longtext",
 			Password: "12345",
@@ -113,6 +139,7 @@ func TestEmployee(t *testing.T){
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
 			NationalID: "1223344556678",
+			PhoneNumber: "0123456789",
 			Email: "Th@.com", //ผิดตรงนี้
 			Profile: "longtext",
 			Password: "12345",
@@ -133,6 +160,7 @@ func TestEmployee(t *testing.T){
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
 			NationalID: "1223344556678",
+			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "",//ผิดตรงนี้
 			Password: "12345",
@@ -153,6 +181,7 @@ func TestEmployee(t *testing.T){
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
 			NationalID: "1223344556678",
+			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "",//ผิดตรงนี้
@@ -173,6 +202,7 @@ func TestEmployee(t *testing.T){
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
 			NationalID: "1223344556678",
+			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "12345",
@@ -193,6 +223,7 @@ func TestEmployee(t *testing.T){
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
 			NationalID: "1223344556678",
+			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "12345",
@@ -213,6 +244,7 @@ func TestEmployee(t *testing.T){
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
 			NationalID: "1223344556678",
+			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "12345",

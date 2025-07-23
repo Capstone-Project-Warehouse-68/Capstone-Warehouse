@@ -2,8 +2,10 @@ package main
 
 import (
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/project_capstone/WareHouse/config"
+	"github.com/project_capstone/WareHouse/controller"
 	"github.com/project_capstone/WareHouse/middlewares"
 )
 
@@ -22,7 +24,10 @@ func main() {
 	router := r.Group("/")
 	{
 		router.Use(middlewares.Authorizes())
-
+		
+		r.POST("/CreateEmployee", controller.CreateEmployee)
+		r.PATCH("/UpdateEmployee/:id", controller.UpdateEmployee)
+		r.DELETE("/DeleteEmployee/:id", controller.DeleteEmployee)
 		// r.POST("/signin", controller.SignIn)
 		//router.Use(middlewares.Authorizes())
 	}
