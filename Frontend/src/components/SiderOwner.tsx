@@ -83,7 +83,7 @@ function SiderOwner() {
     localStorage.clear();
     messageApi.success("Logout successful");
     setTimeout(() => {
-      location.href = "/login";
+      location.href = "/";
     }, 2000);
   };
 

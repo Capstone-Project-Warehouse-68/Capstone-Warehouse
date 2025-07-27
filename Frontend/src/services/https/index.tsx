@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { LoginInterface } from "../../interfaces/Login";
 
 const apiUrl = "http://localhost:8000";
 const Authorization = localStorage.getItem("token");
@@ -11,6 +12,13 @@ const requestOptions = {
     },
 
 };
+
+async function SignIn(data: LoginInterface) {
+  return await axios
+    .post(`${apiUrl}/signin`, data)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
 
 async function CreateEmployee(data: any) {
   return await axios
@@ -34,6 +42,7 @@ async function DeleteEmployeeByID(id: number) {
 }
 
 export {
+    SignIn,
     CreateEmployee,
     UpdateEmployee,
     DeleteEmployeeByID,

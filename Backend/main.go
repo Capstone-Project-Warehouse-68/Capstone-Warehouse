@@ -28,8 +28,9 @@ func main() {
 		r.POST("/CreateEmployee", controller.CreateEmployee)
 		r.PATCH("/UpdateEmployee/:id", controller.UpdateEmployee)
 		r.DELETE("/DeleteEmployee/:id", controller.DeleteEmployee)
-		// r.POST("/signin", controller.SignIn)
-		//router.Use(middlewares.Authorizes())
+		r.POST("/CreateProduct", controller.CreateProduct)
+		r.POST("/signin", controller.SignIn)
+		router.Use(middlewares.Authorizes())
 	}
 
 	r.GET("/", func(c *gin.Context) {

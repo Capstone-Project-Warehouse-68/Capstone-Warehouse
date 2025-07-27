@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 	"github.com/project_capstone/WareHouse/config"
 	"github.com/project_capstone/WareHouse/entity"
@@ -23,11 +24,10 @@ type ProductResponse struct {
 	ShelfID           uint    `json:"ShelfID"`
 }
 
-type Limituantity struct{
-	ProductID uint `json:"product_id"`
+type Limituantity struct {
+	ProductID     uint `json:"product_id"`
 	LimitQuantity uint `json:"limit_quantity"`
 }
-
 
 func CreateProduct(c *gin.Context) {
 	var Productdata ProductResponse
@@ -76,6 +76,11 @@ func CreateProduct(c *gin.Context) {
 		ShelfID:           Productdata.ShelfID,
 	}
 
+	if ok, err := govalidator.ValidateStruct(Product); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	if err := db.Create(&Product).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status": http.StatusInternalServerError,
@@ -89,7 +94,6 @@ func CreateProduct(c *gin.Context) {
 	})
 
 }
-
 
 func UpdateProduct(c *gin.Context) {
 	var Productdata ProductResponse
@@ -168,7 +172,6 @@ func UpdateProduct(c *gin.Context) {
 
 // 	c.JSON(http.StatusOK, gin.H{"message": "ลบข้อมูลอาจารย์สำเร็จ (Soft Delete พร้อมสำรองข้อมูล)"})
 // }
-
 
 func UpdateLimitQuantity(c *gin.Context) {
 	db := config.DB()

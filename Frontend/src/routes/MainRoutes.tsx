@@ -5,7 +5,7 @@ import type { RouteObject } from "react-router-dom";
 import Loadable from "../third-party/Loadable";
 import FullLayout from "../components/FullLayout/FullLayout";
 //User
-const MainPages = Loadable(lazy(() => import("../pages/authentication/Login/index.tsx")));
+const MainPages = Loadable(lazy(() => import("../pages/authentication/Login")));
 //Course
 
 const MainRoutes = (): RouteObject => {
