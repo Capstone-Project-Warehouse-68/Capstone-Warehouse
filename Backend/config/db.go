@@ -56,12 +56,13 @@ func SetupDatabase() {
 	db.FirstOrCreate(&B1, entity.BankType{BankTypeName: "จำลองธนาคาร1"})
 
 	hashedPassword, _ := HashPassword("12345")
+	hashNationalID, _ := HashPassword("0000000000000")
 
 	employee := &entity.Employee{
 		FirstName:  "IT",
 		LastName:   "Admin",
-		Email:      "ITAdmin@stayease.com",
-		NationalID:	"0000000000000",
+		Email:      "ITAdmin@PVWarehouse.com",
+		NationalID:	hashNationalID,
 		Password:   hashedPassword,
 		BankTypeID      	: 1,
 		BankAccountNumber 	: "0",

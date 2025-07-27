@@ -13,22 +13,24 @@ const FullLayout: React.FC = () => {
     const {
         token: { colorBgContainer },
     } = theme.useToken();
-    //   const location = useLocation();
-    //   const [checkLogin, setCheckLogin] = useState(false);
+    const location = useLocation();
+    const [checkLogin, setCheckLogin] = useState(false);
 
-    //   useEffect(() => {
-    //     setCheckLogin(location.pathname !== "/");
-    //   }, [location.pathname]);
+    useEffect(() => {
+        const isLogin = localStorage.getItem("isLogin") === "true";
+        const notLoginPage = location.pathname !== "/";
+        setCheckLogin(isLogin && notLoginPage);
+    }, [location.pathname]);
 
-    //   const Role = localStorage.getItem("role") || "";
+
+    const Role = localStorage.getItem("role") || "";
+    console.log(Role);
 
     return (
         <>
-            <Layout style={{ minHeight: "100vh", backgroundColor: "#F5F5F5" }}>
-                <SiderOwner />
-                {/* {checkLogin && (Role === "admin" ? <NavbarHome /> : Role === "student" ? <NavbarStudent/> : <NavbarLecturer/>)} */}
-                <Layout style={{ backgroundColor: "#f7f8fc", minHeight: "100vh" }}>
-                    <Header style={{ padding: 0, background: colorBgContainer, maxHeight: "0vh" }} />
+            <Layout style={{ minHeight: "100vh", backgroundColor: "#ffffffff", marginTop: 0 }}>
+                {checkLogin && <SiderOwner />}
+                <Layout style={{ backgroundColor: "#ffffffff", minHeight: "100vh", marginTop: 0 }}>
                     <Content style={{ marginTop: "0px" }}>
                         <Breadcrumb style={{ marginTop: "0px" }} />
                         <div>
