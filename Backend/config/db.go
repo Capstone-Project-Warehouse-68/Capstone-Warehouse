@@ -64,6 +64,7 @@ func SetupDatabase() {
 		Email:      "ITAdmin@PVWarehouse.com",
 		NationalID:	hashNationalID,
 		Password:   hashedPassword,
+		PhoneNumber: "0987654321",
 		BankTypeID      	: 1,
 		BankAccountNumber 	: "0",
 		RoleID            	: 1,

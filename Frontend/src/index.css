@@ -13,6 +13,27 @@
   -moz-osx-font-smoothing: grayscale;
 } */
 
+.Card-Header {
+  background-color: #2980B9;
+  border: 1px solid #2980B9;          /* Edge */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);  /* Shadow */
+  border-radius: 20px;              /* Optional: rounded corners */
+  padding: 16px;
+  max-width: 400px;
+  margin-left: 5vh;
+  transition: box-shadow 0.3s ease;
+}
+
+.button-import {
+  background-color: #D35400;
+  border: 1px solid #D35400;          /* Edge */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);  /* Shadow */
+  border-radius: 20px;              /* Optional: rounded corners */
+  padding: 16px;
+  max-width: 400px;
+  transition: box-shadow 0.3s ease;
+}
+
 a {
   font-weight: 500;
   color: #646cff;

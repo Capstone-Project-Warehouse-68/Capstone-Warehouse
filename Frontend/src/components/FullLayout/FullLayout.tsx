@@ -5,6 +5,7 @@ import { Breadcrumb, Layout, theme } from "antd";
 import SignInPages from "../../pages/authentication/Login";
 
 import SiderOwner from "../SiderOwner";
+import ImportProduct from "../../pages/ImportProduct/importproduct";
 
 
 const { Header, Content } = Layout;
@@ -30,12 +31,13 @@ const FullLayout: React.FC = () => {
         <>
             <Layout style={{ minHeight: "100vh", backgroundColor: "#ffffffff", marginTop: 0 }}>
                 {checkLogin && <SiderOwner />}
-                <Layout style={{ backgroundColor: "#ffffffff", minHeight: "100vh", marginTop: 0 }}>
+                <Layout style={{ backgroundColor: "#D4D4D4", minHeight: "100vh", marginTop: 0 }}>
                     <Content style={{ marginTop: "0px" }}>
-                        <Breadcrumb style={{ marginTop: "0px" }} />
+                        <Breadcrumb />
                         <div>
                             <Routes>
                                 <Route path="/" element={<SignInPages />} />
+                                <Route path="/importproduct" element={<ImportProduct />}/>
                             </Routes>
                         </div>
                     </Content>
