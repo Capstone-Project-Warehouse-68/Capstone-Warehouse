@@ -33,7 +33,7 @@ function SignInPages() {
         localStorage.setItem("isLogin", "true");
         localStorage.setItem("token_type", res.data.token_type);
         localStorage.setItem("token", res.data.token);
-        localStorage.setItem("id", res.data.id);
+        localStorage.setItem("employeeID", res.data.employeeID);
         localStorage.setItem("role", res.data.role);
 
         await delay(1000);

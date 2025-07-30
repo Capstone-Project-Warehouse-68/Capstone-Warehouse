@@ -51,7 +51,7 @@ async function GetAllEmployees() {
 
 async function GetEmployeeById(id: number) {
   return await axios
-    .get(`${apiUrl}/GetEmployeeById`, requestOptions)
+    .get(`${apiUrl}/GetEmployeeById/${id}`, requestOptions)
     .then((res) => res)
     .catch((e) => e.response);
 }

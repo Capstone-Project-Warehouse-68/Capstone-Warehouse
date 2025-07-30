@@ -15,7 +15,9 @@ import NotificationImportantIcon from '@mui/icons-material/NotificationImportant
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Link } from "react-router-dom";
-//import { GetEmployeeByID, GetPositions } from "../../services/https";
+ 
+import type { EmployeeInterface } from "../interfaces/Employee";
+import { GetEmployeeById } from "../services/https";
 
 function SiderOwner() {
   const page = localStorage.getItem("page");
@@ -29,51 +31,29 @@ function SiderOwner() {
 
   const employeeID = localStorage.getItem("employeeID");
 
-  //   const getEmployeeById = async () => {
-  //     try {
-  //       const res = await GetEmployeeByID(employeeID || "");
-  //       if (res.status === 200) {
-  //         const employee: EmployeeInterface = res.data;
-  //         setFirstName(employee.FirstName || "");
-  //         setLastName(employee.LastName || "");
-  //         setProfile(employee.Profile || "");
-  //         if (employee.PositionID) {
-  //           getPositionNameById(employee.PositionID);
-  //         } else {
-  //           setPositionName("Unknown Position");
-  //         }
-  //       } else {
-  //         messageApi.error(res.data.error || "ไม่สามารถดึงข้อมูลได้");
-  //         setPositionName("Unknown Position");
-  //       }
-  //     } catch (error) {
-  //       messageApi.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
-  //       setPositionName("Unknown Position");
-  //     }
-  //   };
+  const getEmployeeById = async (id: number) => {
+  try {
+    const res = await GetEmployeeById(id);
 
-  //   const getPositionNameById = async (positionID: number) => {
-  //     try {
-  //       const res = await GetPositions();
-  //       if (res.status === 200) {
-  //         const positions: PositionInterface[] = res.data;
-  //         const position = positions.find((pos) => pos.ID === positionID);
-  //         if (position) {
-  //           setPositionName(position.Name || "Unknown Position");
-  //         } else {
-  //           setPositionName("Unknown Position");
-  //         }
-  //       } else {
-  //         messageApi.error(res.data.error || "ไม่สามารถดึงตำแหน่งได้");
-  //       }
-  //     } catch (error) {
-  //       messageApi.error("เกิดข้อผิดพลาดในการดึงข้อมูลตำแหน่ง");
-  //     }
-  //   };
+    if (res.status === 200) {
+      const employee: EmployeeInterface = res.data;
+      setFirstName(employee.FirstName || "");
+      setLastName(employee.LastName || "");
+      setProfile(employee.Profile || "");
+      setPositionName(employee.Role?.RoleName || "")
+    } else {
+      messageApi.error(res.data?.error || "ไม่สามารถดึงข้อมูลได้ ");
+      setPositionName("Unknown Position");
+    }
+  } catch (error) {
+    messageApi.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
+    setPositionName("Unknown Position");
+  }
+};
 
-  //   useEffect(() => {
-  //     getEmployeeById();
-  //   }, []);
+    useEffect(() => {
+      getEmployeeById(Number(employeeID));
+    }, []);
 
   const setCurrentPage = (val: string) => {
     localStorage.setItem("page", val);
