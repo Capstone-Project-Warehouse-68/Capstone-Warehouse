@@ -10,12 +10,35 @@ import (
 	"github.com/project_capstone/WareHouse/entity"
 )
 
-func GetAllEmployee(c *gin.Context) {
+func GetAllEmployees(c *gin.Context) {
+	var employees []entity.Employee
+ 
 	db := config.DB()
-	var employee []entity.Employee
-	db.Find(&employee)
-	c.JSON(http.StatusOK, &employee)
+	results := db.Preload("BankType").Preload("Role").Find(&employees)
+	if results.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, employees)
 }
+
+func GetEmployeeByID(c *gin.Context) {
+	ID := c.Param("id")
+	var employee entity.Employee
+ 
+	db := config.DB()
+	results := db.Preload("BankType").Preload("Role").First(&employee, ID)
+	if results.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
+		return
+	}
+ 
+	if employee.ID == 0 {
+		c.JSON(http.StatusNoContent, gin.H{})
+		return
+	}
+	c.JSON(http.StatusOK, employee)
+ }
 
 func DeleteEmployee(c *gin.Context) {
 	id := c.Param("id")
@@ -103,7 +126,7 @@ func CreateEmployee(c *gin.Context) {
 	var banktype entity.BankType
 	db.First(&banktype, employee.BankType)
 	if banktype.ID == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบเพศ"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบประเภทธนาคาร"})
 		return
 	}
 

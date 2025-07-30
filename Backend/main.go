@@ -28,6 +28,9 @@ func main() {
 		r.POST("/CreateEmployee", controller.CreateEmployee)
 		r.PATCH("/UpdateEmployee/:id", controller.UpdateEmployee)
 		r.DELETE("/DeleteEmployee/:id", controller.DeleteEmployee)
+		r.GET("/GetAllEmployees", controller.GetAllEmployees)
+		r.GET("/GetEmployeeById/:id",controller.GetEmployeeByID)
+
 		r.POST("/CreateProduct", controller.CreateProduct)
 		r.POST("/signin", controller.SignIn)
 		router.Use(middlewares.Authorizes())

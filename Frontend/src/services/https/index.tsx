@@ -1,5 +1,6 @@
 import axios from "axios";
 import type { LoginInterface } from "../../interfaces/Login";
+import type { EmployeeInterface } from "../../interfaces/Employee";
 
 const apiUrl = "http://localhost:8000";
 const Authorization = localStorage.getItem("token");
@@ -20,14 +21,14 @@ async function SignIn(data: LoginInterface) {
     .catch((e) => e.response);
 }
 
-async function CreateEmployee(data: any) {
+async function CreateEmployee(data: EmployeeInterface) {
   return await axios
     .post(`${apiUrl}/CreateEmployee`, data, requestOptions)
     .then((res) => res)
     .catch((e) => e.response);
 }
 
-async function UpdateEmployee(id: number, data: any) {
+async function UpdateEmployee(id: number, data: EmployeeInterface) {
   return await axios
     .patch(`${apiUrl}/UpdateEmployee/${id}`, data, requestOptions)
     .then((res) => res)
@@ -41,9 +42,25 @@ async function DeleteEmployeeByID(id: number) {
     .catch((e) => e.response);
 }
 
+async function GetAllEmployees() {
+  return await axios
+    .get(`${apiUrl}/GetAllEmployees`, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function GetEmployeeById(id: number) {
+  return await axios
+    .get(`${apiUrl}/GetEmployeeById`, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
 export {
     SignIn,
     CreateEmployee,
     UpdateEmployee,
     DeleteEmployeeByID,
+    GetAllEmployees,
+    GetEmployeeById,
 };
