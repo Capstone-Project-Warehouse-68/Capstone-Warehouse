@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import "../../App.css";
 import { Breadcrumb, Layout, theme } from "antd";
 import SignInPages from "../../pages/authentication/Login";
+import NotificationProduct from "../../pages/NotificationProduct/notificationproduct";
 
 import SiderOwner from "../SiderOwner";
 
@@ -36,6 +37,7 @@ const FullLayout: React.FC = () => {
                         <div>
                             <Routes>
                                 <Route path="/" element={<SignInPages />} />
+                                <Route path="/notificationproduct" element={<NotificationProduct />} />
                             </Routes>
                         </div>
                     </Content>
