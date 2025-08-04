@@ -30,6 +30,9 @@ func main() {
 		r.DELETE("/DeleteEmployee/:id", controller.DeleteEmployee)
 		r.POST("/CreateProduct", controller.CreateProduct)
 		r.POST("/signin", controller.SignIn)
+		r.GET("/GetLimitQuantity",controller.GetLimitQuantity)
+		r.GET("/GetCategory", controller.GetCategory)
+		r.PATCH("/UpdateLimitQuantity", controller.UpdateLimitQuantity)
 		router.Use(middlewares.Authorizes())
 	}
 

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
@@ -195,8 +196,57 @@ func UpdateLimitQuantity(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"status": 200,
 		"message":        "อัปเดต LimitQuantity สำเร็จ",
 		"product_id":     product.ID,
 		"limit_quantity": product.LimitQuantity,
+	})
+}
+type LimitQuantity struct {
+	ProductID        uint      `json:"product_id"`
+	LimitQuantity    uint      `json:"limit_quantity"`
+	ProductCode      string    `json:"product_code"`
+	ProductName      string    `json:"product_name"`
+	SupplierName     string    `json:"supplier_name"`
+	UnitPerQuantity  string    `json:"unit_per_quantity"`
+	ProductCreatedAt time.Time `json:"product_created_at"`
+}
+
+func GetLimitQuantity(c *gin.Context) {
+	db := config.DB()
+	var limitQuantities []LimitQuantity
+	
+	query := `
+			SELECT 
+				p.id AS product_id,
+				p.product_code AS product_code,
+				p.product_name AS product_name,
+				s.supply_name AS supplier_name,
+				p.limit_quantity AS limit_quantity,
+				upq.name_of_unit AS unit_per_quantity,
+				p.created_at AS product_created_at
+			FROM 
+				products p
+			JOIN 
+				product_of_bills pob ON pob.product_id = p.id
+			JOIN 
+				bills b ON pob.bill_id = b.id
+			JOIN 
+				supplies s ON b.supply_id = s.id
+			JOIN 
+				unit_per_quantities upq ON p.unit_per_quantity_id = upq.id
+			GROUP BY
+				p.id, p.product_code, p.product_name, s.supply_name, p.limit_quantity, upq.name_of_unit, p.created_at
+	`
+
+	if err := db.Raw(query).Scan(&limitQuantities).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "ดึงข้อมูลล้มเหลว: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+    "data": limitQuantities,
 	})
 }
