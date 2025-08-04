@@ -4,6 +4,7 @@ import "../../App.css";
 import { Breadcrumb, Layout, theme } from "antd";
 import SignInPages from "../../pages/authentication/Login";
 import NotificationProduct from "../../pages/NotificationProduct/notificationproduct";
+import ProductList from "../../pages/ShowProduct";
 
 import SiderOwner from "../SiderOwner";
 
@@ -38,6 +39,7 @@ const FullLayout: React.FC = () => {
                             <Routes>
                                 <Route path="/" element={<SignInPages />} />
                                 <Route path="/notificationproduct" element={<NotificationProduct />} />
+                                <Route path="/productList" element={<ProductList />} />
                             </Routes>
                         </div>
                     </Content>

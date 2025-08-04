@@ -168,9 +168,9 @@ function SiderOwner() {
                     <FeaturedPlayListIcon style={{ fontSize: 26 }} />
                   </div>
                 }
-                onClick={() => setCurrentPage("listproduct")}
+                onClick={() => setCurrentPage("ProductList")}
               >
-                <Link to="/listproduct" style={{ fontSize: 16 }}>แสดงรายการสินค้า</Link>
+                <Link to="/productList" style={{ fontSize: 16 }}>แสดงรายการสินค้า</Link>
               </Menu.Item>
 
               <SubMenu

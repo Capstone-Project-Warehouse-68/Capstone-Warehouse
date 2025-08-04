@@ -7,6 +7,7 @@ import FullLayout from "../components/FullLayout/FullLayout";
 //User
 const MainPages = Loadable(lazy(() => import("../pages/authentication/Login")));
 const NotificationProduct = Loadable(lazy(() => import("../pages/NotificationProduct/notificationproduct")));
+const ProductList = Loadable(lazy(() => import("../pages/ShowProduct/index")));
 //Course
 
 const MainRoutes = (): RouteObject => {
@@ -26,6 +27,10 @@ const MainRoutes = (): RouteObject => {
       {
         path: "/notificationproduct",
         element: <NotificationProduct />,
+      },
+      {
+        path: "/productList",
+        element: <ProductList />,
       },
     ],
   };

@@ -274,3 +274,53 @@ func GetLowStockProducts(c *gin.Context) {
 
 	c.JSON(http.StatusOK, notifications)
 }
+
+type ShowProductResponse struct {
+	ID                uint    `json:"ID"`
+	ProductCode       string  `json:"ProductCode"`
+	ProductName       string  `json:"ProductName"`
+	Quantity          int     `json:"Quantity"`
+	NameOfUnit	   string  `json:"NameOfUnit"`
+	SupplyProductCode string  `json:"SupplyProductCode"`
+	SupplyName	   string  `json:"SupplyName"`
+	Shelf        string  `json:"Shelf"`
+	Zone 	  string  `json:"Zone"`
+	CreatedAt        time.Time `json:"CreatedAt"`
+	Description       string  `json:"Description"`
+}
+func GetShowProduct(c *gin.Context) {
+	db := config.DB()
+
+	var products []ShowProductResponse
+
+	query := `
+	SELECT 
+		p.id,
+		p.product_code,
+		p.product_name,
+		p.quantity,
+		u.name_of_unit,
+		p.supply_product_code,
+		su.supply_name,
+		sh.shelf_name AS shelf,
+		z.zone_name AS zone,
+		p.created_at,
+		p.description
+	FROM products p
+	LEFT JOIN unit_per_quantities u ON p.unit_per_quantity_id = u.id
+	LEFT JOIN shelves sh ON p.shelf_id = sh.id
+	LEFT JOIN zones z ON sh.zone_id = z.id
+	LEFT JOIN product_of_bills pob ON pob.supply_product_code = p.supply_product_code
+	LEFT JOIN bills b ON pob.bill_id = b.id
+	LEFT JOIN supplies su ON b.supply_id = su.id
+	GROUP BY p.id, u.name_of_unit, su.supply_name, sh.shelf_name, z.zone_name
+	ORDER BY p.id DESC
+	`
+
+	if err := db.Raw(query).Scan(&products).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลสินค้าได้"})
+		return
+	}
+
+	c.JSON(http.StatusOK, products)
+}
