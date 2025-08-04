@@ -250,3 +250,27 @@ func GetLimitQuantity(c *gin.Context) {
     "data": limitQuantities,
 	})
 }
+
+
+func GetLowStockProducts(c *gin.Context) {
+	db := config.DB()
+
+	var products []entity.Product
+
+	if err := db.Preload("UnitPerQuantity").Where("quantity <= limit_quantity").Find(&products).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลสินค้าได้"})
+		return
+	}
+
+	// ส่งเฉพาะข้อมูลที่จำเป็น
+	var notifications []map[string]interface{}
+	for _, p := range products {
+		notifications = append(notifications, map[string]interface{}{
+			"product_id":   p.ID,
+			"product_name": p.ProductName,
+			"quantity":     p.Quantity,
+		})
+	}
+
+	c.JSON(http.StatusOK, notifications)
+}

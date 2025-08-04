@@ -33,6 +33,7 @@ func main() {
 		r.GET("/GetLimitQuantity",controller.GetLimitQuantity)
 		r.GET("/GetCategory", controller.GetCategory)
 		r.PATCH("/UpdateLimitQuantity", controller.UpdateLimitQuantity)
+		r.GET("/notifications", controller.GetLowStockProducts)
 		router.Use(middlewares.Authorizes())
 	}
 

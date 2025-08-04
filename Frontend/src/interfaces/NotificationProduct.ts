@@ -12,3 +12,9 @@ export interface UpdateNotificationProduct {
   product_id: number;   
   limit_quantity: number;
 }
+
+export interface Notification {
+  product_id: number;
+  product_name: string;
+  quantity: number;
+}

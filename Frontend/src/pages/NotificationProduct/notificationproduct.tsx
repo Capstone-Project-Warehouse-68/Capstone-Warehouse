@@ -19,6 +19,7 @@ import {
 import type { Category } from "../../interfaces/Category";
 import type { UpdateNotificationProduct } from "../../interfaces/NotificationProduct";
 import { UpdateLimitQuantity } from "../../services/https/NotificaltionProduct/index";
+import NotificationBell from "../../components/NotificationBell";
 
 import dayjs from "dayjs";
 import "dayjs/locale/th";
@@ -217,6 +218,7 @@ const StockAlertSetting: React.FC = () => {
             </Option>
           ))}
         </Select>
+        <NotificationBell />
       </Space>
 
       <Table

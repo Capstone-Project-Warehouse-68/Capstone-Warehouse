@@ -87,11 +87,34 @@ async function UpdateLimitQuantity(data: UpdateNotificationProduct) {
     };
   }
 }
+async function GetNotificationProducts() {
+    try {
+    const response = await fetch(`${apiUrl}/notifications`, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+    const result = await response.json();
 
+    if (response.ok) {
+      return result;
+    } else {
+      return {
+        status: response.status,
+        error: result.error || "เกิดข้อผิดพลาดในการดึงข้อมูลแจ้งเตือน",
+      };
+    }
+  } catch (error: any) {
+    console.error("Error fetching notification products:", error);
+    return {
+      error: "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้",
+    };
+  }
+}
 
 
 export {
     GetLimitQuantity, 
     GetCategory,  
     UpdateLimitQuantity,
+    GetNotificationProducts,
 };
