@@ -9,6 +9,7 @@ export interface EmployeeInterface {
     Profile?: string;
     RoleID?: number;
     BankAccountNumber?: number;
+    Line?: string;
 
     Role? : {
         ID?: number;

@@ -24,12 +24,20 @@ func main() {
 	router := r.Group("/")
 	{
 		router.Use(middlewares.Authorizes())
-		
+
 		r.POST("/CreateEmployee", controller.CreateEmployee)
 		r.PATCH("/UpdateEmployee/:id", controller.UpdateEmployee)
+		r.PATCH("/Employee/:id/ChangePassword/:id", controller.ChangePassword)
+		r.PATCH("/Employee/:id/EmergencyResetPassword", controller.EmergencyResetPassword)
 		r.DELETE("/DeleteEmployee/:id", controller.DeleteEmployee)
 		r.GET("/GetAllEmployees", controller.GetAllEmployees)
-		r.GET("/GetEmployeeById/:id",controller.GetEmployeeByID)
+		r.GET("/GetEmployeeById/:id", controller.GetEmployeeByID)
+		r.POST("/CheckEmail/:email", controller.CheckEmail)
+		r.POST("/CheckPhone/:phoneNumber", controller.CheckPhone)
+		r.POST("/CheckNationalID/:nationalID", controller.CheckNationalID)
+
+		r.GET("/GetRoles", controller.GetRole)
+		r.GET("/GetBankTypes", controller.GetBankType)
 
 		r.POST("/CreateProduct", controller.CreateProduct)
 		r.POST("/signin", controller.SignIn)
@@ -37,11 +45,11 @@ func main() {
 	}
 
 	r.GET("/", func(c *gin.Context) {
-        c.String(http.StatusOK, "API RUNNING... PORT: %s", PORT)
-    })
+		c.String(http.StatusOK, "API RUNNING... PORT: %s", PORT)
+	})
 
-    // Run the server
-    r.Run("localhost:" + PORT)
+	// Run the server
+	r.Run("localhost:" + PORT)
 }
 
 func CORSMiddleware() gin.HandlerFunc {
@@ -58,4 +66,3 @@ func CORSMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
- 

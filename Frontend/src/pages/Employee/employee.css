@@ -1,0 +1,38 @@
+.profile {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 50%;
+    background-color: white;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 12px;
+}
+
+
+
+.help-btn {
+    background-color: #ffffff;     /* สีพื้นเริ่มต้น */
+    color: black;                  /* สีไอคอนเริ่มต้น */
+    border: none;
+    border-radius: 16px;
+    float: right;
+
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.2),
+                -3px -3px 6px rgba(255, 255, 255, 0.6);
+
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* ขนาดไอคอน + จัดให้อยู่กึ่งกลาง */
+.help-btn svg {
+    font-size: 20px;
+}
+

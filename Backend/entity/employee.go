@@ -12,6 +12,7 @@ type Employee struct {
 	Profile			  string `gorm:"type:longtext" valid:"required~Profile is required"`
 	Password          string `valid:"required~Password is required"`
 	BankAccountNumber string `valid:"required~BankAccountNumber is required"`
+	Line              string `valid:"required~Line is required"`
 	
 	BankTypeID        uint		`valid:"required~BankTypeID is required"`
 	BankType          BankType 	`gorm:"foreignKey:BankTypeID"`
