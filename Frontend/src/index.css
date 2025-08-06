@@ -34,6 +34,29 @@
   transition: box-shadow 0.3s ease;
 }
 
+.profile-image {
+  object-fit: cover !important;
+  border-radius: 50% !important;
+  border: 2px solid rgb(218, 165, 32) !important;
+  background-color: white !important;
+  /* Removed transition for width and height */
+}
+
+.profile-container {
+  display: flex !important;
+  justify-content: center !important;
+  margin: 50px 0 20px 0 !important; /* Top, Right, Bottom, Left */
+}
+
+.profile-info {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  margin: 20px 0 !important; /* Top and Bottom margin */
+  overflow-wrap: break-word !important;
+  text-align: center !important;
+}
+
 a {
   font-weight: 500;
   color: #646cff;

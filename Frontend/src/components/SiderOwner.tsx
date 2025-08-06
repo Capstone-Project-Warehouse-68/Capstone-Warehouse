@@ -15,7 +15,8 @@ import NotificationImportantIcon from '@mui/icons-material/NotificationImportant
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Link } from "react-router-dom";
-//import { GetEmployeeByID, GetPositions } from "../../services/https";
+import { GetEmployeeById } from "../services/https";
+import type { EmployeeInterface } from "../interfaces/Employee";
 
 function SiderOwner() {
   const page = localStorage.getItem("page");
@@ -27,30 +28,27 @@ function SiderOwner() {
   const [positionName, setPositionName] = useState("");
   const [profile, setProfile] = useState("");
 
-  const employeeID = localStorage.getItem("employeeID");
+  const employeeID = localStorage.getItem("id");
 
-  //   const getEmployeeById = async () => {
-  //     try {
-  //       const res = await GetEmployeeByID(employeeID || "");
-  //       if (res.status === 200) {
-  //         const employee: EmployeeInterface = res.data;
-  //         setFirstName(employee.FirstName || "");
-  //         setLastName(employee.LastName || "");
-  //         setProfile(employee.Profile || "");
-  //         if (employee.PositionID) {
-  //           getPositionNameById(employee.PositionID);
-  //         } else {
-  //           setPositionName("Unknown Position");
-  //         }
-  //       } else {
-  //         messageApi.error(res.data.error || "ไม่สามารถดึงข้อมูลได้");
-  //         setPositionName("Unknown Position");
-  //       }
-  //     } catch (error) {
-  //       messageApi.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
-  //       setPositionName("Unknown Position");
-  //     }
-  //   };
+  const getEmployeeById = async () => {
+    
+    try {
+      const res = await GetEmployeeById(Number(employeeID || 0));
+      if (res.status === 200) {
+        const employee: EmployeeInterface = res.data;
+        setFirstName(employee.FirstName || "");
+        setLastName(employee.LastName || "");
+        setProfile(employee.Profile || "");
+        setPositionName(employee.Role?.RoleName || "Unknown Position");
+      } else {
+        messageApi.error(res.data.error || "ไม่สามารถดึงข้อมูลได้");
+        setPositionName("Unknown Position");
+      }
+    } catch (error) {
+      messageApi.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
+      setPositionName("Unknown Position");
+    }
+  };
 
   //   const getPositionNameById = async (positionID: number) => {
   //     try {
@@ -71,9 +69,9 @@ function SiderOwner() {
   //     }
   //   };
 
-  //   useEffect(() => {
-  //     getEmployeeById();
-  //   }, []);
+  useEffect(() => {
+    getEmployeeById();
+  }, []);
 
   const setCurrentPage = (val: string) => {
     localStorage.setItem("page", val);
@@ -121,10 +119,10 @@ function SiderOwner() {
             </div>
 
             <div className="profile-info">
-              <span style={{ fontSize: "large", color: "black" }}>
+              <span style={{ fontSize: "large", color: "white" }}>
                 {firstName} {lastName}
               </span>
-              <span style={{ fontSize: "default", color: "black" }}>
+              <span style={{ fontSize: "default", color: "white" }}>
                 ({positionName})
               </span>
             </div>
@@ -259,17 +257,17 @@ function SiderOwner() {
 
           <Menu style={{ backgroundColor: "#8c8c8c" }} mode="inline" inlineCollapsed={collapsed}>
             <Menu.Item key="logout" icon={
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      height: "100%",
-                    }}
-                  >
-                    <LogoutIcon style={{ fontSize: 26 }} />
-                  </div>
-                } onClick={Logout}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "100%",
+                }}
+              >
+                <LogoutIcon style={{ fontSize: 26 }} />
+              </div>
+            } onClick={Logout}>
               <span style={{ fontSize: 16 }}>ออกจากระบบ </span>
             </Menu.Item>
           </Menu>
