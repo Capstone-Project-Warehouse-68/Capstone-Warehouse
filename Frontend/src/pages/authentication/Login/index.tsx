@@ -29,16 +29,16 @@ function SignInPages() {
           content: "Sign-in successful",
           duration: 1,
         });
-        
+
         localStorage.setItem("isLogin", "true");
         localStorage.setItem("token_type", res.data.token_type);
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("id", res.data.id);
         localStorage.setItem("role", res.data.role);
         console.log(localStorage.getItem("id"));
-        console.log("Role: "+localStorage.getItem("role"));
-        
-        
+        console.log("Role: " + localStorage.getItem("role"));
+
+
 
         await delay(1000);
         location.href = "/dashboard";

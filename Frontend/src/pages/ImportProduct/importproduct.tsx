@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import * as XLSX from "xlsx";
 import dayjs from "dayjs";
-import { Button, Col, Row, Table, Dropdown, message, Form, Input, Modal, Space, Card, InputNumber, DatePicker, Select } from "antd";
+import { Upload, Button, Col, Row, Table, Dropdown, message, Form, Input, Modal, Space, Card, InputNumber, DatePicker, Select } from "antd";
 import {
     FileAddOutlined,
     FilePdfOutlined,
@@ -9,31 +10,129 @@ import {
     DeleteOutlined,
     DashOutlined,
     InfoCircleOutlined,
-    PlusOutlined
+    PlusOutlined,
+    FileExcelOutlined
 
 } from "@ant-design/icons";
 import KeyboardIcon from '@mui/icons-material/Keyboard';
-import { CreateBillwithProduct, DeleteBill, GetAllBills, GetCategory, GetShelfByZoneID, GetSupply, GetUnitPerQuantity, GetZone } from "../../services/https";
+import { CreateBillwithProduct, DeleteBill, GetAllBills, GetCategory, GetShelfByZoneID, GetUnitPerQuantity, GetZone } from "../../services/https";
 import type { BillInterface } from "../../interfaces/Bill";
 import type { UnitPerQuantityInterface } from "../../interfaces/UnitPerQuantity";
 import type { CategoryInterface } from "../../interfaces/Category";
 import type { ZoneInterface } from "../../interfaces/Zone";
 import type { ShelfInterface } from "../../interfaces/Shelf";
-import type { SupplyInterface } from "../../interfaces/Supply";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 const { Option } = Select;
 
 function ImportProduct() {
     const [messageApi, contextHolder] = message.useMessage();
     const [Bills, setBillData] = useState<BillInterface[]>([]);
     const [Units, setUnitData] = useState<UnitPerQuantityInterface[]>([]);
-    const [Sups, setSupplyData] = useState<SupplyInterface[]>([]);
     const [Categorys, setCateData] = useState<CategoryInterface[]>([]);
     const [Zones, setZoneData] = useState<ZoneInterface[]>([]);
     const [shelfMap, setShelfMap] = useState<Record<number, ShelfInterface[]>>({});
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [form] = Form.useForm();
     const [productFields, setProductFields] = useState([{ key: Date.now() }]);
+
+    const handleExcelUpload = (file: File) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = new Uint8Array(e.target?.result as ArrayBuffer);
+            const workbook = XLSX.read(data, { type: "array" });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+
+            const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+            console.log("Raw Excel Data:", jsonData);
+
+
+            // ✅ ประกาศ formValues ก่อนใช้งาน
+            const formValues: Record<string, any> = {};
+
+            // อ่าน Supply, DateImport, Title
+            jsonData.forEach(row => {
+                if (row[0] === "ชื่อบริษัท") {
+                    formValues["SupplyID"] = row[1];
+                }
+                if (row[0] === "วันที่นำเข้า") {
+                    formValues["DateImport"] = dayjs(row[1], "DD/MM/YYYY");
+                }
+                if (row[0] === "ชื่อใบสั่งซื้อ") {
+                    formValues["Title"] = row[1];
+                }
+            });
+
+            // หาตำแหน่ง header row
+            const headerIndex = jsonData.findIndex(
+                row =>
+                    row[0] === "ลำดับ" &&
+                    row[1] === "รหัสสินค้าของบริษัทสั่งซื้อ" &&
+                    row[2] === "รายการ" &&
+                    row[3] === "จำนวน" &&
+                    row[4] === "หน่วย" &&
+                    row[5] === "ราคาต่อหน่วย" &&
+                    row[6] === "ส่วนลด %" &&
+                    row[7] === "ราคารวม" &&
+                    row[8] === "ราคาขายต่อหน่วย"
+            );
+
+            if (headerIndex === -1) {
+                console.error("ไม่พบ header row ในไฟล์ Excel");
+                return;
+            }
+
+            const rows = jsonData.slice(headerIndex + 1).filter(row => row.length > 0);
+
+            const products: any[] = [];
+            let summaryPrice: number | null = null;
+
+            for (const row of rows) {
+                if (row[2] === "จำนวนเงินรวมทั้งสิ้น") {
+                    summaryPrice = row[7] !== undefined ? parseFloat(row[7].toString().replace(/,/g, "")) : 0;
+                } else {
+                    products.push({
+                        ProductCode: row[1] ?? "",
+                        ProductName: row[2] ?? "",
+                        Quantity: row[3] ?? 0,
+                        UnitPerQuantityID: row[4] ?? "",
+                        PricePerPiece: row[5] ?? 0,
+                        Discount: row[6] ?? 0,
+                        SumPriceProduct: row[7] ?? 0,
+                    });
+                }
+            }
+
+            // map products ลง form
+            products.forEach((p, i) => {
+                formValues[`ProductCode-${i}`] = p.ProductCode;
+                formValues[`ProductName-${i}`] = p.ProductName;
+                formValues[`Quantity-${i}`] = p.Quantity;
+                formValues[`UnitPerQuantityID-${i}`] = p.UnitPerQuantityID;
+                formValues[`PricePerPiece-${i}`] = p.PricePerPiece;
+                formValues[`Discount-${i}`] = p.Discount;
+                formValues[`SumPriceProduct-${i}`] = p.SumPriceProduct;
+            });
+
+            if (summaryPrice !== null) {
+                formValues["SummaryPrice"] = summaryPrice;
+            }
+
+            form.setFieldsValue(formValues);
+
+            const newProductFields = products.map((_, i) => ({ key: Date.now() + i }));
+            setProductFields(newProductFields);
+
+            setIsCreateModalOpen(true);
+
+            console.log("Form Values:", formValues);
+        };
+
+        reader.readAsArrayBuffer(file);
+        return false;
+    };
+
 
     const showCreateModal = () => setIsCreateModalOpen(true);
     const handleCreateCancel = () => setIsCreateModalOpen(false);
@@ -42,39 +141,33 @@ function ImportProduct() {
         setProductFields([...productFields, { key: Date.now() }]);
     };
 
-    const handleRemoveCard = (keyToRemove: number) => {
-        const updatedFields = productFields.filter((item) => item.key !== keyToRemove);
+    const handleRemoveCard = (indexToRemove: number) => {
+        // ลบ card ที่ index
+        const updatedFields = [...productFields];
 
-        // เก็บค่าเก่า
+        updatedFields.splice(indexToRemove, 1);
+        setProductFields(updatedFields);
+
+        // เตรียมค่าฟอร์มใหม่
         const oldValues = form.getFieldsValue();
-
-        // หาค่าใหม่ที่จะใช้ (เคลียร์ field ที่หลอนออกไป)
         const newValues: Record<string, any> = {};
-        updatedFields.forEach((item, newIndex) => {
-            const oldIndex = productFields.findIndex((f) => f.key === item.key);
-            newValues[`productName-${newIndex}`] = oldValues[`productName-${oldIndex}`];
-            newValues[`productCode-${newIndex}`] = oldValues[`productCode-${oldIndex}`];
-            newValues[`unit-${newIndex}`] = oldValues[`unit-${oldIndex}`];
-            newValues[`category-${newIndex}`] = oldValues[`category-${oldIndex}`];
-            newValues[`zone-${newIndex}`] = oldValues[`zone-${oldIndex}`];
-            newValues[`shelfID-${newIndex}`] = oldValues[`shelfID-${oldIndex}`];
+
+        updatedFields.forEach((_, newIndex) => {
+            newValues[`productName-${newIndex}`] = oldValues[`productName-${newIndex < indexToRemove ? newIndex : newIndex + 1}`];
+            newValues[`productCode-${newIndex}`] = oldValues[`productCode-${newIndex < indexToRemove ? newIndex : newIndex + 1}`];
+            newValues[`unit-${newIndex}`] = oldValues[`unit-${newIndex < indexToRemove ? newIndex : newIndex + 1}`];
+            newValues[`category-${newIndex}`] = oldValues[`category-${newIndex < indexToRemove ? newIndex : newIndex + 1}`];
+            newValues[`zone-${newIndex}`] = oldValues[`zone-${newIndex < indexToRemove ? newIndex : newIndex + 1}`];
+            newValues[`shelfID-${newIndex}`] = oldValues[`shelfID-${newIndex < indexToRemove ? newIndex : newIndex + 1}`];
         });
 
-        // ✅ เคลียร์ฟอร์มก่อน แล้วค่อยเซตใหม่
-        const allProductFieldNames = Object.keys(oldValues).filter((key) =>
-            key.startsWith("productName-") ||
-            key.startsWith("productCode-") ||
-            key.startsWith("unit-") ||
-            key.startsWith("category-") ||
-            key.startsWith("zone-") ||
-            key.startsWith("shelfID-")
+        // รีเซ็ต fields ทั้งหมด
+        const allProductFields = Object.keys(oldValues).filter(key =>
+            /^(productName|productCode|unit|category|zone|shelfID)-/.test(key)
         );
+        form.resetFields(allProductFields);
 
-        form.resetFields(allProductFieldNames);
-
-        form.setFieldsValue(newValues); // เซตค่าที่ index ถูกต้องแล้ว
-
-        setProductFields(updatedFields); // เซต state ใหม่
+        form.setFieldsValue(newValues);
     };
 
     const handleModelCreateOk = () => {
@@ -140,23 +233,6 @@ function ImportProduct() {
             .catch((err) => {
                 console.log("Validation Failed", err);
             });
-    };
-
-    const getSupply = async () => {
-        try {
-            const res = await GetSupply();
-            if (res.status === 200) {
-                const sups = res.data.map((item: SupplyInterface) => ({
-                    ID: item.ID.toString(),
-                    SupplyName: item.SupplyName || "-",
-                }));
-                setSupplyData(sups);
-            } else {
-                messageApi.error(res.data.error || "ไม่สามารถดึงข้อมูลบริษัทได้");
-            }
-        } catch (error) {
-            messageApi.error("เกิดข้อผิดพลาดในการดึงข้อมูลบริษัท");
-        }
     };
 
     const getBillAll = async () => {
@@ -354,7 +430,6 @@ function ImportProduct() {
     useEffect(() => {
         getBillAll();
         getUnitperQuantity();
-        getSupply();
         getCategory();
         getZone();
     }, []);
@@ -377,8 +452,16 @@ function ImportProduct() {
                 </span>
             </div>
 
-            <Row style={{ display: "flex", justifyContent: "center", marginTop: "3%", marginBottom: "3%" }}>
-                <Col style={{ marginRight: "10%" }}>
+            <Row
+                style={{
+                    marginTop: "3%",
+                    marginBottom: "3%",
+                    display: "flex",
+                    justifyContent: "center", // จัดให้อยู่ตรงกลางแนวนอน
+                    gap: "10%",               // เว้นระยะระหว่างปุ่ม
+                    alignItems: "center"
+                }}>
+                <Col>
                     <Button
                         onClick={showCreateModal}
                         className="button-import" style={{
@@ -399,7 +482,35 @@ function ImportProduct() {
                     </Button>
                 </Col>
 
-                <Col style={{ marginLeft: "10%" }}>
+                <Col>
+                    <Upload
+                        beforeUpload={handleExcelUpload}
+                        showUploadList={false}
+                        accept=".xls,.xlsx" // จำกัดให้เลือกแต่ Excel
+                    >
+                        <Button
+                            className="button-import"
+                            style={{
+                                height: "auto",
+                                width: "auto",
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                            }}
+                        >
+                            <span style={{
+                                fontSize: 20, color: "white", display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                            }}>
+                                <FileExcelOutlined style={{ marginRight: 8 }} />
+                                เพิ่มข้อมูลด้วย Excel
+                            </span>
+                        </Button>
+                    </Upload>
+                </Col>
+
+                <Col>
                     <Button
                         className="button-import" style={{
                             height: "auto",
@@ -458,13 +569,7 @@ function ImportProduct() {
                                 label="ชื่อบริษัทที่สั่งซื้อ"
                                 rules={[{ required: true, message: "กรุณากรอกชื่อบริษัทที่สั่งซื้อ" }]}
                             >
-                                <Select placeholder="เลือกหน่วยสินค้า">
-                                    {Sups.map((sup) => (
-                                        <Option key={sup.ID} value={sup.ID}>
-                                            {sup.SupplyName}
-                                        </Option>
-                                    ))}
-                                </Select>
+                                <Input placeholder="กรอกชื่อบริษัทที่สั่งซื้อ" />
                             </Form.Item>
                         </Col>
                         <Col xl={12}>
@@ -516,7 +621,7 @@ function ImportProduct() {
                                         <Button
                                             danger
                                             icon={<DeleteOutlined />}
-                                            onClick={() => handleRemoveCard(item.key)}
+                                            onClick={() => handleRemoveCard(index)}
                                             size="small"
                                         >
                                             ลบ
@@ -629,13 +734,34 @@ function ImportProduct() {
                                     <Col xl={12}>
                                         <Form.Item
                                             name={`Discount-${index}`}
-                                            label="ส่วนลด (ถ้ามี)"
+                                            label="ส่วนลด %f (ถ้ามี)"
                                         >
                                             <InputNumber
                                                 min={0}
                                                 step={0.01}
                                                 style={{ width: "100%" }}
                                                 placeholder="กรอกส่วนลด (ถ้ามี)"
+                                                precision={2}
+                                                onKeyPress={(e) => {
+                                                    const allowedChars = /^[0-9.]$/;
+                                                    if (!allowedChars.test(e.key)) {
+                                                        e.preventDefault();
+                                                    }
+                                                }}
+                                            />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col xl={12}>
+                                        <Form.Item
+                                            name={`SumPriceProduct-${index}`}
+                                            label="ราคารวม"
+                                            rules={[{ required: true, message: "กรุณากรอกมูลราคารวม" }]}
+                                        >
+                                            <InputNumber
+                                                min={0}
+                                                step={0.01}
+                                                style={{ width: "100%" }}
+                                                placeholder="กรอกมูลค่าราคารวม"
                                                 precision={2}
                                                 onKeyPress={(e) => {
                                                     const allowedChars = /^[0-9.]$/;
