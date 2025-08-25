@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import dayjs from "dayjs";
-import { Upload, Button, Col, Row, Table, Dropdown, message, Form, Input, Modal, Space, Card, InputNumber, DatePicker, Select } from "antd";
+import { Upload, Button, Col, Row, Table, Dropdown, message, Form, Input, Modal, Space, Card, InputNumber, DatePicker, Select, Steps } from "antd";
 import {
     FileAddOutlined,
     FilePdfOutlined,
@@ -32,8 +32,12 @@ function ImportProduct() {
     const [Zones, setZoneData] = useState<ZoneInterface[]>([]);
     const [shelfMap, setShelfMap] = useState<Record<number, ShelfInterface[]>>({});
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [billForms, setBillForms] = useState<any[]>([{}]); //
+    const [currentStep, setCurrentStep] = useState(0); // index ของบิลที่กำลังแก้
     const [form] = Form.useForm();
-    const [productFields, setProductFields] = useState([{ key: Date.now() }]);
+    const [productFields, setProductFields] = useState<{ key: number }[]>([]);
+    const [productFieldsMap, setProductFieldsMap] = useState<Record<number, { key: number }[]>>({});
+
 
     const handleExcelUpload = (file: File) => {
         const reader = new FileReader();
@@ -44,17 +48,14 @@ function ImportProduct() {
             const worksheet = workbook.Sheets[sheetName];
 
             const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
             console.log("Raw Excel Data:", jsonData);
 
-
-            // ✅ ประกาศ formValues ก่อนใช้งาน
             const formValues: Record<string, any> = {};
 
             // อ่าน Supply, DateImport, Title
             jsonData.forEach(row => {
                 if (row[0] === "ชื่อบริษัท") {
-                    formValues["SupplyID"] = row[1];
+                    formValues["SupplyName"] = row[1];
                 }
                 if (row[0] === "วันที่นำเข้า") {
                     formValues["DateImport"] = dayjs(row[1], "DD/MM/YYYY");
@@ -68,14 +69,16 @@ function ImportProduct() {
             const headerIndex = jsonData.findIndex(
                 row =>
                     row[0] === "ลำดับ" &&
-                    row[1] === "รหัสสินค้าของบริษัทสั่งซื้อ" &&
-                    row[2] === "รายการ" &&
-                    row[3] === "จำนวน" &&
-                    row[4] === "หน่วย" &&
-                    row[5] === "ราคาต่อหน่วย" &&
-                    row[6] === "ส่วนลด %" &&
-                    row[7] === "ราคารวม" &&
-                    row[8] === "ราคาขายต่อหน่วย"
+                    row[1] === "รหัสสินค้าบริษัทที่ผลิต" &&
+                    row[2] === "รหัสสินค้าของบริษัทสั่งซื้อ" &&
+                    row[3] === "รายการ" &&
+                    row[4] === "จำนวน" &&
+                    row[5] === "หน่วย" &&
+                    row[6] === "ราคาต่อหน่วย" &&
+                    row[7] === "ส่วนลด %" &&
+                    row[8] === "ราคารวม" &&
+                    row[9] === "ราคาขายต่อหน่วย" &&
+                    row[10] === "คำอธิบายสินค้า"
             );
 
             if (headerIndex === -1) {
@@ -89,30 +92,40 @@ function ImportProduct() {
             let summaryPrice: number | null = null;
 
             for (const row of rows) {
-                if (row[2] === "จำนวนเงินรวมทั้งสิ้น") {
-                    summaryPrice = row[7] !== undefined ? parseFloat(row[7].toString().replace(/,/g, "")) : 0;
+                if (row[3] === "จำนวนเงินรวมทั้งสิ้น") {
+                    summaryPrice = row[8] !== undefined ? parseFloat(row[8].toString().replace(/,/g, "")) : 0;
                 } else {
                     products.push({
-                        ProductCode: row[1] ?? "",
-                        ProductName: row[2] ?? "",
-                        Quantity: row[3] ?? 0,
-                        UnitPerQuantityID: row[4] ?? "",
-                        PricePerPiece: row[5] ?? 0,
-                        Discount: row[6] ?? 0,
-                        SumPriceProduct: row[7] ?? 0,
+                        ManufacturerCode: row[1] ?? "",
+                        SupplyProductCode: row[2] ?? "",
+                        ProductName: row[3] ?? "",
+                        Quantity: row[4] ?? 0,
+                        UnitPerQuantityID: row[5] ?? "",
+                        PricePerPiece: row[6] ?? 0,
+                        Discount: row[7] ?? 0,
+                        SumPriceProduct: row[8] ?? 0,
+                        SalePrice: row[9] ?? 0,
+                        Description: row[10] ?? "",
                     });
                 }
             }
 
-            // map products ลง form
+            // สร้าง key คงที่สำหรับแต่ละ product
+            const newProductFields = products.map((_, i) => ({ key: Date.now() + i }));
+
+            // map products ลง form โดยใช้ key ของแต่ละ card
             products.forEach((p, i) => {
-                formValues[`ProductCode-${i}`] = p.ProductCode;
-                formValues[`ProductName-${i}`] = p.ProductName;
-                formValues[`Quantity-${i}`] = p.Quantity;
-                formValues[`UnitPerQuantityID-${i}`] = p.UnitPerQuantityID;
-                formValues[`PricePerPiece-${i}`] = p.PricePerPiece;
-                formValues[`Discount-${i}`] = p.Discount;
-                formValues[`SumPriceProduct-${i}`] = p.SumPriceProduct;
+                const key = newProductFields[i].key;
+                formValues[`ManufacturerCode-${key}`] = p.ManufacturerCode;
+                formValues[`SupplyProductCode-${key}`] = p.SupplyProductCode;
+                formValues[`ProductName-${key}`] = p.ProductName;
+                formValues[`Quantity-${key}`] = p.Quantity;
+                formValues[`UnitPerQuantityID-${key}`] = p.UnitPerQuantityID;
+                formValues[`PricePerPiece-${key}`] = p.PricePerPiece;
+                formValues[`Discount-${key}`] = p.Discount;
+                formValues[`SumPriceProduct-${key}`] = p.SumPriceProduct;
+                formValues[`SalePrice-${key}`] = p.SalePrice;
+                formValues[`Description-${key}`] = p.Description;
             });
 
             if (summaryPrice !== null) {
@@ -120,10 +133,7 @@ function ImportProduct() {
             }
 
             form.setFieldsValue(formValues);
-
-            const newProductFields = products.map((_, i) => ({ key: Date.now() + i }));
             setProductFields(newProductFields);
-
             setIsCreateModalOpen(true);
 
             console.log("Form Values:", formValues);
@@ -133,53 +143,145 @@ function ImportProduct() {
         return false;
     };
 
+    // บันทึกบิลลง localStorage ตาม key
+    const saveBillToStorage = (key: number, billData: any) => {
+        const bills = JSON.parse(localStorage.getItem("billForms") || "{}");
+        bills[key] = billData;
+        localStorage.setItem("billForms", JSON.stringify(bills));
+    };
+
+    // ดึงบิลจาก localStorage ตาม key
+    const getBillFromStorage = (key: number) => {
+        const bills = JSON.parse(localStorage.getItem("billForms") || "{}");
+        const bill = bills[key] || {};
+
+        // แปลงวันที่เป็น dayjs สำหรับ DatePicker
+        const newBill: Record<string, any> = { ...bill };
+        Object.keys(newBill).forEach((field) => {
+            if (field === "DateImport" && newBill[field]) {
+                newBill[field] = dayjs(newBill[field]);
+            }
+        });
+
+        return newBill;
+    };
+
+    const handleNextBill = () => {
+        // 1. บันทึก form ปัจจุบันลง billForms
+        const currentValues = form.getFieldsValue();
+        const newBillForms = [...billForms];
+        newBillForms[currentStep] = currentValues;
+        setBillForms(newBillForms);
+
+        // 2. บันทึก productFields ปัจจุบันลง map
+        setProductFieldsMap(prev => ({
+            ...prev,
+            [currentStep]: [...productFields]
+        }));
+
+        // 3. ไปบิลถัดไป
+        const nextStep = currentStep + 1;
+        setCurrentStep(nextStep);
+
+        // 4. โหลด form + productFields ของบิลถัดไป
+        const nextBill = newBillForms[nextStep] || {};
+        form.setFieldsValue(nextBill);
+        const nextProductFields = productFieldsMap[nextStep] || [{ key: Date.now() }];
+        setProductFields(nextProductFields);
+    };
+
+    const handlePrevBill = () => {
+        // 1. บันทึก form ปัจจุบันลง billForms
+        const currentValues = form.getFieldsValue();
+        const newBillForms = [...billForms];
+        newBillForms[currentStep] = currentValues;
+        setBillForms(newBillForms);
+
+        // 2. บันทึก productFields ปัจจุบันลง map
+        setProductFieldsMap(prev => ({
+            ...prev,
+            [currentStep]: [...productFields]
+        }));
+
+        // 3. ไปบิลก่อนหน้า
+        const prevStep = currentStep - 1;
+        if (prevStep >= 0) {
+            setCurrentStep(prevStep);
+
+            // 4. โหลด form + productFields ของบิลก่อนหน้า
+            const prevBill = newBillForms[prevStep] || {};
+            form.setFieldsValue(prevBill);
+            const prevProductFields = productFieldsMap[prevStep] || [{ key: Date.now() }];
+            setProductFields(prevProductFields);
+        }
+    };
+
+    const handleAddBill = () => {
+        // บันทึกบิลปัจจุบันและ productFields ปัจจุบัน
+        saveBillToStorage(currentStep, form.getFieldsValue());
+        setProductFieldsMap(prev => ({ ...prev, [currentStep]: productFields }));
+
+        const newIndex = billForms.length;
+        setBillForms([...billForms, {}]); // เพิ่มบิลใหม่
+        setCurrentStep(newIndex);
+
+        // เริ่ม productFields ว่างสำหรับบิลใหม่
+        setProductFields([]);
+        form.resetFields();
+    };
+
+
+
 
     const showCreateModal = () => setIsCreateModalOpen(true);
     const handleCreateCancel = () => setIsCreateModalOpen(false);
 
     const handleAddCard = () => {
-        setProductFields([...productFields, { key: Date.now() }]);
+        const newKey = productFields.length ? Math.max(...productFields.map(f => f.key)) + 1 : 1;
+        setProductFields([...productFields, { key: newKey }]);
     };
 
-    const handleRemoveCard = (indexToRemove: number) => {
-        // ลบ card ที่ index
-        const updatedFields = [...productFields];
-
-        updatedFields.splice(indexToRemove, 1);
+    const handleRemoveCard = (keyToRemove: number) => {
+        // ลบ card จาก state
+        const updatedFields = productFields.filter(item => item.key !== keyToRemove);
         setProductFields(updatedFields);
 
-        // เตรียมค่าฟอร์มใหม่
-        const oldValues = form.getFieldsValue();
-        const newValues: Record<string, any> = {};
+        // ลบค่าของฟิลด์ที่เกี่ยวข้องกับ card นั้น
+        const fieldsToRemove = [
+            `ProductName-${keyToRemove}`,
+            `ProductCode-${keyToRemove}`,
+            `SupplyProductCode-${keyToRemove}`,
+            `ManufacturerCode-${keyToRemove}`,
+            `Description-${keyToRemove}`,
+            `Quantity-${keyToRemove}`,
+            `UnitPerQuantityID-${keyToRemove}`,
+            `PricePerPiece-${keyToRemove}`,
+            `Discount-${keyToRemove}`,
+            `SumPriceProduct-${keyToRemove}`,
+            `SalePrice-${keyToRemove}`,
+            `CategoryID-${keyToRemove}`,
+            `zone-${keyToRemove}`,
+            `ShelfID-${keyToRemove}`
+        ];
 
-        updatedFields.forEach((_, newIndex) => {
-            newValues[`productName-${newIndex}`] = oldValues[`productName-${newIndex < indexToRemove ? newIndex : newIndex + 1}`];
-            newValues[`productCode-${newIndex}`] = oldValues[`productCode-${newIndex < indexToRemove ? newIndex : newIndex + 1}`];
-            newValues[`unit-${newIndex}`] = oldValues[`unit-${newIndex < indexToRemove ? newIndex : newIndex + 1}`];
-            newValues[`category-${newIndex}`] = oldValues[`category-${newIndex < indexToRemove ? newIndex : newIndex + 1}`];
-            newValues[`zone-${newIndex}`] = oldValues[`zone-${newIndex < indexToRemove ? newIndex : newIndex + 1}`];
-            newValues[`shelfID-${newIndex}`] = oldValues[`shelfID-${newIndex < indexToRemove ? newIndex : newIndex + 1}`];
-        });
-
-        // รีเซ็ต fields ทั้งหมด
-        const allProductFields = Object.keys(oldValues).filter(key =>
-            /^(productName|productCode|unit|category|zone|shelfID)-/.test(key)
-        );
-        form.resetFields(allProductFields);
-
-        form.setFieldsValue(newValues);
+        form.resetFields(fieldsToRemove);
     };
 
-    const handleModelCreateOk = () => {
-        form
-            .validateFields()
-            .then((values) => {
-                // แปลง Object form values เป็น array ของ products ตาม index
-                const products = Object.entries(values).reduce((acc, [key, value]) => {
+    const handleSaveAll = async () => {
+        try {
+            const values = await form.validateFields();
+            const newBills = [...billForms];
+            newBills[currentStep] = values;
+            setBillForms(newBills);
+
+            for (const bill of newBills) {
+                // --- โค้ดเหมือน handleModelCreateOk ---
+                const products = Object.entries(bill).reduce((acc, [key, value]) => {
                     const [field, index] = key.split("-");
-                    if (field && index !== undefined) {
-                        if (!acc[index]) acc[index] = {};
-                        acc[index][field] = value;
+                    const idx = Number(index);
+                    if (field && idx !== undefined) {
+                        if (!acc[idx]) acc[idx] = {};
+                        acc[idx][field] = value;
                     }
                     return acc;
                 }, [] as any[]);
@@ -191,16 +293,13 @@ function ImportProduct() {
                     ShelfID: Number(product.ShelfID),
                 }));
 
-                // ดึง employeeID จาก localStorage
-                const employeeID = localStorage.getItem("id");
-
                 const billData = {
                     Bill: {
-                        Title: values.Title,
-                        SupplyID: Number(values.SupplyID),
-                        DateImport: values.DateImport.toISOString(),
-                        SummaryPrice: values.SummaryPrice,
-                        EmployeeID: Number(employeeID),
+                        Title: bill.Title,
+                        SupplyName: bill.SupplyName,
+                        DateImport: bill.DateImport.toISOString(),
+                        SummaryPrice: bill.SummaryPrice,
+                        EmployeeID: Number(localStorage.getItem("id")),
                     },
                     Products: parsedProducts,
                     ProductsOfBill: parsedProducts.map((p) => ({
@@ -211,28 +310,31 @@ function ImportProduct() {
                     })),
                 };
 
-                console.log(billData);
+                console.log("บันทึกบิล:", billData);
 
-                // เรียก API
-                CreateBillwithProduct(billData)
-                    .then((res) => {
-                        if (res && res.status === 201) {
-                            message.success("สร้างบิลและสินค้าเรียบร้อย");
-                            form.resetFields();
-                            setIsCreateModalOpen(false);
-                            getBillAll();
-                        } else {
-                            message.error("เกิดข้อผิดพลาดในการสร้างบิล");
-                            console.log("Response ไม่ 201:", res);
-                        }
-                    })
-                    .catch(() => {
+                try {
+                    const res = await CreateBillwithProduct(billData);
+                    if (res && res.status === 201) {
+                        message.success("สร้างบิลและสินค้าเรียบร้อย");
+                    } else {
                         message.error("เกิดข้อผิดพลาดในการสร้างบิล");
-                    });
-            })
-            .catch((err) => {
-                console.log("Validation Failed", err);
-            });
+                        console.log("Response ไม่ 201:", res);
+                    }
+                } catch (err) {
+                    message.error("เกิดข้อผิดพลาดในการสร้างบิล");
+                    console.log("API error:", err);
+                }
+            }
+
+            // reset หลังจากบันทึกทุกบิลแล้ว
+            form.resetFields();
+            setIsCreateModalOpen(false);
+            setBillForms([{}]);
+            setCurrentStep(0);
+            getBillAll();
+        } catch (err) {
+            console.log("Validation Failed", err);
+        }
     };
 
     const getBillAll = async () => {
@@ -306,14 +408,16 @@ function ImportProduct() {
         }
     };
 
-    const handleZoneSelect = async (ZoneID: number, index: number) => {
+    const handleZoneSelect = async (ZoneID: number, key: number) => {
         try {
-            form.setFieldsValue({ [`shelfID-${index}`]: null }); // Reset shelf ของ index นี้
+            // Reset shelf ของ card นี้
+            form.setFieldsValue({ [`ShelfID-${key}`]: null });
+
             const ShelfResponse = await GetShelfByZoneID(ZoneID);
             if (ShelfResponse.status === 200) {
                 setShelfMap(prev => ({
                     ...prev,
-                    [index]: ShelfResponse.data,
+                    [key]: ShelfResponse.data, // ใช้ key แทน index
                 }));
             } else {
                 message.error(ShelfResponse.data.error || "ไม่สามารถโหลดข้อมูลชั้นวางได้");
@@ -344,8 +448,6 @@ function ImportProduct() {
             },
         });
     };
-
-
 
     const columns = [
         {
@@ -432,7 +534,9 @@ function ImportProduct() {
         getUnitperQuantity();
         getCategory();
         getZone();
-    }, []);
+        const bill = getBillFromStorage(currentStep);
+        form.setFieldsValue(bill);
+    }, [currentStep]);
 
     return (
         <>
@@ -546,12 +650,26 @@ function ImportProduct() {
 
             <Modal
                 open={isCreateModalOpen}
-                onOk={handleModelCreateOk}
                 onCancel={handleCreateCancel}
                 okText="บันทึก"
                 cancelText="ยกเลิก"
+                footer={[
+                    <Button key="prev" onClick={handlePrevBill} disabled={currentStep === 0}>ย้อนกลับ</Button>,
+                    <Button key="next" onClick={handleNextBill} disabled={currentStep === billForms.length - 1}>ถัดไป</Button>,
+                    <Button key="add" type="dashed" onClick={handleAddBill}>+ เพิ่มบิลใหม่</Button>,
+                    <Button key="save" type="primary" onClick={handleSaveAll}>บันทึกทั้งหมด</Button>,
+                ]}
                 width={700}
             >
+
+                {/* Steps แสดงทุกบิล */}
+                <Steps
+                    current={currentStep}
+                    onChange={(step) => setCurrentStep(step)}
+                    items={billForms.map((_, i) => ({ title: `บิลที่ ${i + 1}` }))}
+                    style={{ marginBottom: 16 }}
+                />
+                <h2>บิลที่ {currentStep + 1}</h2> {/* แสดงเลขบิลปัจจุบัน */}
                 <Form form={form} layout="vertical" name="form">
                     <Row gutter={[8, 8]}>
                         <Col xl={12}>
@@ -565,7 +683,7 @@ function ImportProduct() {
                         </Col>
                         <Col xl={12}>
                             <Form.Item
-                                name="SupplyID"
+                                name="SupplyName"
                                 label="ชื่อบริษัทที่สั่งซื้อ"
                                 rules={[{ required: true, message: "กรุณากรอกชื่อบริษัทที่สั่งซื้อ" }]}
                             >
@@ -621,7 +739,7 @@ function ImportProduct() {
                                         <Button
                                             danger
                                             icon={<DeleteOutlined />}
-                                            onClick={() => handleRemoveCard(index)}
+                                            onClick={() => handleRemoveCard(item.key)}
                                             size="small"
                                         >
                                             ลบ
@@ -632,7 +750,7 @@ function ImportProduct() {
                                 <Row gutter={[8, 8]}>
                                     <Col xl={12}>
                                         <Form.Item
-                                            name={`ProductName-${index}`}
+                                            name={`ProductName-${item.key}`}
                                             label="ชื่อสินค้า"
                                             rules={[{ required: true, message: "กรุณากรอกชื่อสินค้า" }]}
                                         >
@@ -641,7 +759,7 @@ function ImportProduct() {
                                     </Col>
                                     <Col xl={12}>
                                         <Form.Item
-                                            name={`ProductCode-${index}`}
+                                            name={`ProductCode-${item.key}`}
                                             label="รหัสสินค้า"
                                             rules={[{ required: true, message: "กรุณากรอกรหัสสินค้า" }]}
                                         >
@@ -651,7 +769,7 @@ function ImportProduct() {
 
                                     <Col xl={12}>
                                         <Form.Item
-                                            name={`SupplyProductCode-${index}`}
+                                            name={`SupplyProductCode-${item.key}`}
                                             label="รหัสสินค้าของบริษัทสั่งซื้อ"
                                         >
                                             <Input placeholder="กรอกรหัสสินค้าของบริษัทสั่งซื้อ" />
@@ -659,7 +777,7 @@ function ImportProduct() {
                                     </Col>
                                     <Col xl={12}>
                                         <Form.Item
-                                            name={`ManufacturerCode-${index}`}
+                                            name={`ManufacturerCode-${item.key}`}
                                             label="รหัสสินค้าของบริษัทที่ผลิต"
                                             rules={[{ required: true, message: "กรุณากรอกรหัสสินค้าของบริษัทที่ผลิต" }]}
                                         >
@@ -669,7 +787,7 @@ function ImportProduct() {
 
                                     <Col xl={24}>
                                         <Form.Item
-                                            name={`Description-${index}`}
+                                            name={`Description-${item.key}`}
                                             label="คำอธิบายสินค้า"
                                             rules={[{ required: true, message: "กรุณากรอกคำอธิบายสินค้า" }]}
                                         >
@@ -679,7 +797,7 @@ function ImportProduct() {
 
                                     <Col xl={12}>
                                         <Form.Item
-                                            name={`Quantity-${index}`}
+                                            name={`Quantity-${item.key}`}
                                             label="จำนวนของสินค้า"
                                             rules={[{ required: true, message: "กรุณากรอกจำนวนของสินค้า" }]}
                                         >
@@ -697,7 +815,7 @@ function ImportProduct() {
                                     </Col>
                                     <Col xl={12}>
                                         <Form.Item
-                                            name={`UnitPerQuantityID-${index}`}
+                                            name={`UnitPerQuantityID-${item.key}`}
                                             label="หน่วยสินค้า"
                                             rules={[{ required: true, message: "กรุณาเลือกหน่วยสินค้า" }]}
                                         >
@@ -712,7 +830,7 @@ function ImportProduct() {
                                     </Col>
                                     <Col xl={12}>
                                         <Form.Item
-                                            name={`PricePerPiece-${index}`}
+                                            name={`PricePerPiece-${item.key}`}
                                             label="มูลค่าสินค้าต่อชิ้น"
                                             rules={[{ required: true, message: "กรุณากรอกมูลค่าสินค้าต่อชิ้น" }]}
                                         >
@@ -733,7 +851,7 @@ function ImportProduct() {
                                     </Col>
                                     <Col xl={12}>
                                         <Form.Item
-                                            name={`Discount-${index}`}
+                                            name={`Discount-${item.key}`}
                                             label="ส่วนลด %f (ถ้ามี)"
                                         >
                                             <InputNumber
@@ -753,7 +871,7 @@ function ImportProduct() {
                                     </Col>
                                     <Col xl={12}>
                                         <Form.Item
-                                            name={`SumPriceProduct-${index}`}
+                                            name={`SumPriceProduct-${item.key}`}
                                             label="ราคารวม"
                                             rules={[{ required: true, message: "กรุณากรอกมูลราคารวม" }]}
                                         >
@@ -774,15 +892,15 @@ function ImportProduct() {
                                     </Col>
                                     <Col xl={12}>
                                         <Form.Item
-                                            name={`SalePrice-${index}`}
-                                            label="มูลค่าราคาขาย"
-                                            rules={[{ required: true, message: "กรุณากรอกมูลค่าราคาขาย" }]}
+                                            name={`SalePrice-${item.key}`}
+                                            label="ราคาขายต่อหน่วย"
+                                            rules={[{ required: true, message: "กรุณากรอกราคาขายต่อหน่วย" }]}
                                         >
                                             <InputNumber
                                                 min={0}
                                                 step={0.01}
                                                 style={{ width: "100%" }}
-                                                placeholder="กรอกมูลค่าราคาขาย"
+                                                placeholder="กรอกราคาขายต่อหน่วย"
                                                 precision={2}
                                                 onKeyPress={(e) => {
                                                     const allowedChars = /^[0-9.]$/;
@@ -796,7 +914,7 @@ function ImportProduct() {
 
                                     <Col xl={12}>
                                         <Form.Item
-                                            name={`CategoryID-${index}`}
+                                            name={`CategoryID-${item.key}`}
                                             label="ประเภทสินค้า"
                                             rules={[{ required: true, message: "กรุณาเลือกประเภทสินค้า" }]}
                                         >
@@ -812,13 +930,15 @@ function ImportProduct() {
                                     </Col>
                                     <Col xl={12}>
                                         <Form.Item
-                                            name={`zone-${index}`}
+                                            name={`zone-${item.key}`}
                                             label="ตำแหน่งสินค้า"
                                             rules={[{ required: true, message: "กรุณาเลือกตำแหน่งสินค้า" }]}
                                         >
-                                            <Select placeholder="เลือกตำแหน่งสินค้า"
-                                                onChange={(value) => handleZoneSelect(value, index)}>
-                                                {(Zones).map((zone) => (
+                                            <Select
+                                                placeholder="เลือกตำแหน่งสินค้า"
+                                                onChange={(value) => handleZoneSelect(value, item.key)}
+                                            >
+                                                {Zones.map((zone) => (
                                                     <Option key={zone.ID} value={zone.ID}>
                                                         {zone.ZoneName}
                                                     </Option>
@@ -828,15 +948,15 @@ function ImportProduct() {
                                     </Col>
                                     <Col xl={12}>
                                         <Form.Item
-                                            name={`ShelfID-${index}`}
-                                            label="ตำแหน่งสินค้า"
-                                            rules={[{ required: true, message: "กรุณาเลือกตำแหน่งสินค้า" }]}
+                                            name={`ShelfID-${item.key}`}
+                                            label="ชั้นวางสินค้า"
+                                            rules={[{ required: true, message: "กรุณาเลือกชั้นวางสินค้า" }]}
                                         >
                                             <Select
-                                                placeholder="เลือกตำแหน่งสินค้า"
-                                                disabled={!form.getFieldValue(`zone-${index}`)}
+                                                placeholder="เลือกชั้นวางสินค้า"
+                                                disabled={!form.getFieldValue(`zone-${item.key}`)}
                                             >
-                                                {(shelfMap[index] || []).map((shelf) => (
+                                                {(shelfMap[item.key] || []).map((shelf) => (
                                                     <Option key={shelf.ID} value={shelf.ID}>
                                                         {shelf.ShelfName}
                                                     </Option>
@@ -844,6 +964,7 @@ function ImportProduct() {
                                             </Select>
                                         </Form.Item>
                                     </Col>
+
                                 </Row>
                             </Card>
                         ))}

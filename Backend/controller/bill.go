@@ -11,7 +11,7 @@ import (
 type BillResponse struct {
 	ID           uint      `json:"ID"`
 	Title        string    `json:"Title"`
-	SupplyID     uint      `json:"SupplyID"`
+	SupplyName     string      `json:"SupplyName"`
 	DateImport   time.Time `json:"DateImport"`
 	SummaryPrice float32   `json:"SummaryPrice"`
 	EmployeeID   uint      `json:"EmployeeID"`
@@ -29,44 +29,44 @@ func GetAllBill(c *gin.Context) {
 	c.JSON(http.StatusOK, bills)
 }
 
-func CreateBill(c *gin.Context) {
-	var Billdata BillResponse
+// func CreateBill(c *gin.Context) {
+// 	var Billdata BillResponse
 
-	if err := c.ShouldBindJSON(&Billdata); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "เกิดข้อผิดพลาดในการส่งข้อมูลใบสั่งซื้อ",
-		})
-		return
-	}
+// 	if err := c.ShouldBindJSON(&Billdata); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{
+// 			"error": "เกิดข้อผิดพลาดในการส่งข้อมูลใบสั่งซื้อ",
+// 		})
+// 		return
+// 	}
 
-	db := config.DB()
+// 	db := config.DB()
 
-	if Billdata.SupplyID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ไม่พบข้อมูลบริษัทที่สั่งซื้อ",
-		})
-		return
-	}
+// 	if Billdata.SupplyID == 0 {
+// 		c.JSON(http.StatusBadRequest, gin.H{
+// 			"error": "ไม่พบข้อมูลบริษัทที่สั่งซื้อ",
+// 		})
+// 		return
+// 	}
 
-	BillCreate := entity.Bill{
-		SupplyID:     Billdata.SupplyID,
-		DateImport:   Billdata.DateImport,
-		SummaryPrice: Billdata.SummaryPrice,
-	}
+// 	BillCreate := entity.Bill{
+// 		SupplyID:     Billdata.SupplyID,
+// 		DateImport:   Billdata.DateImport,
+// 		SummaryPrice: Billdata.SummaryPrice,
+// 	}
 
-	if err := db.Create(&BillCreate).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status": http.StatusInternalServerError,
-			"error":  "ไม่สามารถเพิ่มข้อมูลสินค้าได้",
-		})
-		return
-	}
+// 	if err := db.Create(&BillCreate).Error; err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{
+// 			"status": http.StatusInternalServerError,
+// 			"error":  "ไม่สามารถเพิ่มข้อมูลสินค้าได้",
+// 		})
+// 		return
+// 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"data": BillCreate,
-	})
+// 	c.JSON(http.StatusCreated, gin.H{
+// 		"data": BillCreate,
+// 	})
 
-}
+// }
 
 func UpdateBill(c *gin.Context) {
 	var Billdata BillResponse

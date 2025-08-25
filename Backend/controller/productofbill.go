@@ -2,12 +2,15 @@ package controller
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"io"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/project_capstone/WareHouse/config"
 	"github.com/project_capstone/WareHouse/entity"
-	"io"
-	"net/http"
+	"gorm.io/gorm"
 )
 
 type ProductOfBillResponse struct {
@@ -46,10 +49,32 @@ func CreateBillWithProducts(c *gin.Context) {
 		return
 	}
 
+	var supply entity.Supply
+	if err := tx.Where("supply_name = ?", req.Bill.SupplyName).First(&supply).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// ไม่เจอ => สร้างใหม่
+			supply = entity.Supply{
+				SupplyName: req.Bill.SupplyName,
+			}
+			if err := tx.Create(&supply).Error; err != nil {
+				tx.Rollback()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้าง Supply ไม่สำเร็จ"})
+				return
+			}
+		} else {
+			// error อื่นๆ
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "เช็ค Supply ล้มเหลว"})
+			return
+		}
+	}
+
+	// -------------------------------
 	// สร้าง Bill
+	// -------------------------------
 	bill := entity.Bill{
 		Title:        req.Bill.Title,
-		SupplyID:     req.Bill.SupplyID,
+		SupplyName:   supply.SupplyName, // ใช้ ID ของ supply ที่เจอหรือสร้างใหม่
 		DateImport:   req.Bill.DateImport,
 		SummaryPrice: req.Bill.SummaryPrice,
 		EmployeeID:   req.Bill.EmployeeID,
@@ -148,7 +173,6 @@ func UpdateBillWithProducts(c *gin.Context) {
 		return
 	}
 
-	// 1. หา Bill ที่จะอัปเดต
 	var bill entity.Bill
 	if err := tx.First(&bill, req.Bill.ID).Error; err != nil {
 		tx.Rollback()
@@ -156,9 +180,29 @@ func UpdateBillWithProducts(c *gin.Context) {
 		return
 	}
 
+	// 2. ตรวจสอบ Supply
+	var supply entity.Supply
+	if err := tx.Where("supply_name = ?", req.Bill.SupplyName).First(&supply).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// ถ้าไม่เจอ => สร้างใหม่
+			supply = entity.Supply{
+				SupplyName: req.Bill.SupplyName,
+			}
+			if err := tx.Create(&supply).Error; err != nil {
+				tx.Rollback()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้าง Supply ใหม่ไม่สำเร็จ"})
+				return
+			}
+		} else {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ตรวจสอบ Supply ล้มเหลว"})
+			return
+		}
+	}
+
 	// 2. อัปเดตข้อมูล Bill
 	bill.Title = req.Bill.Title
-	bill.SupplyID = req.Bill.SupplyID
+	bill.SupplyName = req.Bill.SupplyName
 	bill.DateImport = req.Bill.DateImport
 	bill.SummaryPrice = req.Bill.SummaryPrice
 	bill.EmployeeID = req.Bill.EmployeeID
@@ -276,56 +320,55 @@ func UpdateBillWithProducts(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "อัปเดต Bill และข้อมูลเรียบร้อย"})
 }
 
-
 func DeleteBill(c *gin.Context) {
-    id := c.Param("id")
+	id := c.Param("id")
 
-    db := config.DB()
-    tx := db.Begin()
-    if tx.Error != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "เริ่ม transaction ไม่ได้"})
-        return
-    }
+	db := config.DB()
+	tx := db.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "เริ่ม transaction ไม่ได้"})
+		return
+	}
 
-    // 1. ดึง productIDs ที่เกี่ยวข้องกับ bill นี้ จาก ProductOfBill
-    var productIDs []uint
-    if err := tx.Model(&entity.ProductOfBill{}).
-        Where("bill_id = ?", id).
-        Pluck("product_id", &productIDs).Error; err != nil {
-        tx.Rollback()
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึง ProductID ไม่สำเร็จ"})
-        return
-    }
+	// 1. ดึง productIDs ที่เกี่ยวข้องกับ bill นี้ จาก ProductOfBill
+	var productIDs []uint
+	if err := tx.Model(&entity.ProductOfBill{}).
+		Where("bill_id = ?", id).
+		Pluck("product_id", &productIDs).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึง ProductID ไม่สำเร็จ"})
+		return
+	}
 
-    // 2. Soft delete ProductOfBill ที่เกี่ยวข้องกับ Bill
-    if err := tx.Where("bill_id = ?", id).Delete(&entity.ProductOfBill{}).Error; err != nil {
-        tx.Rollback()
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "ลบ ProductOfBill ไม่สำเร็จ"})
-        return
-    }
+	// 2. Soft delete ProductOfBill ที่เกี่ยวข้องกับ Bill
+	if err := tx.Where("bill_id = ?", id).Delete(&entity.ProductOfBill{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ลบ ProductOfBill ไม่สำเร็จ"})
+		return
+	}
 
-    // 3. Soft delete Bill
-    if err := tx.Delete(&entity.Bill{}, id).Error; err != nil {
-        tx.Rollback()
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "ลบ Bill ไม่สำเร็จ"})
-        return
-    }
+	// 3. Soft delete Bill
+	if err := tx.Delete(&entity.Bill{}, id).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ลบ Bill ไม่สำเร็จ"})
+		return
+	}
 
-    // 4. Soft delete Product ที่อยู่ใน productIDs
-    if len(productIDs) > 0 {
-        if err := tx.Where("id IN ?", productIDs).Delete(&entity.Product{}).Error; err != nil {
-            tx.Rollback()
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "ลบ Product ไม่สำเร็จ"})
-            return
-        }
-    }
+	// 4. Soft delete Product ที่อยู่ใน productIDs
+	if len(productIDs) > 0 {
+		if err := tx.Where("id IN ?", productIDs).Delete(&entity.Product{}).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ลบ Product ไม่สำเร็จ"})
+			return
+		}
+	}
 
-    // Commit transaction
-    if err := tx.Commit().Error; err != nil {
-        tx.Rollback()
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "commit transaction ล้มเหลว"})
-        return
-    }
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "commit transaction ล้มเหลว"})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{"message": "ลบข้อมูลบิลและสินค้าที่เกี่ยวข้องเรียบร้อย (soft delete)"})
+	c.JSON(http.StatusOK, gin.H{"message": "ลบข้อมูลบิลและสินค้าที่เกี่ยวข้องเรียบร้อย (soft delete)"})
 }

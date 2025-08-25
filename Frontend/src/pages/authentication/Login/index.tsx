@@ -74,7 +74,7 @@ function SignInPages() {
 
           <Form
             name="basic"
-            autoComplete="off"
+            autoComplete="on"
             layout="vertical"
             onFinish={onFinish}
           >

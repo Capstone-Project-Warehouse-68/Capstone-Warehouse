@@ -110,6 +110,20 @@ func SetupDatabase() {
 	// ===== Unit =====
 	unit := entity.UnitPerQuantity{NameOfUnit: "ชิ้น"}
 	db.FirstOrCreate(&unit, entity.UnitPerQuantity{NameOfUnit: "ชิ้น"})
+	unit2 := entity.UnitPerQuantity{NameOfUnit: "อัน"}
+	db.FirstOrCreate(&unit2, entity.UnitPerQuantity{NameOfUnit: "อัน"})
+	unit3 := entity.UnitPerQuantity{NameOfUnit: "ตัว"}
+	db.FirstOrCreate(&unit3, entity.UnitPerQuantity{NameOfUnit: "ตัว"})
+	unit4 := entity.UnitPerQuantity{NameOfUnit: "ลูก"}
+	db.FirstOrCreate(&unit4, entity.UnitPerQuantity{NameOfUnit: "ลูก"})
+	unit5 := entity.UnitPerQuantity{NameOfUnit: "เส้น"}
+	db.FirstOrCreate(&unit5, entity.UnitPerQuantity{NameOfUnit: "เส้น"})
+	unit6 := entity.UnitPerQuantity{NameOfUnit: "กระป๋อง"}
+	db.FirstOrCreate(&unit6, entity.UnitPerQuantity{NameOfUnit: "กระป๋อง"})
+	unit7 := entity.UnitPerQuantity{NameOfUnit: "ใบ"}
+	db.FirstOrCreate(&unit7, entity.UnitPerQuantity{NameOfUnit: "ใบ"})
+	unit8 := entity.UnitPerQuantity{NameOfUnit: "แผ่น"}
+	db.FirstOrCreate(&unit8, entity.UnitPerQuantity{NameOfUnit: "แผ่น"})
 
 	// ===== Supply =====
 	supply := entity.Supply{
@@ -142,7 +156,7 @@ func SetupDatabase() {
 	// ===== Bill =====
 	bill := entity.Bill{
 		Title: "Test Bill",
-		SupplyID:     supply.ID,
+		SupplyName:     supply.SupplyName,
 		DateImport:   time.Now(),
 		SummaryPrice: 17000,
 		EmployeeID: 1,

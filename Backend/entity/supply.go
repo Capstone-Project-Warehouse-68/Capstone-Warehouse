@@ -14,5 +14,5 @@ type Supply struct {
 	LineIDSale        string	`valid:"required~LineIDSale is required"`
 
 	OrderBill []OrderBill `gorm:"foreignKey:SupplyID"`
-	Bill      []Bill      `gorm:"foreignKey:SupplyID"`
+	Bill      []Bill      `gorm:"foreignKey:SupplyName"`
 }
