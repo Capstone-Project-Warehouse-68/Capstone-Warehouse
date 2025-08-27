@@ -6,6 +6,7 @@ export interface NotificationProduct {
   product_created_at: string;
   limit_quantity: number;
   unit_per_quantity: string;
+  quantity: number;
 }
 
 export interface UpdateNotificationProduct {

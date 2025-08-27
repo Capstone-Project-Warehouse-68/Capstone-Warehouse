@@ -210,6 +210,8 @@ type LimitQuantity struct {
 	SupplierName     string    `json:"supplier_name"`
 	UnitPerQuantity  string    `json:"unit_per_quantity"`
 	ProductCreatedAt time.Time `json:"product_created_at"`
+	Quantity          uint		`json:"quantity"`
+
 }
 
 func GetLimitQuantity(c *gin.Context) {
@@ -224,7 +226,8 @@ func GetLimitQuantity(c *gin.Context) {
 				s.supply_name AS supplier_name,
 				p.limit_quantity AS limit_quantity,
 				upq.name_of_unit AS unit_per_quantity,
-				p.created_at AS product_created_at
+				p.created_at AS product_created_at,
+				p.quantity AS quantity
 			FROM 
 				products p
 			JOIN 
