@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import dayjs from "dayjs";
-import { Upload, Button, Col, Row, Table, Dropdown, message, Form, Input, Modal, Space, Card, InputNumber, DatePicker, Select, Steps } from "antd";
+import { Upload, Button, Col, Row, Table, Dropdown, message, Form, Input, Modal, Card, InputNumber, DatePicker, Select } from "antd";
 import {
     FileAddOutlined,
     FilePdfOutlined,
@@ -22,7 +22,6 @@ import type { CategoryInterface } from "../../interfaces/Category";
 import type { ZoneInterface } from "../../interfaces/Zone";
 import type { ShelfInterface } from "../../interfaces/Shelf";
 // import { useNavigate } from "react-router-dom";
-const { Option } = Select;
 
 function ImportProduct() {
     const [messageApi, contextHolder] = message.useMessage();
@@ -35,237 +34,121 @@ function ImportProduct() {
     const [billForms, setBillForms] = useState<any[]>([{}]); //
     const [currentStep, setCurrentStep] = useState(0); // index ของบิลที่กำลังแก้
     const [form] = Form.useForm();
-    const [productFields, setProductFields] = useState<{ key: number }[]>([]);
-    const [productFieldsMap, setProductFieldsMap] = useState<Record<number, { key: number }[]>>({});
-
+    const [tempBills, setTempBills] = useState<any[]>(() => {
+        const saved = localStorage.getItem("tempBills");
+        return saved ? JSON.parse(saved) : [];
+    });
 
     const handleExcelUpload = (file: File) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const data = new Uint8Array(e.target?.result as ArrayBuffer);
             const workbook = XLSX.read(data, { type: "array" });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
 
-            const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            console.log("Raw Excel Data:", jsonData);
+            const formValues: any = { bills: [] };
 
-            const formValues: Record<string, any> = {};
+            workbook.SheetNames.forEach((sheetName) => {
+                const worksheet = workbook.Sheets[sheetName];
+                let jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                jsonData = jsonData.filter(row => row && row.length > 0);
 
-            // อ่าน Supply, DateImport, Title
-            jsonData.forEach(row => {
-                if (row[0] === "ชื่อบริษัท") {
-                    formValues["SupplyName"] = row[1];
+                const bill: any = {
+                    Title: "",
+                    SupplyName: "",
+                    DateImport: null,
+                    SummaryPrice: 0,
+                    products: []
+                };
+
+                // อ่านค่า Title, SupplyName, DateImport
+                jsonData.forEach(row => {
+                    if (row[0] === "ชื่อบริษัท") bill.SupplyName = row[1];
+                    if (row[0] === "วันที่นำเข้า") bill.DateImport = dayjs(row[1], "DD/MM/YYYY");
+                    if (row[0] === "ชื่อใบสั่งซื้อ") bill.Title = row[1];
+                });
+
+                // หาตำแหน่ง header ของ products
+                const headerIndex = jsonData.findIndex(
+                    row => row[0] === "ลำดับ"
+                );
+
+                if (headerIndex !== -1) {
+                    const productRows = jsonData.slice(headerIndex + 1).filter(row => row && row.length > 0);
+                    const products: any[] = [];
+                    let summaryPrice: number | null = null;
+
+                    for (const row of productRows) {
+                        if (row[3] === "จำนวนเงินรวมทั้งสิ้น") {
+                            summaryPrice = row[8] !== undefined ? parseFloat(row[8].toString().replace(/,/g, "")) : 0;
+                        } else {
+                            products.push({
+                                ManufacturerCode: row[1] ?? "",
+                                SupplyProductCode: row[2] ?? "",
+                                ProductName: row[3] ?? "",
+                                Quantity: row[4] ?? 0,
+                                UnitPerQuantityID: row[5] ?? "",
+                                PricePerPiece: row[6] ?? 0,
+                                Discount: row[7] ?? 0,
+                                SumPriceProduct: row[8] ?? 0,
+                                SalePrice: row[9] ?? 0,
+                                Description: row[10] ?? "",
+                            });
+                        }
+                    }
+
+                    bill.products = products;
+                    if (summaryPrice !== null) bill.SummaryPrice = summaryPrice;
                 }
-                if (row[0] === "วันที่นำเข้า") {
-                    formValues["DateImport"] = dayjs(row[1], "DD/MM/YYYY");
-                }
-                if (row[0] === "ชื่อใบสั่งซื้อ") {
-                    formValues["Title"] = row[1];
-                }
+
+                formValues.bills.push(bill);
             });
 
-            // หาตำแหน่ง header row
-            const headerIndex = jsonData.findIndex(
-                row =>
-                    row[0] === "ลำดับ" &&
-                    row[1] === "รหัสสินค้าบริษัทที่ผลิต" &&
-                    row[2] === "รหัสสินค้าของบริษัทสั่งซื้อ" &&
-                    row[3] === "รายการ" &&
-                    row[4] === "จำนวน" &&
-                    row[5] === "หน่วย" &&
-                    row[6] === "ราคาต่อหน่วย" &&
-                    row[7] === "ส่วนลด %" &&
-                    row[8] === "ราคารวม" &&
-                    row[9] === "ราคาขายต่อหน่วย" &&
-                    row[10] === "คำอธิบายสินค้า"
-            );
+            console.log("Form Values (All Bills):", formValues);
 
-            if (headerIndex === -1) {
-                console.error("ไม่พบ header row ในไฟล์ Excel");
-                return;
-            }
-
-            const rows = jsonData.slice(headerIndex + 1).filter(row => row.length > 0);
-
-            const products: any[] = [];
-            let summaryPrice: number | null = null;
-
-            for (const row of rows) {
-                if (row[3] === "จำนวนเงินรวมทั้งสิ้น") {
-                    summaryPrice = row[8] !== undefined ? parseFloat(row[8].toString().replace(/,/g, "")) : 0;
-                } else {
-                    products.push({
-                        ManufacturerCode: row[1] ?? "",
-                        SupplyProductCode: row[2] ?? "",
-                        ProductName: row[3] ?? "",
-                        Quantity: row[4] ?? 0,
-                        UnitPerQuantityID: row[5] ?? "",
-                        PricePerPiece: row[6] ?? 0,
-                        Discount: row[7] ?? 0,
-                        SumPriceProduct: row[8] ?? 0,
-                        SalePrice: row[9] ?? 0,
-                        Description: row[10] ?? "",
-                    });
-                }
-            }
-
-            // สร้าง key คงที่สำหรับแต่ละ product
-            const newProductFields = products.map((_, i) => ({ key: Date.now() + i }));
-
-            // map products ลง form โดยใช้ key ของแต่ละ card
-            products.forEach((p, i) => {
-                const key = newProductFields[i].key;
-                formValues[`ManufacturerCode-${key}`] = p.ManufacturerCode;
-                formValues[`SupplyProductCode-${key}`] = p.SupplyProductCode;
-                formValues[`ProductName-${key}`] = p.ProductName;
-                formValues[`Quantity-${key}`] = p.Quantity;
-                formValues[`UnitPerQuantityID-${key}`] = p.UnitPerQuantityID;
-                formValues[`PricePerPiece-${key}`] = p.PricePerPiece;
-                formValues[`Discount-${key}`] = p.Discount;
-                formValues[`SumPriceProduct-${key}`] = p.SumPriceProduct;
-                formValues[`SalePrice-${key}`] = p.SalePrice;
-                formValues[`Description-${key}`] = p.Description;
-            });
-
-            if (summaryPrice !== null) {
-                formValues["SummaryPrice"] = summaryPrice;
-            }
-
+            // ใส่ค่าเข้า form
             form.setFieldsValue(formValues);
-            setProductFields(newProductFields);
-            setIsCreateModalOpen(true);
 
-            console.log("Form Values:", formValues);
+            // บันทึกลง localStorage
+            saveTempBills(formValues.bills);
+
+            // ตั้งค่า state สำหรับ currentStep
+            setTempBills(formValues.bills);
+            setCurrentStep(0);
+            setIsCreateModalOpen(true);
         };
 
         reader.readAsArrayBuffer(file);
         return false;
     };
 
-    // บันทึกบิลลง localStorage ตาม key
-    const saveBillToStorage = (key: number, billData: any) => {
-        const bills = JSON.parse(localStorage.getItem("billForms") || "{}");
-        bills[key] = billData;
-        localStorage.setItem("billForms", JSON.stringify(bills));
-    };
-
-    // ดึงบิลจาก localStorage ตาม key
-    const getBillFromStorage = (key: number) => {
-        const bills = JSON.parse(localStorage.getItem("billForms") || "{}");
-        const bill = bills[key] || {};
-
-        // แปลงวันที่เป็น dayjs สำหรับ DatePicker
-        const newBill: Record<string, any> = { ...bill };
-        Object.keys(newBill).forEach((field) => {
-            if (field === "DateImport" && newBill[field]) {
-                newBill[field] = dayjs(newBill[field]);
-            }
-        });
-
-        return newBill;
-    };
-
-    const handleNextBill = () => {
-        // 1. บันทึก form ปัจจุบันลง billForms
-        const currentValues = form.getFieldsValue();
-        const newBillForms = [...billForms];
-        newBillForms[currentStep] = currentValues;
-        setBillForms(newBillForms);
-
-        // 2. บันทึก productFields ปัจจุบันลง map
-        setProductFieldsMap(prev => ({
-            ...prev,
-            [currentStep]: [...productFields]
-        }));
-
-        // 3. ไปบิลถัดไป
-        const nextStep = currentStep + 1;
-        setCurrentStep(nextStep);
-
-        // 4. โหลด form + productFields ของบิลถัดไป
-        const nextBill = newBillForms[nextStep] || {};
-        form.setFieldsValue(nextBill);
-        const nextProductFields = productFieldsMap[nextStep] || [{ key: Date.now() }];
-        setProductFields(nextProductFields);
-    };
-
-    const handlePrevBill = () => {
-        // 1. บันทึก form ปัจจุบันลง billForms
-        const currentValues = form.getFieldsValue();
-        const newBillForms = [...billForms];
-        newBillForms[currentStep] = currentValues;
-        setBillForms(newBillForms);
-
-        // 2. บันทึก productFields ปัจจุบันลง map
-        setProductFieldsMap(prev => ({
-            ...prev,
-            [currentStep]: [...productFields]
-        }));
-
-        // 3. ไปบิลก่อนหน้า
-        const prevStep = currentStep - 1;
-        if (prevStep >= 0) {
-            setCurrentStep(prevStep);
-
-            // 4. โหลด form + productFields ของบิลก่อนหน้า
-            const prevBill = newBillForms[prevStep] || {};
-            form.setFieldsValue(prevBill);
-            const prevProductFields = productFieldsMap[prevStep] || [{ key: Date.now() }];
-            setProductFields(prevProductFields);
+    const saveTempBills = (bills: any[]) => {
+        try {
+            const billsString = JSON.stringify(bills);
+            localStorage.setItem("tempBills", billsString);
+            setTempBills(bills);
+            console.log("Saved tempBills:", bills);
+        } catch (err) {
+            console.error("Error saving tempBills to localStorage:", err);
         }
     };
 
-    const handleAddBill = () => {
-        // บันทึกบิลปัจจุบันและ productFields ปัจจุบัน
-        saveBillToStorage(currentStep, form.getFieldsValue());
-        setProductFieldsMap(prev => ({ ...prev, [currentStep]: productFields }));
+    const removeCurrentBill = () => {
+        if (tempBills.length <= 1) {
+            message.warning("ต้องมีบิลอย่างน้อย 1 บิล");
+            return;
+        }
 
-        const newIndex = billForms.length;
-        setBillForms([...billForms, {}]); // เพิ่มบิลใหม่
-        setCurrentStep(newIndex);
+        const updatedBills = [...tempBills];
+        updatedBills.splice(currentStep, 1); // ลบบิลปัจจุบัน
+        saveTempBills(updatedBills); // update tempBills และ localStorage
 
-        // เริ่ม productFields ว่างสำหรับบิลใหม่
-        setProductFields([]);
-        form.resetFields();
+        const newStep = currentStep >= updatedBills.length ? updatedBills.length - 1 : currentStep;
+        setCurrentStep(newStep);
+        form.setFieldsValue(updatedBills[newStep] || {}); // โหลดบิลใหม่
     };
-
-
-
 
     const showCreateModal = () => setIsCreateModalOpen(true);
     const handleCreateCancel = () => setIsCreateModalOpen(false);
-
-    const handleAddCard = () => {
-        const newKey = productFields.length ? Math.max(...productFields.map(f => f.key)) + 1 : 1;
-        setProductFields([...productFields, { key: newKey }]);
-    };
-
-    const handleRemoveCard = (keyToRemove: number) => {
-        // ลบ card จาก state
-        const updatedFields = productFields.filter(item => item.key !== keyToRemove);
-        setProductFields(updatedFields);
-
-        // ลบค่าของฟิลด์ที่เกี่ยวข้องกับ card นั้น
-        const fieldsToRemove = [
-            `ProductName-${keyToRemove}`,
-            `ProductCode-${keyToRemove}`,
-            `SupplyProductCode-${keyToRemove}`,
-            `ManufacturerCode-${keyToRemove}`,
-            `Description-${keyToRemove}`,
-            `Quantity-${keyToRemove}`,
-            `UnitPerQuantityID-${keyToRemove}`,
-            `PricePerPiece-${keyToRemove}`,
-            `Discount-${keyToRemove}`,
-            `SumPriceProduct-${keyToRemove}`,
-            `SalePrice-${keyToRemove}`,
-            `CategoryID-${keyToRemove}`,
-            `zone-${keyToRemove}`,
-            `ShelfID-${keyToRemove}`
-        ];
-
-        form.resetFields(fieldsToRemove);
-    };
 
     const handleSaveAll = async () => {
         try {
@@ -449,6 +332,7 @@ function ImportProduct() {
         });
     };
 
+
     const columns = [
         {
             title: 'ลำดับ',
@@ -534,9 +418,7 @@ function ImportProduct() {
         getUnitperQuantity();
         getCategory();
         getZone();
-        const bill = getBillFromStorage(currentStep);
-        form.setFieldsValue(bill);
-    }, [currentStep]);
+    }, []);
 
     return (
         <>
@@ -654,332 +536,373 @@ function ImportProduct() {
                 okText="บันทึก"
                 cancelText="ยกเลิก"
                 footer={[
-                    <Button key="prev" onClick={handlePrevBill} disabled={currentStep === 0}>ย้อนกลับ</Button>,
-                    <Button key="next" onClick={handleNextBill} disabled={currentStep === billForms.length - 1}>ถัดไป</Button>,
-                    <Button key="add" type="dashed" onClick={handleAddBill}>+ เพิ่มบิลใหม่</Button>,
-                    <Button key="save" type="primary" onClick={handleSaveAll}>บันทึกทั้งหมด</Button>,
+                    <Button key="cancel" onClick={() => setIsCreateModalOpen(false)}>ยกเลิก</Button>,
+                    <Button
+                        key="prev"
+                        disabled={currentStep === 0}
+                        onClick={() => {
+                            const values = form.getFieldsValue(true);
+                            const updatedBills = [...tempBills];
+                            updatedBills[currentStep] = values; // save ปัจจุบัน
+                            saveTempBills(updatedBills);
+
+                            const prevStep = currentStep - 1;
+                            setCurrentStep(prevStep);
+
+                            // โหลดบิลปัจจุบันลง form
+                            form.setFieldsValue(updatedBills[prevStep]);
+                        }}
+                    >
+                        ย้อนกลับ
+                    </Button>,
+
+                    // ปุ่มถัดไป
+                    <Button
+                        key="next"
+                        type="primary"
+                        onClick={() => {
+                            const values = form.getFieldsValue(true);
+                            const updatedBills = [...tempBills];
+                            updatedBills[currentStep] = values; // save ปัจจุบัน
+                            saveTempBills(updatedBills);
+
+                            const nextStep = currentStep + 1;
+                            setCurrentStep(nextStep);
+
+                            // โหลดบิลถัดไปลง form
+                            form.setFieldsValue(updatedBills[nextStep]);
+                        }}
+                        disabled={currentStep === tempBills.length - 1}
+                    >
+                        ถัดไป
+                    </Button>,
+
+
+                    <Button
+                        key="addBill"
+                        onClick={() => {
+                            // ดึงค่าปัจจุบันจากฟอร์ม
+                            const values = form.getFieldsValue(true);
+                            console.log("Current form values before adding new bill:", values);
+
+                            // อัปเดต tempBills
+                            const updatedBills = [...tempBills];
+                            updatedBills[currentStep] = values;
+
+                            // สร้างบิลใหม่
+                            const newBill = { Title: "", SupplyName: "", DateImport: null, SummaryPrice: 0, products: [] };
+                            updatedBills.push(newBill);
+
+                            // บันทึกลง localStorage
+                            saveTempBills(updatedBills);
+
+                            // เปลี่ยน currentStep ไปบิลใหม่
+                            setCurrentStep(updatedBills.length - 1);
+
+                            // โหลดบิลใหม่ลงฟอร์ม
+                            form.setFieldsValue(updatedBills[updatedBills.length - 1]);
+
+                            console.log("Added new bill. Updated tempBills:", updatedBills);
+                        }}
+                    >
+                        เพิ่มบิล
+                    </Button>,
+                    <Button key="save" type="primary" onClick={handleSaveAll}>บันทึก</Button>
                 ]}
+
                 width={700}
             >
 
-                {/* Steps แสดงทุกบิล */}
-                <Steps
-                    current={currentStep}
-                    onChange={(step) => setCurrentStep(step)}
-                    items={billForms.map((_, i) => ({ title: `บิลที่ ${i + 1}` }))}
-                    style={{ marginBottom: 16 }}
-                />
-                <h2>บิลที่ {currentStep + 1}</h2> {/* แสดงเลขบิลปัจจุบัน */}
                 <Form form={form} layout="vertical" name="form">
-                    <Row gutter={[8, 8]}>
-                        <Col xl={12}>
-                            <Form.Item
-                                name="Title"
-                                label="ชื่อรายการสั่งซื้อ"
-                                rules={[{ required: true, message: "กรุณากรอกชื่อรายการสั่งซื้อ" }]}
-                            >
-                                <Input placeholder="กรอกชื่อรายการสั่งซื้อ" />
-                            </Form.Item>
-                        </Col>
-                        <Col xl={12}>
-                            <Form.Item
-                                name="SupplyName"
-                                label="ชื่อบริษัทที่สั่งซื้อ"
-                                rules={[{ required: true, message: "กรุณากรอกชื่อบริษัทที่สั่งซื้อ" }]}
-                            >
-                                <Input placeholder="กรอกชื่อบริษัทที่สั่งซื้อ" />
-                            </Form.Item>
-                        </Col>
-                        <Col xl={12}>
-                            <Form.Item
-                                name="DateImport"
-                                label="วันที่นำเข้าสินค้า"
-                                rules={[{ required: true, message: "กรุณาเลือกวันที่นำเข้าสินค้า" }]}
-                            >
-                                <DatePicker
-                                    style={{ width: "100%" }}
-                                    placeholder="เลือกวันที่นำเข้าสินค้า"
-                                    disabledDate={(current) => current && current > dayjs().endOf('day')}
-                                />
-                            </Form.Item>
-                        </Col>
+                    {/* Bill List */}
+                    <Card
+                        title={`บิลที่ ${currentStep + 1}`}
+                        extra={
+                            (form.getFieldValue("bills") || []).length > 1 && (
+                                <Button
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    size="small"
+                                    onClick={removeCurrentBill}
+                                >
+                                    ลบบิล
+                                </Button>
+                            )
+                        }
+                    >
 
-                        <Col xl={12}>
-                            <Form.Item
-                                name="SummaryPrice"
-                                label="มูลค่ารวม (บาท)"
-                                rules={[{ required: true, message: "กรุณากรอกมูลค่ารวม" }]}
-                            >
-                                <InputNumber
-                                    min={0}
-                                    step={0.01}
-                                    style={{ width: "100%" }}
-                                    placeholder="กรอกมูลค่ารวม"
-                                    precision={2}
-                                    onKeyPress={(e) => {
-                                        const allowedChars = /^[0-9.]$/;
-                                        if (!allowedChars.test(e.key)) {
-                                            e.preventDefault();
+
+                        <Row gutter={[8, 8]}>
+                            <Col xl={12}>
+                                <Form.Item
+                                    name={['bills', currentStep, 'Title']}
+                                    label="ชื่อรายการสั่งซื้อ"
+                                    rules={[{ required: true, message: "กรุณากรอกชื่อรายการสั่งซื้อ" }]}
+                                >
+                                    <Input placeholder="กรอกชื่อรายการสั่งซื้อ" />
+                                </Form.Item>
+                            </Col>
+                            <Col xl={12}>
+                                <Form.Item
+                                    name={['bills', currentStep, 'SupplyName']}
+                                    label="ชื่อบริษัทที่สั่งซื้อ"
+                                    rules={[{ required: true, message: "กรุณากรอกชื่อบริษัทที่สั่งซื้อ" }]}
+                                >
+                                    <Input placeholder="กรอกชื่อบริษัทที่สั่งซื้อ" />
+                                </Form.Item>
+                            </Col>
+                            <Col xl={12}>
+                                <Form.Item
+                                    name={['bills', currentStep, 'DateImport']}
+                                    label="วันที่นำเข้าสินค้า"
+                                    rules={[{ required: true, message: "กรุณาเลือกวันที่นำเข้าสินค้า" }]}
+                                >
+                                    <DatePicker
+                                        style={{ width: "100%" }}
+                                        placeholder="เลือกวันที่นำเข้าสินค้า"
+                                        disabledDate={(current) => current && current > dayjs().endOf("day")}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col xl={12}>
+                                <Form.Item
+                                    name={['bills', currentStep, 'SummaryPrice']}
+                                    label="มูลค่ารวม (บาท)"
+                                    rules={[{ required: true, message: "กรุณากรอกมูลค่ารวม" }]}
+                                >
+                                    <InputNumber min={0} step={0.01} style={{ width: "100%" }} placeholder="กรอกมูลค่ารวม" precision={2} />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Card>
+
+
+                    <Form.List name={['bills', currentStep, 'products']}>
+                        {(fields, { add, remove }) => (
+                            <>
+                                {fields.map((field, index) => (
+                                    <Card
+                                        key={field.key} // ใช้ field.key ของ Form.List
+                                        style={{ border: '2px solid #d9d9d9', marginBottom: 16 }}
+                                        title={`สินค้า #${index + 1}`}
+                                        extra={
+                                            fields.length > 1 && (
+                                                <Button
+                                                    danger
+                                                    icon={<DeleteOutlined />}
+                                                    onClick={() => remove(field.name)}
+                                                    size="small"
+                                                >
+                                                    ลบ
+                                                </Button>
+                                            )
                                         }
-                                    }}
-                                />
-                            </Form.Item>
-                        </Col>
-                    </Row>
+                                    >
+                                        <Row gutter={[8, 8]}>
+                                            <Col xl={12}>
+                                                <Form.Item
+                                                    {...field}
+                                                    name={[field.name, 'ProductName']}
+                                                    key={field.key}
+                                                    label="ชื่อสินค้า"
+                                                    rules={[{ required: true, message: 'กรุณากรอกชื่อสินค้า' }]}
+                                                >
+                                                    <Input placeholder="กรอกชื่อสินค้า" />
+                                                </Form.Item>
+                                            </Col>
 
+                                            <Col xl={12}>
+                                                <Form.Item
+                                                    {...field}
+                                                    name={[field.name, 'ProductCode']}
+                                                    key={field.key}
+                                                    label="รหัสสินค้า"
+                                                    rules={[{ required: true, message: 'กรุณากรอกรหัสสินค้า' }]}
+                                                >
+                                                    <Input placeholder="กรอกรหัสสินค้า" />
+                                                </Form.Item>
+                                            </Col>
 
-                    <Space direction="vertical" style={{ width: "100%" }}>
-                        {productFields.map((item, index) => (
-                            <Card
-                                style={{ border: '2px solid #d9d9d9' }}
-                                key={item.key}
-                                title={`สินค้า #${index + 1}`}
-                                extra={
-                                    productFields.length > 1 && (
-                                        <Button
-                                            danger
-                                            icon={<DeleteOutlined />}
-                                            onClick={() => handleRemoveCard(item.key)}
-                                            size="small"
-                                        >
-                                            ลบ
-                                        </Button>
-                                    )
-                                }
-                            >
-                                <Row gutter={[8, 8]}>
-                                    <Col xl={12}>
-                                        <Form.Item
-                                            name={`ProductName-${item.key}`}
-                                            label="ชื่อสินค้า"
-                                            rules={[{ required: true, message: "กรุณากรอกชื่อสินค้า" }]}
-                                        >
-                                            <Input placeholder="กรอกชื่อสินค้า" />
-                                        </Form.Item>
-                                    </Col>
-                                    <Col xl={12}>
-                                        <Form.Item
-                                            name={`ProductCode-${item.key}`}
-                                            label="รหัสสินค้า"
-                                            rules={[{ required: true, message: "กรุณากรอกรหัสสินค้า" }]}
-                                        >
-                                            <Input placeholder="กรอกรหัสสินค้า" />
-                                        </Form.Item>
-                                    </Col>
+                                            <Col xl={12}>
+                                                <Form.Item
+                                                    {...field}
+                                                    key={field.key}
+                                                    name={[field.name, 'SupplyProductCode']}
+                                                    label="รหัสสินค้าของบริษัทสั่งซื้อ"
+                                                >
+                                                    <Input placeholder="กรอกรหัสสินค้าของบริษัทสั่งซื้อ" />
+                                                </Form.Item>
+                                            </Col>
 
-                                    <Col xl={12}>
-                                        <Form.Item
-                                            name={`SupplyProductCode-${item.key}`}
-                                            label="รหัสสินค้าของบริษัทสั่งซื้อ"
-                                        >
-                                            <Input placeholder="กรอกรหัสสินค้าของบริษัทสั่งซื้อ" />
-                                        </Form.Item>
-                                    </Col>
-                                    <Col xl={12}>
-                                        <Form.Item
-                                            name={`ManufacturerCode-${item.key}`}
-                                            label="รหัสสินค้าของบริษัทที่ผลิต"
-                                            rules={[{ required: true, message: "กรุณากรอกรหัสสินค้าของบริษัทที่ผลิต" }]}
-                                        >
-                                            <Input placeholder="กรอกรหัสสินค้าของบริษัทที่ผลิต" />
-                                        </Form.Item>
-                                    </Col>
+                                            <Col xl={12}>
+                                                <Form.Item
+                                                    {...field}
+                                                    key={field.key}
+                                                    name={[field.name, 'ManufacturerCode']}
+                                                    label="รหัสสินค้าของบริษัทที่ผลิต"
+                                                    rules={[{ required: true, message: 'กรุณากรอกรหัสสินค้าของบริษัทที่ผลิต' }]}
+                                                >
+                                                    <Input placeholder="กรอกรหัสสินค้าของบริษัทที่ผลิต" />
+                                                </Form.Item>
+                                            </Col>
 
-                                    <Col xl={24}>
-                                        <Form.Item
-                                            name={`Description-${item.key}`}
-                                            label="คำอธิบายสินค้า"
-                                            rules={[{ required: true, message: "กรุณากรอกคำอธิบายสินค้า" }]}
-                                        >
-                                            <Input placeholder="กรอกคำอธิบายสินค้า" />
-                                        </Form.Item>
-                                    </Col>
+                                            <Col xl={24}>
+                                                <Form.Item
+                                                    {...field}
+                                                    key={field.key}
+                                                    name={[field.name, 'Description']}
+                                                    label="คำอธิบายสินค้า"
+                                                    rules={[{ required: true, message: 'กรุณากรอกคำอธิบายสินค้า' }]}
+                                                >
+                                                    <Input placeholder="กรอกคำอธิบายสินค้า" />
+                                                </Form.Item>
+                                            </Col>
 
-                                    <Col xl={12}>
-                                        <Form.Item
-                                            name={`Quantity-${item.key}`}
-                                            label="จำนวนของสินค้า"
-                                            rules={[{ required: true, message: "กรุณากรอกจำนวนของสินค้า" }]}
-                                        >
-                                            <InputNumber
-                                                placeholder="กรอกจำนวนของสินค้า"
-                                                style={{ width: "100%" }}
-                                                onKeyPress={(e) => {
-                                                    const allowedChars = /^[0-9.]$/;
-                                                    if (!allowedChars.test(e.key)) {
-                                                        e.preventDefault();
-                                                    }
-                                                }}
-                                            />
-                                        </Form.Item>
-                                    </Col>
-                                    <Col xl={12}>
-                                        <Form.Item
-                                            name={`UnitPerQuantityID-${item.key}`}
-                                            label="หน่วยสินค้า"
-                                            rules={[{ required: true, message: "กรุณาเลือกหน่วยสินค้า" }]}
-                                        >
-                                            <Select placeholder="เลือกหน่วยสินค้า">
-                                                {Units.map((unit) => (
-                                                    <Option key={unit.ID} value={unit.ID}>
-                                                        {unit.NameOfUnit}
-                                                    </Option>
-                                                ))}
-                                            </Select>
-                                        </Form.Item>
-                                    </Col>
-                                    <Col xl={12}>
-                                        <Form.Item
-                                            name={`PricePerPiece-${item.key}`}
-                                            label="มูลค่าสินค้าต่อชิ้น"
-                                            rules={[{ required: true, message: "กรุณากรอกมูลค่าสินค้าต่อชิ้น" }]}
-                                        >
-                                            <InputNumber
-                                                min={0}
-                                                step={0.01}
-                                                style={{ width: "100%" }}
-                                                placeholder="กรอกมูลค่าสินค้าต่อชิ้น"
-                                                precision={2}
-                                                onKeyPress={(e) => {
-                                                    const allowedChars = /^[0-9.]$/;
-                                                    if (!allowedChars.test(e.key)) {
-                                                        e.preventDefault();
-                                                    }
-                                                }}
-                                            />
-                                        </Form.Item>
-                                    </Col>
-                                    <Col xl={12}>
-                                        <Form.Item
-                                            name={`Discount-${item.key}`}
-                                            label="ส่วนลด %f (ถ้ามี)"
-                                        >
-                                            <InputNumber
-                                                min={0}
-                                                step={0.01}
-                                                style={{ width: "100%" }}
-                                                placeholder="กรอกส่วนลด (ถ้ามี)"
-                                                precision={2}
-                                                onKeyPress={(e) => {
-                                                    const allowedChars = /^[0-9.]$/;
-                                                    if (!allowedChars.test(e.key)) {
-                                                        e.preventDefault();
-                                                    }
-                                                }}
-                                            />
-                                        </Form.Item>
-                                    </Col>
-                                    <Col xl={12}>
-                                        <Form.Item
-                                            name={`SumPriceProduct-${item.key}`}
-                                            label="ราคารวม"
-                                            rules={[{ required: true, message: "กรุณากรอกมูลราคารวม" }]}
-                                        >
-                                            <InputNumber
-                                                min={0}
-                                                step={0.01}
-                                                style={{ width: "100%" }}
-                                                placeholder="กรอกมูลค่าราคารวม"
-                                                precision={2}
-                                                onKeyPress={(e) => {
-                                                    const allowedChars = /^[0-9.]$/;
-                                                    if (!allowedChars.test(e.key)) {
-                                                        e.preventDefault();
-                                                    }
-                                                }}
-                                            />
-                                        </Form.Item>
-                                    </Col>
-                                    <Col xl={12}>
-                                        <Form.Item
-                                            name={`SalePrice-${item.key}`}
-                                            label="ราคาขายต่อหน่วย"
-                                            rules={[{ required: true, message: "กรุณากรอกราคาขายต่อหน่วย" }]}
-                                        >
-                                            <InputNumber
-                                                min={0}
-                                                step={0.01}
-                                                style={{ width: "100%" }}
-                                                placeholder="กรอกราคาขายต่อหน่วย"
-                                                precision={2}
-                                                onKeyPress={(e) => {
-                                                    const allowedChars = /^[0-9.]$/;
-                                                    if (!allowedChars.test(e.key)) {
-                                                        e.preventDefault();
-                                                    }
-                                                }}
-                                            />
-                                        </Form.Item>
-                                    </Col>
+                                            <Col xl={12}>
+                                                <Form.Item
+                                                    {...field}
+                                                    key={field.key}
+                                                    name={[field.name, 'Quantity']}
+                                                    label="จำนวนของสินค้า"
+                                                    rules={[{ required: true, message: 'กรุณากรอกจำนวนของสินค้า' }]}
+                                                >
+                                                    <InputNumber style={{ width: '100%' }} placeholder="กรอกจำนวนของสินค้า" />
+                                                </Form.Item>
+                                            </Col>
 
-                                    <Col xl={12}>
-                                        <Form.Item
-                                            name={`CategoryID-${item.key}`}
-                                            label="ประเภทสินค้า"
-                                            rules={[{ required: true, message: "กรุณาเลือกประเภทสินค้า" }]}
-                                        >
-                                            <Select placeholder="เลือกประเภทสินค้า">
-                                                {Categorys.map((cate) => (
-                                                    <Option key={cate.ID} value={cate.ID}>
-                                                        {cate.CategoryName}
-                                                    </Option>
-                                                ))}
-                                            </Select>
+                                            <Col xl={12}>
+                                                <Form.Item
+                                                    {...field}
+                                                    key={field.key}
+                                                    name={[field.name, 'UnitPerQuantityID']}
+                                                    label="หน่วยสินค้า"
+                                                    rules={[{ required: true, message: 'กรุณาเลือกหน่วยสินค้า' }]}
+                                                >
+                                                    <Select placeholder="เลือกหน่วยสินค้า">
+                                                        {Units.map(unit => (
+                                                            <Select.Option key={unit.ID} value={unit.ID}>
+                                                                {unit.NameOfUnit}
+                                                            </Select.Option>
+                                                        ))}
+                                                    </Select>
+                                                </Form.Item>
+                                            </Col>
 
-                                        </Form.Item>
-                                    </Col>
-                                    <Col xl={12}>
-                                        <Form.Item
-                                            name={`zone-${item.key}`}
-                                            label="ตำแหน่งสินค้า"
-                                            rules={[{ required: true, message: "กรุณาเลือกตำแหน่งสินค้า" }]}
-                                        >
-                                            <Select
-                                                placeholder="เลือกตำแหน่งสินค้า"
-                                                onChange={(value) => handleZoneSelect(value, item.key)}
-                                            >
-                                                {Zones.map((zone) => (
-                                                    <Option key={zone.ID} value={zone.ID}>
-                                                        {zone.ZoneName}
-                                                    </Option>
-                                                ))}
-                                            </Select>
-                                        </Form.Item>
-                                    </Col>
-                                    <Col xl={12}>
-                                        <Form.Item
-                                            name={`ShelfID-${item.key}`}
-                                            label="ชั้นวางสินค้า"
-                                            rules={[{ required: true, message: "กรุณาเลือกชั้นวางสินค้า" }]}
-                                        >
-                                            <Select
-                                                placeholder="เลือกชั้นวางสินค้า"
-                                                disabled={!form.getFieldValue(`zone-${item.key}`)}
-                                            >
-                                                {(shelfMap[item.key] || []).map((shelf) => (
-                                                    <Option key={shelf.ID} value={shelf.ID}>
-                                                        {shelf.ShelfName}
-                                                    </Option>
-                                                ))}
-                                            </Select>
-                                        </Form.Item>
-                                    </Col>
+                                            <Col xl={12}>
+                                                <Form.Item
+                                                    {...field}
+                                                    key={field.key}
+                                                    name={[field.name, 'PricePerPiece']}
+                                                    label="มูลค่าสินค้าต่อชิ้น"
+                                                    rules={[{ required: true, message: 'กรุณากรอกมูลค่าสินค้าต่อชิ้น' }]}
+                                                >
+                                                    <InputNumber style={{ width: '100%' }} placeholder="กรอกมูลค่าสินค้าต่อชิ้น" precision={2} />
+                                                </Form.Item>
+                                            </Col>
 
-                                </Row>
-                            </Card>
-                        ))}
+                                            <Col xl={12}>
+                                                <Form.Item
+                                                    {...field}
+                                                    key={field.key}
+                                                    name={[field.name, 'Discount']}
+                                                    label="ส่วนลด (ถ้ามี)"
+                                                >
+                                                    <InputNumber style={{ width: '100%' }} placeholder="กรอกส่วนลด" precision={2} />
+                                                </Form.Item>
+                                            </Col>
 
-                        <Button
-                            onClick={handleAddCard}
-                            type="dashed"
-                            icon={<PlusOutlined />}
-                            style={{ width: "100%" }}
-                        >
-                            เพิ่มสินค้าอีกชิ้น
-                        </Button>
-                    </Space>
+                                            <Col xl={12}>
+                                                <Form.Item
+                                                    {...field}
+                                                    key={field.key}
+                                                    name={[field.name, 'SumPriceProduct']}
+                                                    label="ราคารวม"
+                                                    rules={[{ required: true, message: 'กรุณากรอกมูลราคารวม' }]}
+                                                >
+                                                    <InputNumber style={{ width: '100%' }} placeholder="กรอกมูลราคารวม" precision={2} />
+                                                </Form.Item>
+                                            </Col>
+
+                                            <Col xl={12}>
+                                                <Form.Item
+                                                    {...field}
+                                                    key={field.key}
+                                                    name={[field.name, 'SalePrice']}
+                                                    label="ราคาขายต่อหน่วย"
+                                                    rules={[{ required: true, message: 'กรุณากรอกราคาขายต่อหน่วย' }]}
+                                                >
+                                                    <InputNumber style={{ width: '100%' }} placeholder="กรอกราคาขายต่อหน่วย" precision={2} />
+                                                </Form.Item>
+                                            </Col>
+
+                                            <Col xl={12}>
+                                                <Form.Item
+                                                    {...field}
+                                                    key={field.key}
+                                                    name={[field.name, 'CategoryID']}
+                                                    label="ประเภทสินค้า"
+                                                    rules={[{ required: true, message: 'กรุณาเลือกประเภทสินค้า' }]}
+                                                >
+                                                    <Select placeholder="เลือกประเภทสินค้า">
+                                                        {Categorys.map(cate => (
+                                                            <Select.Option key={cate.ID} value={cate.ID}>
+                                                                {cate.CategoryName}
+                                                            </Select.Option>
+                                                        ))}
+                                                    </Select>
+                                                </Form.Item>
+                                            </Col>
+
+                                            <Col xl={12}>
+                                                <Form.Item
+                                                    {...field}
+                                                    key={field.key}
+                                                    name={[field.name, 'zone']}
+                                                    label="ตำแหน่งสินค้า"
+                                                    rules={[{ required: true, message: 'กรุณาเลือกตำแหน่งสินค้า' }]}
+                                                >
+                                                    <Select
+                                                        placeholder="เลือกตำแหน่งสินค้า"
+                                                        onChange={(value) => handleZoneSelect(value, field.name)}
+                                                    >
+                                                        {Zones.map(zone => (
+                                                            <Select.Option key={zone.ID} value={zone.ID}>
+                                                                {zone.ZoneName}
+                                                            </Select.Option>
+                                                        ))}
+                                                    </Select>
+                                                </Form.Item>
+                                            </Col>
+
+                                            <Col xl={12}>
+                                                <Form.Item
+                                                    {...field}
+                                                    key={field.key}
+                                                    name={[field.name, 'ShelfID']}
+                                                    label="ชั้นวางสินค้า"
+                                                    rules={[{ required: true, message: 'กรุณาเลือกชั้นวางสินค้า' }]}
+                                                >
+                                                    <Select placeholder="เลือกชั้นวางสินค้า" disabled={!form.getFieldValue(['products', field.name, 'zone'])}>
+                                                        {(shelfMap[field.name] || []).map(shelf => (
+                                                            <Select.Option key={shelf.ID} value={shelf.ID}>
+                                                                {shelf.ShelfName}
+                                                            </Select.Option>
+                                                        ))}
+                                                    </Select>
+                                                </Form.Item>
+                                            </Col>
+                                        </Row>
+                                    </Card>
+                                ))}
+
+                                <Button type="dashed" onClick={() => add()} style={{ width: '100%' }} icon={<PlusOutlined />}>
+                                    เพิ่มสินค้าอีกชิ้น
+                                </Button>
+                            </>
+                        )}
+                    </Form.List>
                 </Form>
-            </Modal>
+            </Modal >
 
         </>
     );

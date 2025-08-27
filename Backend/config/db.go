@@ -215,11 +215,4 @@ func SetupDatabase() {
 	}
 	db.FirstOrCreate(&orderProduct)
 
-
-
-
-
-
-
-
 }
