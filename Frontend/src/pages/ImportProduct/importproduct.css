@@ -1,0 +1,27 @@
+
+.Table-historyimport-product .ant-table-thead > tr > th {
+    background-color: #06215D;
+    color: #FFFFFF ;         
+    text-align: center;
+    font-size: 16px;
+}
+
+.Table-historyimport-product .ant-table-tbody > tr > td {
+    text-align: center;
+    font-size: 14px;
+}
+
+.Table-historyimport-product .ant-table {
+    border: 1px solid #06215D;
+    border-radius: 8px;
+}
+
+.Table-historyimport-product .ant-btn {
+    border-color: #06215D;
+    color: #06215D;
+}
+
+.Table-historyimport-product .ant-btn:hover {
+    background-color: #06215D;
+    color: #000000;
+}

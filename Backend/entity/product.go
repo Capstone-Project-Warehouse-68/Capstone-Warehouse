@@ -6,7 +6,7 @@ import (
 
 type Product struct {
 	gorm.Model
-	SupplyProductCode string	`valid:"required~SupplyProductCode is required"`
+	SupplyProductCode string
 	ProductCode       string	`valid:"required~ProductCode is required"`
 	ProductName       string	`valid:"required~ProductName is required"`
 	Description       string	`valid:"required~Description is required"`
@@ -23,6 +23,5 @@ type Product struct {
 
 	OrderProduct        []OrderProduct  `gorm:"foreignKey:ProductID"`
 	ProductOfBillByID   []ProductOfBill `gorm:"foreignKey:ProductID"`
-	ProductOfBillByCode []ProductOfBill `gorm:"foreignKey:SupplyProductCode"`
 	CartProduct         []CartProduct   `gorm:"foreignKey:ProductID"`
 }

@@ -8,14 +8,14 @@ import (
 	"github.com/project_capstone/WareHouse/entity"
 )
 
-func GetCategory(c *gin.Context) {
-	var category []entity.Category
+func GetZone(c *gin.Context) {
+	var zone []entity.Zone
  
 	db := config.DB()
-	results := db.Find(&category)
+	results := db.Find(&zone)
 	if results.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, category)
+	c.JSON(http.StatusOK, zone)
 }

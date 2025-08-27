@@ -35,6 +35,10 @@ function SignInPages() {
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("id", res.data.id);
         localStorage.setItem("role", res.data.role);
+        console.log(localStorage.getItem("id"));
+        console.log("Role: " + localStorage.getItem("role"));
+
+
 
         await delay(1000);
         location.href = "/dashboard";

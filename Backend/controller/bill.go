@@ -10,9 +10,23 @@ import (
 
 type BillResponse struct {
 	ID           uint      `json:"ID"`
+	Title        string    `json:"Title"`
 	SupplyID     uint      `json:"SupplyID"`
 	DateImport   time.Time `json:"DateImport"`
 	SummaryPrice float32   `json:"SummaryPrice"`
+	EmployeeID   uint      `json:"EmployeeID"`
+}
+
+func GetAllBill(c *gin.Context) {
+	var bills []entity.Bill
+
+	db := config.DB()
+	results := db.Preload("Supply").Preload("Employee").Find(&bills)
+	if results.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, bills)
 }
 
 func CreateBill(c *gin.Context) {

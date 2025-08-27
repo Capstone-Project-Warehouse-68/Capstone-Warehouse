@@ -7,6 +7,8 @@ import NotificationProduct from "../../pages/NotificationProduct/notificationpro
 import ProductList from "../../pages/ShowProduct";
 
 import SiderOwner from "../SiderOwner";
+import ImportProduct from "../../pages/ImportProduct/importproduct";
+import OrderCreate from "../../pages/CreateListProductPDF/index";
 
 
 const { Header, Content } = Layout;
@@ -32,14 +34,16 @@ const FullLayout: React.FC = () => {
         <>
             <Layout style={{ minHeight: "100vh", backgroundColor: "#ffffffff", marginTop: 0 }}>
                 {checkLogin && <SiderOwner />}
-                <Layout style={{ backgroundColor: "#ffffffff", minHeight: "100vh", marginTop: 0 }}>
+                <Layout style={{ backgroundColor: "#D4D4D4", minHeight: "100vh", marginTop: 0 }}>
                     <Content style={{ marginTop: "0px" }}>
-                        <Breadcrumb style={{ marginTop: "0px" }} />
+                        <Breadcrumb />
                         <div>
                             <Routes>
                                 <Route path="/" element={<SignInPages />} />
+                                <Route path="/importproduct" element={<ImportProduct />}/>
                                 <Route path="/notificationproduct" element={<NotificationProduct />} />
                                 <Route path="/productList" element={<ProductList />} />
+                                <Route path="/createlistproduct" element={<OrderCreate />} />
                             </Routes>
                         </div>
                     </Content>

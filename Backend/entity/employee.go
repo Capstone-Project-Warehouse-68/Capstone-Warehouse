@@ -21,4 +21,5 @@ type Employee struct {
 
 	Cart      []Cart      `gorm:"foreignKey:EmployeeID"`
 	OrderBill []OrderBill `gorm:"foreignKey:EmployeeID"`
+	Bill      []Bill      `gorm:"foreignKey:EmployeeID"`
 }
