@@ -142,14 +142,25 @@ const handleConfirm = () => {
   });
 
   // สร้างและดาวน์โหลด PDF
-  pdfMake.createPdf({
+  // pdfMake.createPdf({
+  //   content,
+  //   defaultStyle: { font: 'THSarabunNew' },
+  //   styles: {
+  //     header: { fontSize: 18, bold: true, alignment: 'center' },
+  //     subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 5] }
+  //   }
+  // }).download('Order.pdf');
+    const docDefinition = {
     content,
-    defaultStyle: { font: 'THSarabunNew' },
+    defaultStyle: { font: "THSarabunNew" },
     styles: {
-      header: { fontSize: 18, bold: true, alignment: 'center' },
+      header: { fontSize: 18, bold: true, alignment: "center" },
       subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 5] }
     }
-  }).download('Order.pdf');
+  };
+
+  // พรีวิว PDF
+  pdfMake.createPdf(docDefinition).open();
 };
 
 
