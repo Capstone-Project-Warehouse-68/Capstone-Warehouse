@@ -44,6 +44,7 @@ const StockAlertSetting: React.FC = () => {
   const [dataSource, setDataSource] = useState<NotificationProduct[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [filteredData, setFilteredData] = useState<NotificationProduct[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const fetchLimitQuantity = async () => {
     try {
@@ -99,21 +100,30 @@ const StockAlertSetting: React.FC = () => {
     setFilteredData(dataSource);
   }, [dataSource]);
 
-  // ฟังก์ชันค้นหาแบบ dynamic
-  const onSearchDynamic = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const searchValue = e.target.value.trim().toLowerCase();
+  const filterData = (searchValue: string = "", category: string = "all") => {
+    let filtered = [...dataSource];
 
-    if (!searchValue) {
-      setFilteredData(dataSource);
-      return;
+    // filter by search
+    if (searchValue) {
+      const lowerSearch = searchValue.toLowerCase();
+      filtered = filtered.filter(
+        (item) =>
+          item.product_name.toLowerCase().includes(lowerSearch) ||
+          item.product_code.toLowerCase().includes(lowerSearch)
+      );
     }
 
-    const filtered = dataSource.filter(
-      (item) =>
-        item.product_name.toLowerCase().includes(searchValue) ||
-        item.product_code.toLowerCase().includes(searchValue)
-    );
+    // filter by category
+    if (category !== "all") {
+      filtered = filtered.filter((item) => item.category_name === category);
+    }
+
     setFilteredData(filtered);
+  };
+
+  const onSearchDynamic = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const searchValue = e.target.value.trim();
+    filterData(searchValue, selectedCategory);
   };
 
   const handleEditClick = (record: NotificationProduct) => {
@@ -192,6 +202,11 @@ const StockAlertSetting: React.FC = () => {
       },
     },
     {
+      title: "ประเภทสินค้า",
+      dataIndex: "category_name",
+      key: "category_name",
+    },
+    {
       title: "จำนวนคงเหลือ",
       dataIndex: "quantity",
       key: "quantity",
@@ -240,7 +255,7 @@ const StockAlertSetting: React.FC = () => {
         className="header"
         style={{ width: "100%", height: "130px", display: "block" }}
       >
-        <div 
+        <div
           className="header-top"
           style={{
             display: "flex", // จัดเรียงแบบแถว
@@ -271,11 +286,12 @@ const StockAlertSetting: React.FC = () => {
             กำหนดการแจ้งเตือนเมื่อสินค้าต่ำ
           </div>
 
-          <NotificationBell size={40} badgeSize="small"/>
+          <NotificationBell size={40} badgeSize="small" />
         </div>
         <div>
           <Space style={{ marginBottom: 16, gap: "16px" }}>
             <Input
+              id="search-input"
               placeholder="ค้นหาโค้ดสินค้า หรือ ชื่อสินค้า"
               allowClear
               style={{ width: 833, height: 50, borderRadius: 50 }}
@@ -293,11 +309,18 @@ const StockAlertSetting: React.FC = () => {
                 </span>
               }
               style={{ width: 300, height: 50, borderRadius: 50 }}
-              onChange={(value) => console.log("เลือก:", value)}
+              onChange={(value) => {
+                setSelectedCategory(value);
+                filterData(
+                  (document.getElementById("search-input") as HTMLInputElement)
+                    ?.value || "",
+                  value
+                );
+              }}
             >
               <Option value="all">ทั้งหมด</Option>
               {categories.map((cat) => (
-                <Option key={cat.id} value={cat.id}>
+                <Option key={cat.id} value={cat.category_name}>
                   {cat.category_name}
                 </Option>
               ))}
@@ -310,7 +333,7 @@ const StockAlertSetting: React.FC = () => {
           columns={columns}
           dataSource={filteredData}
           bordered={false} // ไม่ต้องใช้ bordered ของ antd
-          pagination={false}
+          pagination={{pageSize: 7}}
           className="custom-table"
         />
       </div>
