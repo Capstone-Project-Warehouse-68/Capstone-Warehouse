@@ -11,6 +11,8 @@ import type { SupplySelect } from "../../interfaces/Supply";
 import { GetSupplySelect } from "../../services/https/ShowProduct/index";
 import type { ProductItem } from "../../interfaces/Product";
 import { GetProductsforShowlist } from "../../services/https/ShowProduct/index";
+import NotificationBell from "../../components/NotificationBell";
+import "./index.css";
 
 import dayjs from "dayjs";
 import "dayjs/locale/th";
@@ -240,23 +242,31 @@ const ProductList = () => {
     }));
 
   return (
-    <div style={{ padding: 24, background: "#d3d3d3", minHeight: "100vh" }}>
+    <div style={{ padding: 24, background: "#d3d3d3", minHeight: "100vh" ,minWidth: "1000px" }}>
       <div className="Header" style={{ display: "block", height: 130 }}>
-        <div
-          className="Title"
-          style={{
-            background: "#2980B9",
-            color: "white",
-            borderRadius: 50,
-            display: "flex", // ใช้ flex
-            alignItems: "center", // จัดกลางในแนวตั้ง
-            justifyContent: "center", // จัดกลางในแนวนอน
-            height: 60,
-            width: "400px",
-            textAlign: "center",
-          }}
-        >
-          <h1 style={{ margin: 0, fontSize: "36px" }}>📋 แสดงรายการสินค้า</h1>
+        <div className="sub-header" style={{ display: "flex", justifyContent: "space-between" }}>
+          <div
+            className="Title"
+            style={{
+              background: "#2980B9",
+              color: "white",
+              borderRadius: 50,
+              display: "flex", // ใช้ flex
+              alignItems: "center", // จัดกลางในแนวตั้ง
+              justifyContent: "center", // จัดกลางในแนวนอน
+              height: 60,
+              padding: "0 20px", // ใช้ padding แทน width คงท
+              textAlign: "center",
+              flexShrink: 0, // ป้องกัน title ย่อเกินไป
+              
+            }}
+          >
+            <h1 style={{ margin: 0, fontSize: "36px" }}>📋 แสดงรายการสินค้า</h1>
+          </div>
+          <div style={{flexShrink: 0, height: 60, width: 60 , display: "flex", alignItems: "center", justifyContent: "center", }}>
+            <NotificationBell size={40} badgeSize="small" />
+          </div>
+          
         </div>
         <div
           className="block-filter"
@@ -324,8 +334,9 @@ const ProductList = () => {
           rowKey="ID"
           columns={enhancedColumns}
           dataSource={filteredData}
-          pagination={false}
-          bordered
+          pagination={{ pageSize: 7 }}
+          bordered={false}
+          rowClassName={() => "custom-row"}
         />
       </div>
     </div>
