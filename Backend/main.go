@@ -35,6 +35,8 @@ func main() {
 		r.PATCH("/UpdateLimitQuantity", controller.UpdateLimitQuantity)
 		r.GET("/notifications", controller.GetLowStockProducts)
 		r.GET("/GetShowProduct", controller.GetShowProduct)
+		r.GET("/GetSupply", controller.GetSupply)
+		r.GET("/GetProductsforShowlist", controller.GetProductsforShowlist)
 		router.Use(middlewares.Authorizes())
 	}
 
