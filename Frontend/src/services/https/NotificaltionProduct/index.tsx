@@ -41,7 +41,7 @@ async function GetLimitQuantity() {
 }
 async function GetCategory() {
   try {
-    const response = await fetch(`${apiUrl}/GetCategory`, {
+    const response = await fetch(`${apiUrl}/GetCategoryApi`, {
       method: "GET",
       headers: getAuthHeaders(),
     });

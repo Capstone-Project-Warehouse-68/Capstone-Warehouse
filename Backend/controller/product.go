@@ -393,3 +393,42 @@ func GetProductsforShowlist(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{"data": result})
 }
 
+
+type ProductReport struct {
+	ID           int       `json:"id"`
+	ProductCode  string    `json:"product_code"`
+	ProductName  string    `json:"product_name"`
+	Quantity     int       `json:"quantity"`
+	SupplyName   string    `json:"supply_name"`
+	DateImport   time.Time `json:"date_import"`
+	CategoryName      string    `json:"category_name"`
+}
+
+func GetProductPDF(c *gin.Context) {
+	db := config.DB()
+
+	var results []ProductReport
+
+	err := db.Raw(`
+		SELECT 
+			ROW_NUMBER() OVER (ORDER BY p.id) as id,
+			p.product_code,
+			p.product_name,
+			p.quantity,
+			s.supply_name,
+			b.date_import,
+			c.category_name
+		FROM products p
+		LEFT JOIN product_of_bills pob ON pob.product_id = p.id
+		LEFT JOIN bills b ON b.id = pob.bill_id
+		LEFT JOIN supplies s ON s.id = b.supply_id
+		LEFT JOIN categories c ON c.id = p.category_id
+	`).Scan(&results).Error
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": results})
+}

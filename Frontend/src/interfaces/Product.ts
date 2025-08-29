@@ -12,3 +12,13 @@ export interface ProductItem {
   Description: string;
 CategoryName: string;
 }
+
+export interface ProductPDF {
+  id: number;
+  product_code: string;
+  product_name: string;
+  quantity: number;
+  supply_name: string;
+  date_import: string; 
+  category_name: string;
+}

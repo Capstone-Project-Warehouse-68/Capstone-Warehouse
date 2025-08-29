@@ -48,6 +48,8 @@ func main() {
 		r.GET("/notifications", controller.GetLowStockProducts)
 		r.GET("/GetShowProduct", controller.GetShowProduct)
 		r.GET("/GetProductsforShowlist", controller.GetProductsforShowlist)
+		r.GET("/GetCategoryApi", controller.GetCategoryApi)
+		r.GET("/GetProductPDF", controller.GetProductPDF)
 		router.Use(middlewares.Authorizes())
 	}
 
