@@ -210,6 +210,9 @@ type LimitQuantity struct {
 	SupplierName     string    `json:"supplier_name"`
 	UnitPerQuantity  string    `json:"unit_per_quantity"`
 	ProductCreatedAt time.Time `json:"product_created_at"`
+	Quantity          uint		`json:"quantity"`
+	CategoryName     string    `json:"category_name"`
+
 }
 
 func GetLimitQuantity(c *gin.Context) {
@@ -224,7 +227,9 @@ func GetLimitQuantity(c *gin.Context) {
 				s.supply_name AS supplier_name,
 				p.limit_quantity AS limit_quantity,
 				upq.name_of_unit AS unit_per_quantity,
-				p.created_at AS product_created_at
+				p.created_at AS product_created_at,
+				p.quantity AS quantity,
+				c.category_name AS category_name
 			FROM 
 				products p
 			JOIN 
@@ -235,8 +240,10 @@ func GetLimitQuantity(c *gin.Context) {
 				supplies s ON b.supply_id = s.id
 			JOIN 
 				unit_per_quantities upq ON p.unit_per_quantity_id = upq.id
+			INNER JOIN
+				categories c ON p.category_id = c.id
 			GROUP BY
-				p.id, p.product_code, p.product_name, s.supply_name, p.limit_quantity, upq.name_of_unit, p.created_at
+				p.id, p.product_code, p.product_name, s.supply_name, p.limit_quantity, upq.name_of_unit, p.created_at, p.quantity ,c.category_name
 	`
 
 	if err := db.Raw(query).Scan(&limitQuantities).Error; err != nil {

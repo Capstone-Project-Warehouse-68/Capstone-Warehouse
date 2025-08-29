@@ -6,11 +6,17 @@ import {
   Select,
   Modal,
   Space,
-  Typography,
+  // Typography,
   Form,
   message,
+  Tag,
 } from "antd";
-import { SearchOutlined, EditOutlined } from "@ant-design/icons";
+import {
+  SearchOutlined,
+  EditOutlined,
+  DropboxOutlined,
+  FilterOutlined,
+} from "@ant-design/icons";
 import type { NotificationProduct } from "../../interfaces/NotificationProduct";
 import {
   GetLimitQuantity,
@@ -20,12 +26,14 @@ import type { Category } from "../../interfaces/Category";
 import type { UpdateNotificationProduct } from "../../interfaces/NotificationProduct";
 import { UpdateLimitQuantity } from "../../services/https/NotificaltionProduct/index";
 import NotificationBell from "../../components/NotificationBell";
+import { notifyEvent } from "../../utils/eventBus";
+import "./index.css"; // นำเข้าไฟล์ CSS
 
 import dayjs from "dayjs";
 import "dayjs/locale/th";
 dayjs.locale("th");
 
-const { Title } = Typography;
+// const { Title } = Typography;
 const { Option } = Select;
 
 const StockAlertSetting: React.FC = () => {
@@ -35,6 +43,8 @@ const StockAlertSetting: React.FC = () => {
   const [form] = Form.useForm();
   const [dataSource, setDataSource] = useState<NotificationProduct[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [filteredData, setFilteredData] = useState<NotificationProduct[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const fetchLimitQuantity = async () => {
     try {
@@ -86,10 +96,40 @@ const StockAlertSetting: React.FC = () => {
     fetchCategory();
   }, []);
 
+  useEffect(() => {
+    setFilteredData(dataSource);
+  }, [dataSource]);
+
+  const filterData = (searchValue: string = "", category: string = "all") => {
+    let filtered = [...dataSource];
+
+    // filter by search
+    if (searchValue) {
+      const lowerSearch = searchValue.toLowerCase();
+      filtered = filtered.filter(
+        (item) =>
+          item.product_name.toLowerCase().includes(lowerSearch) ||
+          item.product_code.toLowerCase().includes(lowerSearch)
+      );
+    }
+
+    // filter by category
+    if (category !== "all") {
+      filtered = filtered.filter((item) => item.category_name === category);
+    }
+
+    setFilteredData(filtered);
+  };
+
+  const onSearchDynamic = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const searchValue = e.target.value.trim();
+    filterData(searchValue, selectedCategory);
+  };
+
   const handleEditClick = (record: NotificationProduct) => {
     setEditingProduct(record);
     console.log("Editing product:", record);
-    form.setFieldsValue({ limit_quantity: record.limit_quantity });
+    form.setFieldsValue(record);
     setIsModalOpen(true);
   };
 
@@ -122,11 +162,12 @@ const StockAlertSetting: React.FC = () => {
       if (result && result.status === 200) {
         message.success("อัปเดตจำนวนการแจ้งเตือนเรียบร้อยแล้ว");
         fetchLimitQuantity(); // Refresh the data after update
+        notifyEvent("refreshNotifications"); // แจ้งให้ NotificationBell รีเฟรชข้อมูล
       } else if (result && result.error) {
         message.error(result.error);
       } else {
         message.error("ไม่สามารถอัปเดตจำนวนการแจ้งเตือนได้");
-        console.error("ไม่สามารถอัปเดตจำนวนการแจ้งเตือนได้" );
+        console.error("ไม่สามารถอัปเดตจำนวนการแจ้งเตือนได้");
       }
     } catch (error) {
       message.error("เกิดข้อผิดพลาดในการอัปเดตจำนวนการแจ้งเตือน");
@@ -161,6 +202,23 @@ const StockAlertSetting: React.FC = () => {
       },
     },
     {
+      title: "ประเภทสินค้า",
+      dataIndex: "category_name",
+      key: "category_name",
+    },
+    {
+      title: "จำนวนคงเหลือ",
+      dataIndex: "quantity",
+      key: "quantity",
+      render: (val: number, record: any) =>
+        val < record.limit_quantity ? (
+          <Tag color="red">{val}</Tag>
+        ) : (
+          <Tag color="green">{val}</Tag>
+        ),
+    },
+
+    {
       title: "แจ้งเตือนเมื่อต่ำกว่า",
       dataIndex: "limit_quantity",
       key: "limit_quantity",
@@ -185,82 +243,136 @@ const StockAlertSetting: React.FC = () => {
 
   return (
     <div
-      style={{ padding: 24, backgroundColor: "#d9d9d9", minHeight: "100vh" }}
+      className="layout"
+      style={{
+        padding: 24,
+        backgroundColor: "#d9d9d9",
+        minHeight: "100vh",
+        display: "block",
+      }}
     >
       <div
-        style={{
-          backgroundColor: "#1890ff",
-          color: "white",
-          display: "inline-block",
-          padding: "4px 12px",
-          borderRadius: 8,
-          marginBottom: 16,
-        }}
+        className="header"
+        style={{ width: "100%", height: "130px", display: "block" }}
       >
-        <strong>กำหนดการแจ้งเตือนเมื่อสินค้าต่ำ</strong>
+        <div
+          className="header-top"
+          style={{
+            display: "flex", // จัดเรียงแบบแถว
+            justifyContent: "space-between", // เว้นระยะหัวซ้าย-ขวา
+            alignItems: "center", // จัดให้อยู่กึ่งกลางแนวตั้ง
+            width: "100%",
+            marginBottom: 16,
+          }}
+        >
+          <div
+            className="header-title"
+            style={{
+              backgroundColor: "#2980B9",
+              color: "white",
+              borderRadius: 50,
+              fontWeight: "bold",
+              textAlign: "center",
+              height: "60px",
+              width: "564px",
+              display: "flex", // ใช้ flex
+              alignItems: "center", // vertical center
+              justifyContent: "center", // horizontal center
+              gap: "8px", // ช่องว่างระหว่าง icon กับ text
+              fontSize: "30px", // ขนาดตัวอักษร
+            }}
+          >
+            <DropboxOutlined />
+            กำหนดการแจ้งเตือนเมื่อสินค้าต่ำ
+          </div>
+
+          <NotificationBell size={40} badgeSize="small" />
+        </div>
+        <div>
+          <Space style={{ marginBottom: 16, gap: "16px" }}>
+            <Input
+              id="search-input"
+              placeholder="ค้นหาโค้ดสินค้า หรือ ชื่อสินค้า"
+              allowClear
+              style={{ width: 833, height: 50, borderRadius: 50 }}
+              onChange={onSearchDynamic}
+              suffix={
+                <SearchOutlined style={{ color: "#1890ff", fontSize: 20 }} />
+              }
+            />
+
+            <Select
+              placeholder={
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <FilterOutlined style={{ color: "#1890ff" }} />
+                  เลือกประเภทสินค้า
+                </span>
+              }
+              style={{ width: 300, height: 50, borderRadius: 50 }}
+              onChange={(value) => {
+                setSelectedCategory(value);
+                filterData(
+                  (document.getElementById("search-input") as HTMLInputElement)
+                    ?.value || "",
+                  value
+                );
+              }}
+            >
+              <Option value="all">ทั้งหมด</Option>
+              {categories.map((cat) => (
+                <Option key={cat.id} value={cat.category_name}>
+                  {cat.category_name}
+                </Option>
+              ))}
+            </Select>
+          </Space>
+        </div>
+      </div>
+      <div className="conten" style={{ marginTop: 16 }}>
+        <Table
+          columns={columns}
+          dataSource={filteredData}
+          bordered={false} // ไม่ต้องใช้ bordered ของ antd
+          pagination={{pageSize: 7}}
+          className="custom-table"
+        />
       </div>
 
-      <Space style={{ marginBottom: 16 }}>
-        <Input
-          placeholder="ค้นหาชื่อสินค้า"
-          prefix={<SearchOutlined />}
-          style={{ width: 300 }}
-        />
-        <Select
-          placeholder="เลือกประเภทสินค้า"
-          style={{ width: 200 }}
-          onChange={(value) => console.log("เลือก:", value)} // ทำสิ่งที่ต้องการตอนเลือก
-        >
-          <Option value="all">ทั้งหมด</Option>
-          {categories.map((cat) => (
-            <Option key={cat.id} value={cat.id}>
-              {cat.category_name}
-            </Option>
-          ))}
-        </Select>
-        <NotificationBell />
-      </Space>
-
-      <Table
-        columns={columns}
-        dataSource={dataSource}
-        bordered
-        pagination={false}
-        style={{ backgroundColor: "white" }}
-      />
-
       <Modal
-        title="แก้ไขจำนวนการแจ้งเตือนเมื่อสินค้าต่ำกว่า"
+        title={
+          <div style={{ textAlign: "center", color: "red" }}>
+            แก้ไขเกณฑ์แจ้งเตือน
+          </div>
+        }
         open={isModalOpen}
-        onCancel={handleCancel}
         onOk={handleOk}
-        okText="ยืนยัน"
+        onCancel={handleCancel}
+        okText="บันทึก"
         cancelText="ยกเลิก"
-        centered
-        // bodyStyle={{ backgroundColor: "#d9d9d9" }}
       >
-        {editingProduct && (
-          <Form form={form} layout="horizontal">
-            <Form.Item label="ชื่อสินค้า">
-              <span>{editingProduct.product_name}</span>
-            </Form.Item>
-            <Form.Item label="โค้ดสินค้า">
-              <span>{editingProduct.product_code}</span>
-            </Form.Item>
-            <Form.Item
-              label="แจ้งเตือนเมื่อต่ำกว่า"
-              name="limit_quantity"
-              rules={[{ required: true, message: "กรุณาระบุจำนวน" }]}
-            >
-              <Input
-                type="number"
-                suffix="ชิ้น"
-                min={1}
-                style={{ width: "60%" }}
-              />
-            </Form.Item>
-          </Form>
-        )}
+        <Form form={form} layout="vertical">
+          {/* แสดงชื่อสินค้าเป็น text ธรรมดา */}
+          <span style={{ marginBottom: 10, display: "block" }}>
+            <h1 style={{ fontSize: 18 }}>
+              <strong>ชื่อสินค้า</strong> : {editingProduct?.product_name}
+            </h1>
+          </span>
+
+          {/* ฟอร์มแก้ไข limit_quantity */}
+          <Form.Item
+            label="แจ้งเตือนเมื่อต่ำกว่า"
+            name="limit_quantity"
+            extra="ระบบจะแจ้งเตือนเมื่อจำนวนคงเหลือน้อยกว่าค่านี้"
+            rules={[{ required: true, message: "กรุณาระบุจำนวน" }]}
+          >
+            <Input
+              type="number"
+              suffix="ชิ้น"
+              min={1}
+              style={{ width: "60%" }}
+            />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );
