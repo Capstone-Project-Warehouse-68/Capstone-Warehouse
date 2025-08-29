@@ -332,64 +332,64 @@ func GetShowProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, products)
 }
 
-
 func GetProductsforShowlist(c *gin.Context) {
-	db := config.DB()
+    db := config.DB()
 
-	type ProductResponse struct {
-		ID                uint      `json:"ID"`
-		ProductCode       string    `json:"ProductCode"`
-		ProductName       string    `json:"ProductName"`
-		Quantity          int       `json:"Quantity"`
-		NameOfUnit        string    `json:"NameOfUnit"`
-		SupplyProductCode string    `json:"SupplyProductCode"`
-		SupplyName        string    `json:"SupplyName"`
-		Shelf             string    `json:"Shelf"`
-		Zone              string    `json:"Zone"`
-		CreatedAt         time.Time `json:"CreatedAt"`
-		Description       string    `json:"Description"`
-	}
+    type ProductResponse struct {
+        ID                uint      `json:"ID"`
+        ProductCode       string    `json:"ProductCode"`
+        ProductName       string    `json:"ProductName"`
+        Quantity          int       `json:"Quantity"`
+        NameOfUnit        string    `json:"NameOfUnit"`
+        SupplyProductCode string    `json:"SupplyProductCode"`
+        SupplyName        string    `json:"SupplyName"`
+        Shelf             string    `json:"Shelf"`
+        Zone              string    `json:"Zone"`
+        CreatedAt         time.Time `json:"CreatedAt"`
+        Description       string    `json:"Description"`
+        CategoryName      string    `json:"CategoryName"`
+    }
 
-	var products []entity.Product
-	err := db.Preload("UnitPerQuantity").
-		Preload("Shelf.Zone").
-		Preload("ProductOfBillByID.Bill.Supply").
-		Find(&products).Error
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "ดึงข้อมูลล้มเหลว: " + err.Error(),
-		})
-		return
-	}
+    var result []ProductResponse
 
-	var result []ProductResponse
-	for _, p := range products {
-		// เลือก Supply ล่าสุดถ้ามีหลาย ProductOfBill
-		supplyName := ""
-		if len(p.ProductOfBillByID) > 0 {
-			latest := p.ProductOfBillByID[0]
-			if latest.Bill.Supply.ID != 0 {
-				supplyName = latest.Bill.Supply.SupplyName
-			}
-		}
+    // Subquery: เลือก supply ล่าสุดต่อ product
+    latestSupplySubquery := db.
+        Table("product_of_bills pob").
+        Select("pob.product_id, sup.supply_name").
+        Joins("JOIN bills b ON b.id = pob.bill_id").
+        Joins("JOIN supplies sup ON sup.id = b.supply_id").
+        Where("pob.id IN (SELECT MAX(id) FROM product_of_bills GROUP BY product_id)")
 
-		resp := ProductResponse{
-			ID:                p.ID,
-			ProductCode:       p.ProductCode,
-			ProductName:       p.ProductName,
-			Quantity:          p.Quantity,
-			NameOfUnit:        p.UnitPerQuantity.NameOfUnit,
-			SupplyProductCode: p.SupplyProductCode,
-			SupplyName:        supplyName,
-			Shelf:             p.Shelf.ShelfName,
-			Zone:              p.Shelf.Zone.ZoneName,
-			CreatedAt:         p.CreatedAt,
-			Description:       p.Description,
-		}
-		result = append(result, resp)
-	}
+    // Main query
+    err := db.Table("products p").
+        Select(`
+            p.id,
+            p.product_code,
+            p.product_name,
+            p.quantity,
+            COALESCE(u.name_of_unit, '') AS name_of_unit,
+            p.supply_product_code,
+            COALESCE(ls.supply_name, '') AS supply_name,
+            COALESCE(s.shelf_name, '') AS shelf,
+            COALESCE(z.zone_name, '') AS zone,
+            p.created_at,
+            COALESCE(p.description, '') AS description,
+            COALESCE(c.category_name, '') AS category_name
+        `).
+        Joins("LEFT JOIN unit_per_quantities u ON u.id = p.unit_per_quantity_id").
+        Joins("LEFT JOIN shelves s ON s.id = p.shelf_id").
+        Joins("LEFT JOIN zones z ON z.id = s.zone_id").
+        Joins("LEFT JOIN categories c ON c.id = p.category_id").
+        Joins("LEFT JOIN (?) AS ls ON ls.product_id = p.id", latestSupplySubquery).
+        Scan(&result).Error
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": result,
-	})
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "error": "ดึงข้อมูลล้มเหลว: " + err.Error(),
+        })
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"data": result})
 }
+

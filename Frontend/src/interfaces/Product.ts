@@ -1,7 +1,3 @@
-
-
-
-
 export interface ProductItem {
   ID: number;
   ProductCode: string;
@@ -14,4 +10,5 @@ export interface ProductItem {
   Zone: string;
   CreatedAt: string; 
   Description: string;
+CategoryName: string;
 }
