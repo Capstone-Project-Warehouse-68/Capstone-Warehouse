@@ -3,8 +3,9 @@ package config
 import (
 	"fmt"
 	"github.com/project_capstone/WareHouse/entity"
-	"gorm.io/driver/sqlite"
+	"os"
 	"gorm.io/gorm"
+	"gorm.io/driver/postgres"
 	"time"
 )
 
@@ -15,10 +16,25 @@ func DB() *gorm.DB {
 }
 
 func ConnectionDB() {
-	database, err := gorm.Open(sqlite.Open("Project_Capstone.db?cache=shared"), &gorm.Config{})
+	// ดึงค่าจาก environment variables
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+	sslmode := os.Getenv("DB_SSLMODE") // usually "disable" for local
+
+	// สร้าง DSN สำหรับ Postgres
+	dsn := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		host, port, user, password, dbname, sslmode,
+	)
+
+	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		panic("failed to connect database")
+		panic("failed to connect database: " + err.Error())
 	}
+
 	fmt.Println("connected database")
 	db = database
 }
