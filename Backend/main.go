@@ -7,11 +7,18 @@ import (
 	"github.com/project_capstone/WareHouse/config"
 	"github.com/project_capstone/WareHouse/controller"
 	"github.com/project_capstone/WareHouse/middlewares"
+	"github.com/joho/godotenv"
+	"log"
 )
 
 const PORT = "8000"
 
 func main() {
+	// โหลด .env จาก folder ปัจจุบัน (Backend/)
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Println("No .env file found or failed to load")
+	}
 	// open connection database
 	config.ConnectionDB()
 

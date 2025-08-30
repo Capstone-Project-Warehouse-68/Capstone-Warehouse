@@ -9,7 +9,7 @@ type Employee struct {
 	NationalID        string `valid:"required~NationalID is required"`
 	PhoneNumber		  string `valid:"required~PhoneNumber is required"`
 	Email             string `valid:"required~Email is required, email~Email is invalid"`
-	Profile			  string `gorm:"type:longtext" valid:"required~Profile is required"`
+	Profile			  string `gorm:"type:text" valid:"required~Profile is required"`
 	Password          string `valid:"required~Password is required"`
 	BankAccountNumber string `valid:"required~BankAccountNumber is required"`
 	
