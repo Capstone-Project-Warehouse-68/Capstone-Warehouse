@@ -1,0 +1,72 @@
+# version: '1.0'
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: project_capstone
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - network_microservice
+
+  backend:
+    container_name: backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    env_file:
+      - backend/.env
+    networks:
+      - network_microservice
+      - network_Webapp
+
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Frontend/Dockerfile
+    container_name: Frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    networks:
+      - network_Webapp
+      - network_microservice
+
+
+
+
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    ports:
+      - 80:80
+    container_name: nginx
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - network_Webapp
+      - network_microservice
+    restart: always
+
+
+networks:
+  network_Webapp:
+  network_microservice:
+
+volumes:
+  postgres_data:

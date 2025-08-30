@@ -1,6 +1,5 @@
-import type { MultiOrderBillInput } from "../../../interfaces/OderProduct";
+const apiUrl = "http://localhost/api";
 
-const apiUrl = "http://localhost:8000";
 
 function getAuthHeaders() {
   const Authorization = localStorage.getItem("token");

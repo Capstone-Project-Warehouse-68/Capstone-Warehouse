@@ -3,7 +3,7 @@ import axios from "axios";
 import type {UpdateNotificationProduct } from "../../../interfaces/NotificationProduct";
 
 
-const apiUrl = "http://localhost:8000";
+const apiUrl = "http://localhost/api";
 
 
 function getAuthHeaders() {

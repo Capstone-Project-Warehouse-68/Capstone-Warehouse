@@ -1,4 +1,4 @@
-const apiUrl = "http://localhost:8000";
+const apiUrl = "http://localhost/api";
 
 
 function getAuthHeaders() {
