@@ -23,7 +23,7 @@ import pdfMake from "pdfmake/build/pdfmake";
 import type { Category } from "../../interfaces/Category";
 import type { SupplySelect } from "../../interfaces/Supply";
 import type { ProductPDF } from "../../interfaces/Product";
-import generateOrderPDF from "../../components/generateOrderPDF";
+import generateOrderPDF from "../../utils/generateOrderPDF";
 import groupOrdersBySupplier from "../../utils/groupOrdersBySupplier";
 
 import "./index.css";
