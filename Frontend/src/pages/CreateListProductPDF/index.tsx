@@ -1,5 +1,13 @@
 import { useEffect, useState, useMemo } from "react";
-import { Table, Modal, Button, Input, Select, message } from "antd";
+import {
+  Table,
+  Modal,
+  Button,
+  Input,
+  Select,
+  message,
+  Pagination,
+} from "antd";
 import dayjs from "dayjs";
 import "dayjs/locale/th";
 dayjs.locale("th");
@@ -15,6 +23,8 @@ import pdfMake from "pdfmake/build/pdfmake";
 import type { Category } from "../../interfaces/Category";
 import type { SupplySelect } from "../../interfaces/Supply";
 import type { ProductPDF } from "../../interfaces/Product";
+import generateOrderPDF from "../../components/generateOrderPDF";
+import groupOrdersBySupplier from "../../utils/groupOrdersBySupplier";
 
 import "./index.css";
 
@@ -38,6 +48,9 @@ const OrderTable = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState<any[]>([]);
+
+  //เก็บหน้าปัจจุบันของ modal
+  const [modalPage, setModalPage] = useState(1);
 
   // สำหรับ search + filter
   const [searchText, setSearchText] = useState("");
@@ -114,14 +127,8 @@ const OrderTable = () => {
     }
   };
 
-  // รวมรายการสั่งซื้อตาม supplier
-  const groupOrdersBySupplier = (orders: any[]) => {
-    return orders.reduce((acc: any, item) => {
-      if (!acc[item.supply_name]) acc[item.supply_name] = [];
-      acc[item.supply_name].push(item);
-      return acc;
-    }, {});
-  };
+  const grouped = Object.entries(groupOrdersBySupplier(selectedOrders));
+  const [supplier, orders]: any = grouped[modalPage - 1] || [];
 
   useEffect(() => {
     fetchCategory();
@@ -149,15 +156,17 @@ const OrderTable = () => {
 
   // Table columns
   const columns = [
-    { title: "ลำดับ", dataIndex: "id", key: "id" },
-    { title: "รหัสสินค้า", dataIndex: "product_code", key: "product_code" },
-    { title: "ชื่อสินค้า", dataIndex: "product_name", key: "product_name" },
-    { title: "จำนวนคงเหลือ", dataIndex: "quantity", key: "quantity" },
-    { title: "ชื่อบริษัทขายส่ง", dataIndex: "supply_name", key: "supply_name" },
+    { title: "ลำดับ", dataIndex: "id", key: "id",width: 80 },
+    { title: "รหัสสินค้า", dataIndex: "product_code", key: "product_code",width: 130 },
+    { title: "ชื่อสินค้า", dataIndex: "product_name", key: "product_name",width: 150 },
+    { title: "จำนวนคงเหลือ", dataIndex: "quantity", key: "quantity",width: 130  },
+    { title: "หน่วย", dataIndex: "name_of_unit", key: "name_of_unit", width: 100 },
+    { title: "ชื่อบริษัทขายส่ง", dataIndex: "supply_name", key: "supply_name",width: 150 },
     {
       title: "วันที่นำเข้า",
       dataIndex: "date_import",
       key: "date_import",
+      with: 80,
       render: (text: string) => {
         const date = dayjs(text);
         const buddhistYear = date.year() + 543;
@@ -166,33 +175,34 @@ const OrderTable = () => {
     },
     {
       title: "ดำเนินการ",
+      with: 200,
       render: (_: any, record: ProductPDF) => {
         const isSelected = selectedOrders.find((o) => o.id === record.id);
         return isSelected ? (
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center",width:200}}>
             <Input
               type="number"
               placeholder="จำนวน"
-              onChange={(e) => {
+              onChange={(e) =>
                 setSelectedOrders((prev) =>
                   prev.map((o) =>
                     o.id === record.id
                       ? { ...o, orderQuantity: Number(e.target.value) }
                       : o
                   )
-                );
-              }}
+                )
+              }
             />
             <Select
               style={{ width: 80 }}
               placeholder="หน่วย"
-              onChange={(value) => {
+              onChange={(value) =>
                 setSelectedOrders((prev) =>
                   prev.map((o) =>
                     o.id === record.id ? { ...o, unit: value } : o
                   )
-                );
-              }}
+                )
+              }
               options={[
                 { value: "ชิ้น", label: "ชิ้น" },
                 { value: "กล่อง", label: "กล่อง" },
@@ -218,43 +228,7 @@ const OrderTable = () => {
   // สร้าง PDF
   const handleConfirm = () => {
     setIsModalOpen(false);
-    const content: any[] = [{ text: "ใบสั่งซื้อสินค้า", style: "header" }];
-    const ordersBySupplier = groupOrdersBySupplier(selectedOrders);
-
-    Object.entries(ordersBySupplier).forEach(([supplier, orders]: any) => {
-      content.push({
-        text: `บริษัทขายส่ง: ${supplier} วันที่: ${dayjs().format(
-          "DD/MM/YYYY"
-        )}`,
-        style: "subheader",
-      });
-      content.push({
-        table: {
-          widths: ["auto", "*", "*", "auto", "auto"],
-          body: [
-            ["ลำดับ", "รหัสสินค้า", "ชื่อสินค้า", "จำนวน", "หน่วย"],
-            ...orders.map((o: any, i: number) => [
-              i + 1,
-              o.product_code,
-              o.product_name,
-              o.orderQuantity,
-              o.unit,
-            ]),
-          ],
-        },
-      });
-    });
-
-    pdfMake
-      .createPdf({
-        content,
-        defaultStyle: { font: "THSarabunNew" },
-        styles: {
-          header: { fontSize: 18, bold: true, alignment: "center" },
-          subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 5] },
-        },
-      })
-      .open();
+    generateOrderPDF(selectedOrders);
   };
 
   return (
@@ -358,7 +332,7 @@ const OrderTable = () => {
           dataSource={filteredData}
           rowKey="id"
           columns={columns}
-          pagination={ false }
+          pagination={false}
           scroll={{ y: window.innerHeight * 0.6 }} // 60% ของความสูงหน้าจอ
           bordered={false}
           rowClassName={() => "custom-row"}
@@ -369,35 +343,61 @@ const OrderTable = () => {
       <Modal
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
-        onOk={handleConfirm}
-        okText="ยืนยัน"
-        cancelText="ยกเลิก"
+        footer={null} // ปิด footer default
+        width={900}
         title="ยืนยันรายการสั่งซื้อ"
       >
-        {Object.entries(groupOrdersBySupplier(selectedOrders)).map(
-          ([supplier, orders]: any) => (
-            <div key={supplier} style={{ marginBottom: 24 }}>
-              <p>วันที่ : {dayjs().format("DD/MM/YYYY")}</p>
-              <p>ชื่อบริษัทขายส่ง : {supplier}</p>
-              <Table
-                dataSource={orders}
-                rowKey="id"
-                pagination={false}
-                size="small"
-                columns={[
-                  {
-                    title: "ลำดับ",
-                    render: (_: any, __: any, i: number) => i + 1,
-                  },
-                  { title: "รหัสสินค้า", dataIndex: "product_code" },
-                  { title: "ชื่อสินค้า", dataIndex: "product_name" },
-                  { title: "จำนวนที่สั่ง", dataIndex: "orderQuantity" },
-                  { title: "หน่วย", dataIndex: "unit" },
-                ]}
-              />
-            </div>
-          )
+        {supplier && (
+          <div style={{ marginBottom: 24 }}>
+            <p>วันที่ : {dayjs().format("DD/MM/YYYY")}</p>
+            <p>ชื่อบริษัทขายส่ง : {supplier}</p>
+            <Table
+              dataSource={orders}
+              rowKey="id"
+              pagination={false}
+              size="small"
+              scroll={{ y: 300 }} // ~7 row (ปรับได้)
+              style={{ minHeight: 200 }}
+              columns={[
+                {
+                  title: "ลำดับ",
+                  render: (_: any, __: any, i: number) => i + 1,
+                },
+                { title: "รหัสสินค้า", dataIndex: "product_code" },
+                { title: "ชื่อสินค้า", dataIndex: "product_name" },
+                { title: "จำนวนที่สั่ง", dataIndex: "orderQuantity" },
+                { title: "หน่วย", dataIndex: "unit" },
+              ]}
+            />
+          </div>
         )}
+
+        {/* Pagination สำหรับเปลี่ยนบริษัท */}
+        <div
+          style={{ display: "flex", justifyContent: "center", marginTop: 16 }}
+        >
+          <Pagination
+            current={modalPage}
+            pageSize={1} // 1 บริษัทต่อหน้า
+            total={grouped.length}
+            onChange={(p: any) => setModalPage(p)}
+          />
+        </div>
+
+        {/* ปุ่มยืนยัน/ยกเลิก */}
+        <div
+          style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}
+        >
+          <Button
+            onClick={() => setIsModalOpen(false)}
+            style={{ marginRight: 8 }}
+          >
+            ยกเลิก
+          </Button>
+          <Button type="primary" onClick={handleConfirm}>
+            ยืนยัน
+          </Button>
+        </div>
       </Modal>
 
       {/* ปุ่ม */}
