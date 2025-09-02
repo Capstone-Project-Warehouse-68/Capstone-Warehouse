@@ -18,6 +18,7 @@ export interface ProductPDF {
   product_code: string;
   product_name: string;
   quantity: number;
+  name_of_unit: string;
   supply_name: string;
   date_import: string; 
   category_name: string;

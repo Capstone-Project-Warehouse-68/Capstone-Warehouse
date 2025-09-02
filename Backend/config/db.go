@@ -192,13 +192,15 @@ func SetupDatabase() {
 		SummaryPrice: 17000,
 		EmployeeID: 1,
 	}
-	db.FirstOrCreate(&bill)
+	db.FirstOrCreate(&bill, entity.Bill{Title: "Test Bill"})
 	bill2 := entity.Bill{
+		Title: "Test Bill 2",
 		SupplyID:     supply2.ID,
 		DateImport:   time.Now(),
 		SummaryPrice: 17000,
+		EmployeeID: 1,
 	}
-	db.FirstOrCreate(&bill2)
+	db.FirstOrCreate(&bill2,entity.Bill{Title: "Test Bill 2"})
 
 	// ===== ProductOfBill =====
 	productOfBill := entity.ProductOfBill{
@@ -209,18 +211,18 @@ func SetupDatabase() {
 		PricePerPiece:     800,
 		Discount:          5,
 	}
-	db.FirstOrCreate(&productOfBill)
+	db.FirstOrCreate(&productOfBill , entity.ProductOfBill{ManufacturerCode:  "MNFC-12345"})
 	productOfBill2 := entity.ProductOfBill{
 		// SupplyProductCode: 2, // ต้องตรงกับ Product.ID หากใช้ foreignKey จาก ID
 		ProductID:         product2.ID,
 		BillID:            bill2.ID,
-		ManufacturerCode:  "MNFC-12345",
-		Quantity:          20,
-		PricePerPiece:     800,
+		ManufacturerCode:  "MNFC-12346",
+		Quantity:          36,
+		PricePerPiece:     1000,
 		Discount:          5,
 		// UnitPerQuantityID: unit2.ID,
 	}
-	db.FirstOrCreate(&productOfBill2)
+	db.FirstOrCreate(&productOfBill2, entity.ProductOfBill{ManufacturerCode:  "MNFC-12346"})
 
 	// ===== Coupon =====
 	coupon := entity.Coupon{

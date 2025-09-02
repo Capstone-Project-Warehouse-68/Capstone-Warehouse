@@ -399,6 +399,7 @@ type ProductReport struct {
 	ProductCode  string    `json:"product_code"`
 	ProductName  string    `json:"product_name"`
 	Quantity     int       `json:"quantity"`
+	NameOfUnit  string    `json:"name_of_unit"`
 	SupplyName   string    `json:"supply_name"`
 	DateImport   time.Time `json:"date_import"`
 	CategoryName      string    `json:"category_name"`
@@ -415,6 +416,7 @@ func GetProductPDF(c *gin.Context) {
 			p.product_code,
 			p.product_name,
 			p.quantity,
+			u.name_of_unit,
 			s.supply_name,
 			b.date_import,
 			c.category_name
@@ -423,6 +425,7 @@ func GetProductPDF(c *gin.Context) {
 		LEFT JOIN bills b ON b.id = pob.bill_id
 		LEFT JOIN supplies s ON s.id = b.supply_id
 		LEFT JOIN categories c ON c.id = p.category_id
+		LEFT JOIN unit_per_quantities u ON u.id = p.unit_per_quantity_id
 	`).Scan(&results).Error
 
 	if err != nil {
