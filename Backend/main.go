@@ -50,6 +50,9 @@ func main() {
 		r.GET("/GetProductsforShowlist", controller.GetProductsforShowlist)
 		r.GET("/GetCategoryApi", controller.GetCategoryApi)
 		r.GET("/GetProductPDF", controller.GetProductPDF)
+		r.POST("/AddOrderBillWithProducts", controller.AddOrderBillWithProducts)
+		r.GET("/GetAllOrderBills", controller.GetAllOrderBills)
+		// r.PATCH("/UpdateOrderBill:id",controller.UpdateOrderBill)
 		router.Use(middlewares.Authorizes())
 	}
 

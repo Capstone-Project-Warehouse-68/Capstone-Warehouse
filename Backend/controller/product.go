@@ -395,7 +395,7 @@ func GetProductsforShowlist(c *gin.Context) {
 
 
 type ProductReport struct {
-	ID           int       `json:"id"`
+	ProductID           int       `json:"product_id"`
 	ProductCode  string    `json:"product_code"`
 	ProductName  string    `json:"product_name"`
 	Quantity     int       `json:"quantity"`
@@ -412,7 +412,7 @@ func GetProductPDF(c *gin.Context) {
 
 	err := db.Raw(`
 		SELECT 
-			ROW_NUMBER() OVER (ORDER BY p.id) as id,
+			p.id as product_id,
 			p.product_code,
 			p.product_name,
 			p.quantity,

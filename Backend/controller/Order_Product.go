@@ -10,16 +10,22 @@ import (
 
 type( 
 	OrderProductInput struct {
-		ProductID         uint  `json:"product_id"`
-		UnitPerQuantityID uint  `json:"unit_per_quantity_id"`
-		Quantity          int   `json:"quantity"`
+		ProductID         uint  `json:"product_id" binding:"required"`
+		UnitPerQuantityID uint  `json:"unit_per_quantity_id" binding:"required"`
+		Quantity          int   `json:"quantity" binding:"required"`
 	}
 	OrderBillInput struct {
-		SupplyID    uint               `json:"supply_id"`
+		SupplyID    uint               `json:"supply_id" binding:"required"`
 		EmployeeID  uint               `json:"employee_id"`
 		Description string             `json:"description"`
 		Products    []OrderProductInput `json:"products"`
 	}
+
+    MultiOrderBillInput struct {
+    	EmployeeID uint             `json:"employee_id" binding:"required"`
+    	Orders     []OrderBillInput `json:"orders"` // ใส่คำสั่งซื้อแยก supplier
+	}
+
 	UpdateOrderProductInput struct {
 		ProductID         uint  `json:"product_id"`
 		UnitPerQuantityID uint  `json:"unit_per_quantity_id"`
@@ -30,68 +36,72 @@ type(
 		Description string                   `json:"description"`
 		Products    []UpdateOrderProductInput `json:"products"`
 	}
+
+	
 )
 
 func AddOrderBillWithProducts(c *gin.Context) {
-	db := config.DB()
-	var input OrderBillInput
+    db := config.DB()
+    var input MultiOrderBillInput
 
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ข้อมูลไม่ถูกต้อง"})
-		return
-	}
+    if err := c.ShouldBindJSON(&input); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "ข้อมูลไม่ถูกต้อง"})
+        return
+    }
 
-	// สร้าง OrderBill ก่อน
-	orderBill := entity.OrderBill{
-		SupplyID:    input.SupplyID,
-		EmployeeID:  input.EmployeeID,
-		Description: input.Description,
-	}
+    var createdOrders []entity.OrderBill
 
-	if err := db.Create(&orderBill).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างคำสั่งซื้อไม่สำเร็จ"})
-		return
-	}
+    for _, order := range input.Orders {
+        orderBill := entity.OrderBill{
+            SupplyID:    order.SupplyID,
+            EmployeeID:  input.EmployeeID,
+            Description: order.Description,
+        }
+        if err := db.Create(&orderBill).Error; err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างคำสั่งซื้อไม่สำเร็จ"})
+            return
+        }
 
-	// สร้าง OrderProduct ทีละตัวผูกกับ OrderBill.ID
-	for _, p := range input.Products {
-		orderProduct := entity.OrderProduct{
-			OrderBillID:       orderBill.ID,
-			ProductID:         p.ProductID,
-			UnitPerQuantityID: p.UnitPerQuantityID,
-			Quantity:          p.Quantity,
-		}
-		if err := db.Create(&orderProduct).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างรายการสินค้าไม่สำเร็จ"})
-			return
-		}
-	}
+        for _, p := range order.Products {
+            orderProduct := entity.OrderProduct{
+                OrderBillID:       orderBill.ID,
+                ProductID:         p.ProductID,
+                UnitPerQuantityID: p.UnitPerQuantityID,
+                Quantity:          p.Quantity,
+            }
+            if err := db.Create(&orderProduct).Error; err != nil {
+                c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างรายการสินค้าไม่สำเร็จ"})
+                return
+            }
+        }
 
-	c.JSON(http.StatusOK, gin.H{
-		"message":    "สร้างคำสั่งซื้อและสินค้าเรียบร้อย",
-		"order_bill": orderBill,
-	})
+        createdOrders = append(createdOrders, orderBill)
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "message":     "สร้างคำสั่งซื้อและสินค้าทั้งหมดเรียบร้อย",
+        "order_bills": createdOrders,
+    })
 }
 
-func GetOrderBillDetail(c *gin.Context) {
-	db := config.DB()
-
-	id := c.Param("id") // สมมติรับ id จาก path
-
-	var orderBill entity.OrderBill
-
-	// preload OrderProduct เพื่อดึงสินค้าที่อยู่ในใบสั่งซื้อ
-	if err := db.Preload("OrderProduct").First(&orderBill, id).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบคำสั่งซื้อ"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		}
-		return
+type (
+	OutputOrderProduct struct {
+		ProductID         uint   `json:"product_id"`
+		ProductName       string `json:"product_name"`
+		UnitPerQuantityID uint   `json:"unit_per_quantity_id"`
+		UnitName          string `json:"unit_name"`
+		Quantity          int    `json:"quantity"`
 	}
+	OutputOrderbill struct {
+		OrderBillId          uint                 `json:"order_bill_id"`
+		UpdatedAt   string               `json:"updated_at"`
+		Description string               `json:"description"`
+		SupplyID    uint                 `json:"supply_id"`
+		SupplyName  string               `json:"supply_name"`
+		Products    []OutputOrderProduct `json:"products"`
+	}
+)
 
-	c.JSON(http.StatusOK, orderBill)
-}
 
 func UpdateOrderBill(c *gin.Context) {
 	db := config.DB()

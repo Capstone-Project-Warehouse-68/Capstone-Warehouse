@@ -15,6 +15,7 @@ CategoryName: string;
 
 export interface ProductPDF {
   id: number;
+  product_id: number;
   product_code: string;
   product_name: string;
   quantity: number;

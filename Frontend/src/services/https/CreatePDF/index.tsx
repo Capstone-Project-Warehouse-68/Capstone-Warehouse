@@ -1,13 +1,15 @@
+import type { MultiOrderBillInput } from "../../../interfaces/OderProduct";
+
 const apiUrl = "http://localhost:8000";
 
-
 function getAuthHeaders() {
-    const Authorization = localStorage.getItem("token");
-    const Bearer = localStorage.getItem("token_type");
+  const Authorization = localStorage.getItem("token");
+  const Bearer = localStorage.getItem("token_type");
   return {
     "Content-Type": "application/json",
     Authorization: `${Bearer} ${Authorization}`,
-  }}
+  };
+}
 
 async function GetProductPDF() {
   try {
@@ -17,14 +19,14 @@ async function GetProductPDF() {
     });
     const data = await response.json();
     if (response.ok) {
-      return data; 
-    }else {
+      return data;
+    } else {
       return {
         status: response.status,
         error: data.error || "Unknown error occurred",
       };
     }
-    }catch (error: any) {
+  } catch (error: any) {
     console.error("Error fetching GetProductPDF:", error);
     return {
       error: "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้",
@@ -32,7 +34,52 @@ async function GetProductPDF() {
   }
 }
 
+async function AddOrderBillWithProducts(data: MultiOrderBillInput) {
+  try {
+    const response = await fetch(`${apiUrl}/AddOrderBillWithProducts`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
 
-export {
-    GetProductPDF
+    const result = await response.json();
+
+    if (response.ok) {
+      return result;
+    } else {
+      return {
+        status: response.status,
+        error: result.error || "Unknown error occurred",
+      };
+    }
+  } catch (error: any) {
+    console.error("Error Add Order Bill With Products:", error);
+    return {
+      error: "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้",
+    };
+  }
 }
+
+async function GetAllOrderBills() {
+  try {
+    const response = await fetch(`${apiUrl}/GetAllOrderBills`, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+    const data = await response.json();
+    if (response.ok) {
+      return data;
+    } else {
+      return {
+        status: response.status,
+        error: data.error || "Unknown error occurred",
+      };
+    }
+  } catch (error: any) {
+    console.error("Error fetching GetAllOrderBills:", error);
+    return {
+      error: "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้",
+    };
+  }
+}
+export { GetProductPDF, AddOrderBillWithProducts ,GetAllOrderBills};
