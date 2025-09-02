@@ -19,7 +19,8 @@ services:
     container_name: backend
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: Backend/Dockerfile
+    image: jarntae/backend:1.0.0
     ports:
       - "8000:8000"
     depends_on:
@@ -33,10 +34,13 @@ services:
 
 
   frontend:
+    container_name: frontend
     build:
       context: .
       dockerfile: Frontend/Dockerfile
-    container_name: Frontend
+    image: jarntae/frontend:1.0.0
+    depends_on:
+      - backend
     restart: always
     ports:
       - "5173:5173"
@@ -49,12 +53,13 @@ services:
 
 
   nginx:
+    container_name: nginx
     build:
       context: .
       dockerfile: nginx/Dockerfile
+    image: jarntae/nginx:1.0.0
     ports:
       - 80:80
-    container_name: nginx
     depends_on:
       - frontend
       - backend
