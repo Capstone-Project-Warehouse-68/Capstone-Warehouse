@@ -2,11 +2,11 @@ FROM node:18 as builder
 
 WORKDIR /app
 
-COPY Frontend/package.json Frontend/package-lock.json ./
+COPY package.json package-lock.json ./
 
 RUN npm install
 
-COPY Frontend/ .
+COPY . .
 
 EXPOSE 5173
 
