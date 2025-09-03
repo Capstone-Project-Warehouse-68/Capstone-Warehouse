@@ -31,9 +31,9 @@ function ImportProduct() {
     const [Zones, setZoneData] = useState<ZoneInterface[]>([]);
     const [shelfMap, setShelfMap] = useState<Record<number, ShelfInterface[]>>({});
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [billForms, setBillForms] = useState<any[]>([{}]); //
     const [currentStep, setCurrentStep] = useState(0); // index ของบิลที่กำลังแก้
     const [form] = Form.useForm();
+    const [billForms, setBillForms] = useState<any[]>([{}]);
     const [tempBills, setTempBills] = useState<any[]>(() => {
         const saved = localStorage.getItem("tempBills");
         return saved ? JSON.parse(saved) : [];
@@ -45,7 +45,7 @@ function ImportProduct() {
             const data = new Uint8Array(e.target?.result as ArrayBuffer);
             const workbook = XLSX.read(data, { type: "array" });
 
-            const formValues: any = { bills: [] };
+            const newBills: any[] = [];
 
             workbook.SheetNames.forEach((sheetName) => {
                 const worksheet = workbook.Sheets[sheetName];
@@ -68,9 +68,7 @@ function ImportProduct() {
                 });
 
                 // หาตำแหน่ง header ของ products
-                const headerIndex = jsonData.findIndex(
-                    row => row[0] === "ลำดับ"
-                );
+                const headerIndex = jsonData.findIndex(row => row[0] === "ลำดับ");
 
                 if (headerIndex !== -1) {
                     const productRows = jsonData.slice(headerIndex + 1).filter(row => row && row.length > 0);
@@ -81,12 +79,16 @@ function ImportProduct() {
                         if (row[3] === "จำนวนเงินรวมทั้งสิ้น") {
                             summaryPrice = row[8] !== undefined ? parseFloat(row[8].toString().replace(/,/g, "")) : 0;
                         } else {
+                            const unitNameFromExcel = row[5] ?? "";
+                            const unitObj = Units.find(u => u.NameOfUnit === unitNameFromExcel);
+                            const unitID = unitObj ? unitObj.ID : null;
+
                             products.push({
                                 ManufacturerCode: row[1] ?? "",
                                 SupplyProductCode: row[2] ?? "",
                                 ProductName: row[3] ?? "",
                                 Quantity: row[4] ?? 0,
-                                UnitPerQuantityID: row[5] ?? "",
+                                UnitPerQuantityID: unitID,
                                 PricePerPiece: row[6] ?? 0,
                                 Discount: row[7] ?? 0,
                                 SumPriceProduct: row[8] ?? 0,
@@ -100,19 +102,21 @@ function ImportProduct() {
                     if (summaryPrice !== null) bill.SummaryPrice = summaryPrice;
                 }
 
-                formValues.bills.push(bill);
+                newBills.push(bill);
             });
 
-            console.log("Form Values (All Bills):", formValues);
+            console.log("Excel Bills:", newBills);
 
-            // ใส่ค่าเข้า form
-            form.setFieldsValue(formValues);
+            // Merge กับ tempBills ปัจจุบัน
+            const mergedBills = [...tempBills, ...newBills];
 
-            // บันทึกลง localStorage
-            saveTempBills(formValues.bills);
+            // บันทึกลง localStorage และ state
+            saveTempBills(mergedBills);
 
-            // ตั้งค่า state สำหรับ currentStep
-            setTempBills(formValues.bills);
+            // ใส่ค่าเข้า form สำหรับบิลแรก
+            form.setFieldsValue({ bills: mergedBills });
+
+            setTempBills(mergedBills);
             setCurrentStep(0);
             setIsCreateModalOpen(true);
         };
@@ -121,16 +125,34 @@ function ImportProduct() {
         return false;
     };
 
+
     const saveTempBills = (bills: any[]) => {
         try {
-            const billsString = JSON.stringify(bills);
-            localStorage.setItem("tempBills", billsString);
+            // ดึงข้อมูล tempBills ปัจจุบันจาก state
+            const currentTempBills = tempBills || [];
+
+            // แปลงเป็น string เพื่อเทียบกัน
+            const newBillsString = JSON.stringify(bills);
+            const currentBillsString = JSON.stringify(currentTempBills);
+
+            // ถ้าเหมือนกันไม่ต้องบันทึกซ้ำ
+            if (newBillsString === currentBillsString) {
+                console.log("ข้อมูลเหมือนเดิม ไม่บันทึกซ้ำ");
+                return;
+            }
+
+            // บันทึกลง localStorage
+            localStorage.setItem("tempBills", newBillsString);
+
+            // อัปเดต state
             setTempBills(bills);
+
             console.log("Saved tempBills:", bills);
         } catch (err) {
             console.error("Error saving tempBills to localStorage:", err);
         }
     };
+
 
     const removeCurrentBill = () => {
         if (tempBills.length <= 1) {
@@ -152,40 +174,72 @@ function ImportProduct() {
 
     const handleSaveAll = async () => {
         try {
-            const values = await form.validateFields();
-            const newBills = [...billForms];
-            newBills[currentStep] = values;
-            setBillForms(newBills);
+            // 1. ดึงค่าปัจจุบันจาก form
+            const values = form.getFieldsValue(true); // { bills: [...] }
+            const updatedBills = [...tempBills];
 
-            for (const bill of newBills) {
-                // --- โค้ดเหมือน handleModelCreateOk ---
-                const products = Object.entries(bill).reduce((acc, [key, value]) => {
-                    const [field, index] = key.split("-");
-                    const idx = Number(index);
-                    if (field && idx !== undefined) {
-                        if (!acc[idx]) acc[idx] = {};
-                        acc[idx][field] = value;
+            // merge บิลปัจจุบันก่อน validate
+            if (values.bills && values.bills[currentStep]) {
+                updatedBills[currentStep] = {
+                    ...updatedBills[currentStep],
+                    ...values.bills[currentStep],
+                };
+            }
+
+            setTempBills(updatedBills);
+            saveTempBills(updatedBills); // บันทึกลง localStorage
+
+            // 2. Validate ทุกบิล
+            for (let i = 0; i < updatedBills.length; i++) {
+                const bill = updatedBills[i];
+                let missingFields: string[] = [];
+
+                if (!bill.Title) missingFields.push("ชื่อรายการสั่งซื้อ");
+                if (!bill.SupplyName) missingFields.push("ชื่อบริษัทที่สั่งซื้อ");
+                if (!bill.DateImport) missingFields.push("วันที่นำเข้าสินค้า");
+
+                if (missingFields.length > 0) {
+                    message.error(`กรุณากรอก ${missingFields.join(", ")} ของบิลที่ ${i + 1}`);
+                    return;
+                }
+
+                if (!bill.products || bill.products.length === 0) {
+                    message.error(`กรุณาเพิ่มสินค้าในบิลที่ ${i + 1}`);
+                    return;
+                }
+
+                for (const [idx, p] of bill.products.entries()) {
+                    let missingProductFields: string[] = [];
+                    if (!p.ProductName) missingProductFields.push("ชื่อสินค้า");
+                    if (!p.ManufacturerCode) missingProductFields.push("รหัสสินค้าผู้ผลิต");
+
+                    if (missingProductFields.length > 0) {
+                        message.error(`กรุณากรอก ${missingProductFields.join(", ")} ของสินค้า #${idx + 1} ในบิลที่ ${i + 1}`);
+                        return;
                     }
-                    return acc;
-                }, [] as any[]);
+                }
+            }
 
-                const parsedProducts = products.map((product) => ({
-                    ...product,
-                    UnitPerQuantityID: Number(product.UnitPerQuantityID),
-                    CategoryID: Number(product.CategoryID),
-                    ShelfID: Number(product.ShelfID),
+            // 3. ส่งทุกบิลไป API (เหมือนเดิม)
+            for (const bill of updatedBills) {
+                const products = bill.products || [];
+                const parsedProducts = products.map((p: any) => ({
+                    ...p,
+                    UnitPerQuantityID: Number(p.UnitPerQuantityID),
+                    CategoryID: Number(p.CategoryID),
+                    ShelfID: Number(p.ShelfID),
                 }));
 
                 const billData = {
                     Bill: {
                         Title: bill.Title,
                         SupplyName: bill.SupplyName,
-                        DateImport: bill.DateImport.toISOString(),
+                        DateImport: bill.DateImport,
                         SummaryPrice: bill.SummaryPrice,
                         EmployeeID: Number(localStorage.getItem("id")),
                     },
                     Products: parsedProducts,
-                    ProductsOfBill: parsedProducts.map((p) => ({
+                    ProductsOfBill: parsedProducts.map((p: any) => ({
                         ManufacturerCode: p.ManufacturerCode,
                         Quantity: p.Quantity,
                         PricePerPiece: p.PricePerPiece,
@@ -193,28 +247,29 @@ function ImportProduct() {
                     })),
                 };
 
-                console.log("บันทึกบิล:", billData);
-
                 try {
                     const res = await CreateBillwithProduct(billData);
                     if (res && res.status === 201) {
-                        message.success("สร้างบิลและสินค้าเรียบร้อย");
+                        message.success(`สร้างบิล "${bill.Title}" เรียบร้อย`);
                     } else {
-                        message.error("เกิดข้อผิดพลาดในการสร้างบิล");
+                        message.error(`เกิดข้อผิดพลาดในการสร้างบิล "${bill.Title}"`);
                         console.log("Response ไม่ 201:", res);
                     }
                 } catch (err) {
-                    message.error("เกิดข้อผิดพลาดในการสร้างบิล");
+                    message.error(`เกิดข้อผิดพลาดในการสร้างบิล "${bill.Title}"`);
                     console.log("API error:", err);
                 }
             }
 
-            // reset หลังจากบันทึกทุกบิลแล้ว
+            // 4. Reset form และ state
             form.resetFields();
             setIsCreateModalOpen(false);
-            setBillForms([{}]);
+            setBillForms([{ products: [{}] }]);
             setCurrentStep(0);
+            setTempBills([]);
+            localStorage.removeItem("tempBills");
             getBillAll();
+
         } catch (err) {
             console.log("Validation Failed", err);
         }
@@ -292,15 +347,21 @@ function ImportProduct() {
     };
 
     const handleZoneSelect = async (ZoneID: number, key: number) => {
+        console.log("zone id", ZoneID);
+
         try {
-            // Reset shelf ของ card นี้
-            form.setFieldsValue({ [`ShelfID-${key}`]: null });
+            form.setFields([
+                {
+                    name: ['bills', currentStep, 'products', key, 'ShelfID'],
+                    value: null,
+                },
+            ]);
 
             const ShelfResponse = await GetShelfByZoneID(ZoneID);
             if (ShelfResponse.status === 200) {
                 setShelfMap(prev => ({
                     ...prev,
-                    [key]: ShelfResponse.data, // ใช้ key แทน index
+                    [key]: ShelfResponse.data,
                 }));
             } else {
                 message.error(ShelfResponse.data.error || "ไม่สามารถโหลดข้อมูลชั้นวางได้");
@@ -610,7 +671,7 @@ function ImportProduct() {
                     <Button key="save" type="primary" onClick={handleSaveAll}>บันทึก</Button>
                 ]}
 
-                width={700}
+                width={'70%'}
             >
 
                 <Form form={form} layout="vertical" name="form">
@@ -882,8 +943,11 @@ function ImportProduct() {
                                                     label="ชั้นวางสินค้า"
                                                     rules={[{ required: true, message: 'กรุณาเลือกชั้นวางสินค้า' }]}
                                                 >
-                                                    <Select placeholder="เลือกชั้นวางสินค้า" disabled={!form.getFieldValue(['products', field.name, 'zone'])}>
-                                                        {(shelfMap[field.name] || []).map(shelf => (
+                                                    <Select
+                                                        placeholder="เลือกชั้นวางสินค้า"
+                                                        disabled={!form.getFieldValue(['bills', currentStep, 'products', field.name, 'zone'])}
+                                                    >
+                                                        {(shelfMap[field.name] || []).map((shelf: any) => (
                                                             <Select.Option key={shelf.ID} value={shelf.ID}>
                                                                 {shelf.ShelfName}
                                                             </Select.Option>
