@@ -6,6 +6,7 @@ import SignInPages from "../../pages/authentication/Login";
 
 import SiderOwner from "../SiderOwner";
 import ImportProduct from "../../pages/ImportProduct/importproduct";
+import CreateSupplyer from "../../pages/CreateSupplyer/CreateSupplyer";
 
 
 const { Header, Content } = Layout;
@@ -38,6 +39,7 @@ const FullLayout: React.FC = () => {
                             <Routes>
                                 <Route path="/" element={<SignInPages />} />
                                 <Route path="/importproduct" element={<ImportProduct />}/>
+                                <Route path="/createsupplyer" element={<CreateSupplyer />}/>
                             </Routes>
                         </div>
                     </Content>

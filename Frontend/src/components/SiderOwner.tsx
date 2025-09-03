@@ -11,6 +11,7 @@ import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import HistoryIcon from '@mui/icons-material/History';
 import PostAddIcon from '@mui/icons-material/PostAdd';
+import AddBusinessIcon from '@mui/icons-material/AddBusiness';
 import NotificationImportantIcon from '@mui/icons-material/NotificationImportant';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -194,6 +195,25 @@ function SiderOwner() {
                   <Link to="/historylistproduct" style={{ fontSize: 14 }}>ประวัติรายการสั่งซื้อสินค้า</Link>
                 </Menu.Item>
               </SubMenu>
+
+              <Menu.Item
+                key="createsupplyer"
+                icon={
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      height: "100%",
+                    }}
+                  >
+                    <AddBusinessIcon style={{ fontSize: 26 }} />
+                  </div>
+                }
+                onClick={() => setCurrentPage("createsupplyer")}
+              >
+                <Link to="/createsupplyer" style={{ fontSize: 16 }}>สร้างข้อมูลบริษัทสั่งซื้อ</Link>
+              </Menu.Item>
 
               <Menu.Item
                 key="importproduct"
