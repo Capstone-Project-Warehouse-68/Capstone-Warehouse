@@ -16,7 +16,7 @@ CategoryName: string;
 export interface ProductPDF {
   id: number;
   product_id: number;
-  product_code: string;
+  supply_product_code: string;
   product_name: string;
   quantity: number;
   name_of_unit: string;
@@ -30,7 +30,7 @@ export interface SelectedOrderPdf {
   date_import: string;       
   name_of_unit: string;      
   orderQuantity: number;     
-  product_code: string;      
+  supply_product_code: string;      
   product_id: number;        
   product_name: string;      
   quantity: number;          

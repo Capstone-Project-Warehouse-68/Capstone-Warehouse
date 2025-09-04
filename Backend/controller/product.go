@@ -396,7 +396,7 @@ func GetProductsforShowlist(c *gin.Context) {
 
 type ProductReport struct {
 	ProductID           int       `json:"product_id"`
-	ProductCode  string    `json:"product_code"`
+	SupplyProductCode  string    `json:"supply_product_code"`
 	ProductName  string    `json:"product_name"`
 	Quantity     int       `json:"quantity"`
 	NameOfUnit  string    `json:"name_of_unit"`
@@ -413,7 +413,7 @@ func GetProductPDF(c *gin.Context) {
 	err := db.Raw(`
 		SELECT 
 			p.id as product_id,
-			p.product_code,
+			p.supply_product_code,
 			p.product_name,
 			p.quantity,
 			u.name_of_unit,

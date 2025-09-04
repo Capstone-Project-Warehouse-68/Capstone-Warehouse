@@ -8,14 +8,18 @@ import { GetCategory } from "../../services/https/NotificaltionProduct/index";
 import { GetSupplySelect } from "../../services/https/ShowProduct/index";
 import { GetProductPDF } from "../../services/https/CreatePDF";
 
-import { FilterOutlined, SearchOutlined } from "@ant-design/icons";
+import {
+  FilterOutlined,
+  SearchOutlined,
+  CloseCircleOutlined,
+} from "@ant-design/icons";
 import pdfFonts from "../../../pdfmake/vfs_fonts";
 import pdfMake from "pdfmake/build/pdfmake";
 
 import type { Category } from "../../interfaces/Category";
 import type { SupplySelect } from "../../interfaces/Supply";
 import type { ProductPDF } from "../../interfaces/Product";
-import type {SelectedOrderPdf} from "../../interfaces/Product";
+import type { SelectedOrderPdf } from "../../interfaces/Product";
 import generateOrderPDF from "../../utils/generateOrderPDF";
 import groupOrdersBySupplier from "../../utils/groupOrdersBySupplier";
 import type { MultiOrderBillInput } from "../../interfaces/OderProduct";
@@ -152,6 +156,7 @@ const OrderTable = () => {
 
   const grouped = Object.entries(groupOrdersBySupplier(selectedOrders));
   const [supplier, orders]: any = grouped[modalPage - 1] || [];
+  console.log("orders---", orders);
 
   useEffect(() => {
     fetchCategory();
@@ -164,7 +169,7 @@ const OrderTable = () => {
   const filteredData = useMemo(() => {
     return productPDF.filter((item) => {
       const matchSearch =
-        item.product_code.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.supply_product_code.toLowerCase().includes(searchText.toLowerCase()) ||
         item.product_name.toLowerCase().includes(searchText.toLowerCase());
 
       const matchCategory = selectedCategory
@@ -188,9 +193,9 @@ const OrderTable = () => {
       render: (_: any, __: any, index: number) => index + 1,
     },
     {
-      title: "รหัสสินค้า",
-      dataIndex: "product_code",
-      key: "product_code",
+      title: "รหัสสินค้าบริษัทขายส่ง",
+      dataIndex: "supply_product_code",
+      key: "supply_product_code",
       width: 130,
     },
     {
@@ -221,93 +226,104 @@ const OrderTable = () => {
       title: "วันที่นำเข้า",
       dataIndex: "date_import",
       key: "date_import",
-      sorter: (a : any, b : any) => dayjs(a.updated_at).unix() - dayjs(b.updated_at).unix(),
+      sorter: (a: any, b: any) =>
+        dayjs(a.updated_at).unix() - dayjs(b.updated_at).unix(),
       with: 80,
       render: (text: string) => {
         const date = dayjs(text);
         const buddhistYear = date.year() + 543;
-         return `${date.date()} ${date.format("MMMM")} ${buddhistYear} เวลา ${date.format("HH:mm")} น.`;
+        return `${date.date()} ${date.format(
+          "MMMM"
+        )} ${buddhistYear} เวลา ${date.format("HH:mm")} น.`;
       },
     },
     {
-  title: "ดำเนินการ",
-  width: 300,
-  render: (_: any, record: ProductPDF) => {
-    const currentOrder = selectedOrders.find(
-      (o) => o.product_id === record.product_id
-    );
+      title: "ดำเนินการ",
+      width: 300,
+      render: (_: any, record: ProductPDF) => {
+        const currentOrder = selectedOrders.find(
+          (o) => o.product_id === record.product_id
+        );
 
-    const isSelected = !!currentOrder;
+        const isSelected = !!currentOrder;
 
-    return isSelected ? (
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          alignItems: "center",
-          width: 300,
-        }}
-      >
-        <Input
-          type="number"
-          placeholder="จำนวน"
-          style={{ width: 80 }}
-          value={currentOrder?.orderQuantity || 0}
-          onChange={(e) =>
-            setSelectedOrders((prev) =>
-              prev.map((o) =>
-                o.product_id === record.product_id
-                  ? { ...o, orderQuantity: Number(e.target.value) }
-                  : o
-              )
-            )
-          }
-        />
-        <Select
-          style={{ width: 100 }}
-          placeholder="หน่วย"
-          value={currentOrder?.unit || undefined}
-          onChange={(value) =>
-            setSelectedOrders((prev) =>
-              prev.map((o) =>
-                o.product_id === record.product_id
-                  ? { ...o, unit: value }
-                  : o
-              )
-            )
-          }
-          options={unitPerQuantity.map((u) => ({
-            value: u.NameOfUnit,
-            label: u.NameOfUnit,
-          }))}
-        />
-        {/* ปุ่มลบ สำหรับยกเลิก row */}
-        <Button
-          danger
-          onClick={() =>
-            setSelectedOrders((prev) =>
-              prev.filter((o) => o.product_id !== record.product_id)
-            )
-          }
-        >
-          ลบ
-        </Button>
-      </div>
-    ) : (
-      <Button
-        onClick={() =>
-          setSelectedOrders((prev) => [
-            ...prev,
-            { ...record, orderQuantity: 1, unit: "" },
-          ])
-        }
-      >
-        สั่งซื้อ
-      </Button>
-    );
-  },
-},
-
+        return isSelected ? (
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              width: 300,
+            }}
+          >
+            <Input
+              type="number"
+              placeholder="จำนวน"
+              style={{ width: 80 }}
+              value={currentOrder?.orderQuantity || 0}
+              onChange={(e) =>
+                setSelectedOrders((prev) =>
+                  prev.map((o) =>
+                    o.product_id === record.product_id
+                      ? { ...o, orderQuantity: Number(e.target.value) }
+                      : o
+                  )
+                )
+              }
+            />
+            <Select
+              style={{
+                width: 100,
+              }}
+              status={
+                currentOrder &&
+                (!currentOrder.unit || currentOrder.unit.trim() === "")
+                  ? "error"
+                  : undefined
+              }
+              placeholder="หน่วย"
+              value={currentOrder?.unit || undefined}
+              onChange={(value) =>
+                setSelectedOrders((prev) =>
+                  prev.map((o) =>
+                    o.product_id === record.product_id
+                      ? { ...o, unit: value }
+                      : o
+                  )
+                )
+              }
+              options={unitPerQuantity.map((u) => ({
+                value: u.NameOfUnit,
+                label: u.NameOfUnit,
+              }))}
+            />
+            {/* ปุ่มลบ สำหรับยกเลิก row */}
+            <Button
+              danger
+              icon={<CloseCircleOutlined />}
+              onClick={() =>
+                setSelectedOrders((prev) =>
+                  prev.filter((o) => o.product_id !== record.product_id)
+                )
+              }
+            >
+              ลบ
+            </Button>
+          </div>
+        ) : (
+          <Button
+            onClick={() =>
+              setSelectedOrders((prev) => [
+                ...prev,
+                { ...record, orderQuantity: 1, unit: undefined },
+              ])
+            }
+          >
+            สั่งซื้อ
+          </Button>
+        );
+      },
+    },
   ];
 
   const addOrderBill = async (data: MultiOrderBillInput) => {
@@ -327,6 +343,11 @@ const OrderTable = () => {
   };
   // สร้าง PDF
   const handleConfirm = async () => {
+    const invalidOrders = selectedOrders.filter((o) => !o.unit);
+    if (invalidOrders.length > 0) {
+      message.error("กรุณาเลือกหน่วยในรายการที่ยังว่าง");
+      return;
+    }
     setIsModalOpen(false);
 
     try {
@@ -368,7 +389,7 @@ const OrderTable = () => {
               ?.ID ?? 0,
           description: `สั่งซื้อจาก supplier ${items[0].supply_name}`,
           products: items.map((o) => ({
-            product_id: o.product_id, 
+            product_id: o.product_id,
             unit_per_quantity_id: unitMap[o.unit] ?? 0,
             quantity: o.orderQuantity,
           })),
@@ -377,10 +398,7 @@ const OrderTable = () => {
 
       await addOrderBill(multiOrderData);
 
-      
-      const pdfDocGenerator : SelectedOrderPdf[] = [
-        ...selectedOrders
-      ];
+      const pdfDocGenerator: SelectedOrderPdf[] = [...selectedOrders];
       console.log("pdfDocGenerator =:", pdfDocGenerator);
       generateOrderPDF(pdfDocGenerator);
       setSelectedOrders([]);
@@ -522,10 +540,21 @@ const OrderTable = () => {
                   title: "ลำดับ",
                   render: (_: any, __: any, i: number) => i + 1,
                 },
-                { title: "รหัสสินค้า", dataIndex: "product_code" },
+                { title: "รหัสสินค้าบริษัทขายส่ง", dataIndex: "supply_product_code" },
                 { title: "ชื่อสินค้า", dataIndex: "product_name" },
                 { title: "จำนวนที่สั่ง", dataIndex: "orderQuantity" },
-                { title: "หน่วย", dataIndex: "unit" },
+                {
+                  title: "หน่วย",
+                  dataIndex: "unit",
+                  render: (_: string, record: any) => {
+                    if (!record.unit || record.unit.trim() === "") {
+                      return (
+                        <span style={{ color: "red" }}>กรุณาเลือกหน่วย</span>
+                      );
+                    }
+                    return record.unit;
+                  },
+                },
               ]}
             />
           </div>

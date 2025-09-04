@@ -84,7 +84,7 @@ const HistoryPdf = () => {
       date_import: record.updated_at, // ใช้วันที่อัปเดตจาก OrderBill
       name_of_unit: p.unit_name,
       orderQuantity: p.quantity, // จำนวนที่สั่ง
-      product_code: p.product_code,
+      supply_product_code: p.supply_product_code,
       product_id: p.product_id,
       product_name: p.product_name,
       quantity: p.quantity, // จำนวนคงเหลือหรือจำนวนจริง

@@ -14,7 +14,7 @@ type (
 	OutputOrderProduct struct {
 		ProductID         uint   `json:"product_id"`
 		ProductName       string `json:"product_name"`
-        ProductCode        string `json:"product_code"`
+        SupplyProductCode        string `json:"supply_product_code"`
         CategoryName        string `json:"category_name"`
 		UnitPerQuantityID uint   `json:"unit_per_quantity_id"`
 		UnitName          string `json:"unit_name"`
@@ -43,7 +43,7 @@ func GetAllOrderBills(c *gin.Context) {
             s.supply_name,
             op.product_id,
             p.product_name,
-            p.product_code,
+            p.supply_product_code,
             c.category_name,
             op.unit_per_quantity_id,
             u.name_of_unit as unit_name,
@@ -74,7 +74,7 @@ func GetAllOrderBills(c *gin.Context) {
             supplyID          uint
             supplyName        string
             productID         *uint  // ใช้ pointer กัน null (เผื่อ order ไม่มีสินค้า)
-            productCode        *string
+            supplyProductCode        *string
             productName       *string
             categoryName        *string
             unitPerQuantityID *uint
@@ -91,7 +91,7 @@ func GetAllOrderBills(c *gin.Context) {
                 &supplyName,        // s.supply_name
                 &productID,         // op.product_id
                 &productName,       // p.product_name
-                &productCode,       // p.product_code
+                &supplyProductCode,       // p.product_code
                 &categoryName,      // c.category_name
                 &unitPerQuantityID, // op.unit_per_quantity_id
                 &unitName,          // u.name_of_unit
@@ -118,7 +118,7 @@ func GetAllOrderBills(c *gin.Context) {
             orderMap[orderBillID].Products = append(orderMap[orderBillID].Products, OutputOrderProduct{
                 ProductID:         *productID,
                 ProductName:       *productName,
-                ProductCode: *productCode,
+                SupplyProductCode: *supplyProductCode,
                 CategoryName: *categoryName,
                 UnitPerQuantityID: *unitPerQuantityID,
                 UnitName:          *unitName,

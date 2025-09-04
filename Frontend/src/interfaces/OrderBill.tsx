@@ -5,7 +5,7 @@ export interface OrderProduct {
   unit_per_quantity_id: number;
   unit_name: string;
   quantity: number;
-  product_code : string;
+  supply_product_code : string;
   category_name: string;
 
 }
