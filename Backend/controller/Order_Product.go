@@ -51,6 +51,12 @@ func AddOrderBillWithProducts(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": "ข้อมูลไม่ถูกต้อง"})
         return
     }
+	tx := db.Begin() // เริ่ม transaction
+    defer func() {
+        if r := recover(); r != nil {
+            tx.Rollback()
+        }
+    }()
 
 	// ใช้ govalidator ตรวจ
     if ok, err := govalidator.ValidateStruct(input); !ok {
@@ -119,6 +125,7 @@ func AddOrderBillWithProducts(c *gin.Context) {
                 orderProduct.StatusDraft = true
                 orderProduct.OrderProductDraftID = draft.ID
             }
+<<<<<<< HEAD
 
 			if err := tx.Create(&orderProduct).Error; err != nil {
 				tx.Rollback()
@@ -126,6 +133,14 @@ func AddOrderBillWithProducts(c *gin.Context) {
 				return
 			}
 		}
+=======
+            if err := db.Create(&orderProduct).Error; err != nil {
+				tx.Rollback()
+                c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างรายการสินค้าไม่สำเร็จ"})
+                return
+            }
+        }
+>>>>>>> cbe9eac (add system delete history pdf)
 
         createdOrders = append(createdOrders, orderBill)
     }

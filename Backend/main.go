@@ -24,13 +24,15 @@ func main() {
 
 	router := r.Group("/")
 	router.Use(middlewares.Authorizes())
-	{		
+	{	
+		// Employee
 		router.POST("/CreateEmployee", controller.CreateEmployee)
 		router.PATCH("/UpdateEmployee/:id", controller.UpdateEmployee)
 		router.DELETE("/DeleteEmployee/:id", controller.DeleteEmployee)
 		router.GET("/GetAllEmployees", controller.GetAllEmployees)
 		router.GET("/GetEmployeeById/:id",controller.GetEmployeeByID)
 		
+		// Bill & Product
 		router.GET("/getAllBill", controller.GetAllBill)
 		router.GET("/Getunitperquantity", controller.GetUnitPerQuantity)
 		router.GET("/GetCategory", controller.GetCategory)
@@ -42,7 +44,7 @@ func main() {
 		router.POST("/CreateProductWithBill", controller.CreateBillWithProducts)
 		router.PATCH("/Updatebillwithproduct", controller.UpdateBillWithProducts)
 		router.DELETE("/deletebillwithproduct/:id", controller.DeleteBill)
-		router.GET("/GetLimitQuantity",controller.GetLimitQuantity)
+		router.GET("/GetLimitQuantity", controller.GetLimitQuantity)
 		router.PATCH("/UpdateLimitQuantity", controller.UpdateLimitQuantity)
 		router.GET("/notifications", controller.GetLowStockProducts)
 		router.GET("/GetShowProduct", controller.GetShowProduct)
@@ -51,6 +53,7 @@ func main() {
 		router.GET("/GetProductPDF", controller.GetProductPDF)
 		router.POST("/AddOrderBillWithProducts", controller.AddOrderBillWithProducts)
 		router.GET("/GetAllOrderBills", controller.GetAllOrderBills)
+		router.DELETE("/DeleteOrderBill/:id", controller.DeleteOrderBill)
 		// r.PATCH("/UpdateOrderBill:id",controller.UpdateOrderBill)
 		router.GET("/GetDashboardSummary", controller.GetDashboardSummary)
 		router.GET("/GetDashboardSupplier", controller.GetDashboardSupplier)
