@@ -1,5 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
-import { Table, Modal, Button, message, DatePicker , ConfigProvider} from "antd";
+import {
+  Table,
+  Modal,
+  Button,
+  message,
+  DatePicker,
+  ConfigProvider,
+} from "antd";
 import generateOrderPDF from "../../../utils/generateOrderPDF";
 import type { SelectedOrderPdf } from "../../../interfaces/Product";
 import {
@@ -8,7 +15,10 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons";
 import type { OrderBill } from "../../../interfaces/OrderBill";
-import { GetAllOrderBills } from "../../../services/https/CreatePDF";
+import {
+  GetAllOrderBills,
+  DeleteOrderBill,
+} from "../../../services/https/CreatePDF";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/th";
 dayjs.locale("th");
@@ -43,47 +53,69 @@ const HistoryPdf = () => {
       message.error("เกิดข้อผิดพลาดในการดึงข้อมูลใยสั่งซื้อ");
       console.error(error);
     } finally {
-    setLoading(false);
+      setLoading(false);
     }
+  };
+
+  const DeleteHistory = async (id: number) => {
+    try {
+      const result = await DeleteOrderBill(id);
+      if (result.error) {
+        console.error("Delete failed:", result.error);
+        message.error("เกิดข้อผิดพลาดในการลบข้อมูล")
+      } else {
+        console.log("Delete successful:", result.message);
+        message.success(result.message)
+      }
+    } catch (error: unknown) {
+      console.error("Unexpected error:", error);
+      message.error("เกิดข้อผิดพลาดที่ไม่ทราบ")
+    }
+    fetchOrderBills();
   };
 
   useEffect(() => {
     fetchOrderBills();
   }, []);
 
-  const CreatePdf = (record: OrderBill)=> {
-  const data : SelectedOrderPdf[]  = record.products.map((p) => ({
-    category_name: p.category_name, 
-    date_import: record.updated_at, // ใช้วันที่อัปเดตจาก OrderBill
-    name_of_unit: p.unit_name,
-    orderQuantity: p.quantity,       // จำนวนที่สั่ง
-    product_code: p.product_code,                
-    product_id: p.product_id,
-    product_name: p.product_name,
-    quantity: p.quantity,            // จำนวนคงเหลือหรือจำนวนจริง
-    supply_name: record.supply_name,
-    unit: p.unit_name,
-    supply_id: record.supply_id,
-  }));
-  console.log("data for pdf",data)
-  generateOrderPDF(data)
-};
+  const CreatePdf = (record: OrderBill) => {
+    const data: SelectedOrderPdf[] = record.products.map((p) => ({
+      category_name: p.category_name,
+      date_import: record.updated_at, // ใช้วันที่อัปเดตจาก OrderBill
+      name_of_unit: p.unit_name,
+      orderQuantity: p.quantity, // จำนวนที่สั่ง
+      product_code: p.product_code,
+      product_id: p.product_id,
+      product_name: p.product_name,
+      quantity: p.quantity, // จำนวนคงเหลือหรือจำนวนจริง
+      supply_name: record.supply_name,
+      unit: p.unit_name,
+      supply_id: record.supply_id,
+    }));
+    console.log("data for pdf", data);
+    generateOrderPDF(data);
+  };
 
   const columns = [
     {
       title: "รหัสใบสั่งซื้อ",
       dataIndex: "order_bill_id",
       key: "order_bill_id",
+      sorter: (a: { order_bill_id: number }, b: { order_bill_id: number }) =>
+        a.order_bill_id - b.order_bill_id,
     },
     {
       title: "วันที่ทำรายการ",
       dataIndex: "updated_at",
-      sorter: (a : any, b : any) => dayjs(a.updated_at).unix() - dayjs(b.updated_at).unix(),
+      sorter: (a: any, b: any) =>
+        dayjs(a.updated_at).unix() - dayjs(b.updated_at).unix(),
       key: "updated_at",
       render: (text: string) => {
         const date = dayjs(text);
         const buddhistYear = date.year() + 543;
-         return `${date.date()} ${date.format("MMMM")} ${buddhistYear} เวลา ${date.format("HH:mm")} น.`;
+        return `${date.date()} ${date.format(
+          "MMMM"
+        )} ${buddhistYear} เวลา ${date.format("HH:mm")} น.`;
       },
     },
     {
@@ -148,36 +180,30 @@ const HistoryPdf = () => {
       title: "พิมพ์ใบสั่งซื้อ",
       key: "actionPrint",
       render: (_: any, record: OrderBill) => (
-        <Button
-          icon={<FilePdfOutlined />}
-          onClick={() => CreatePdf(record)}
-        >
+        <Button icon={<FilePdfOutlined />} onClick={() => CreatePdf(record)}>
           PDF
         </Button>
       ),
     },
     {
-    title: "ลบใบสั่งซื้อ",
-    key: "actionDelete",
-    render: (_: any, record: OrderBill) => (
-      <Button
-        danger
-        icon={<DeleteOutlined />}
-        onClick={() => {
-          Modal.confirm({
-            title: "ยืนยันการลบ",
-            content: `คุณต้องการลบใบสั่งซื้อ #${record.order_bill_id} ใช่หรือไม่?`,
-            onOk: () => {
-              setOrderBills((prev) =>
-                prev.filter((o) => o.order_bill_id !== record.order_bill_id)
-              );
-              message.success("ลบใบสั่งซื้อเรียบร้อย");
-            },
-          });
-        }}
-      />
-    ),
-  },
+      title: "ลบใบสั่งซื้อ",
+      key: "actionDelete",
+      render: (_: any, record: OrderBill) => (
+        <Button
+          danger
+          icon={<DeleteOutlined />}
+          onClick={() => {
+            Modal.confirm({
+              title: "ยืนยันการลบ",
+              content: `คุณต้องการลบใบสั่งซื้อรหัสรายการ #${record.order_bill_id} ใช่หรือไม่?`,
+              onOk: () => {
+                DeleteHistory(record.order_bill_id);
+              },
+            });
+          }}
+        />
+      ),
+    },
   ];
 
   // ฟังก์ชันกรองตามวันและเดือน
@@ -252,23 +278,23 @@ const HistoryPdf = () => {
             alignItems: "center",
           }}
         >
-        <ConfigProvider locale={thTH}>
-          <DatePicker
-            style={{height:50, width: 150 , borderRadius: 50}}
-            value={selectedDay}
-            onChange={handleDayChange}
-            format="DD/MM/YYYY"
-            placeholder="เลือกวันที่"
-          />
-          <DatePicker
-            style={{height:50, width: 150 , borderRadius: 50}}
-            value={selectedMonth}
-            onChange={handleMonthChange}
-            picker="month"
-            format="MM/YYYY"
-            placeholder="เลือกเดือน"
-          />
-        </ConfigProvider>
+          <ConfigProvider locale={thTH}>
+            <DatePicker
+              style={{ height: 50, width: 150, borderRadius: 50 }}
+              value={selectedDay}
+              onChange={handleDayChange}
+              format="DD/MM/YYYY"
+              placeholder="เลือกวันที่"
+            />
+            <DatePicker
+              style={{ height: 50, width: 150, borderRadius: 50 }}
+              value={selectedMonth}
+              onChange={handleMonthChange}
+              picker="month"
+              format="MM/YYYY"
+              placeholder="เลือกเดือน"
+            />
+          </ConfigProvider>
         </div>
       </div>
       <div className="content" style={{ marginTop: 20 }}></div>

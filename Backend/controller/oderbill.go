@@ -2,10 +2,11 @@ package controller
 
 import (
 	"github.com/project_capstone/WareHouse/config"
-	// "github.com/project_capstone/WareHouse/entity"
+	"github.com/project_capstone/WareHouse/entity"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	// "gorm.io/gorm"
+    "strconv"
 	"time"
 )
 
@@ -53,7 +54,8 @@ func GetAllOrderBills(c *gin.Context) {
         LEFT JOIN products p ON op.product_id = p.id
         LEFT JOIN unit_per_quantities u ON op.unit_per_quantity_id = u.id
         LEFT JOIN categories c on c.id = p.category_id
-        ORDER BY op.id
+        WHERE ob.deleted_at IS NULL
+        ORDER BY ob.updated_at DESC, op.id ASC
     `).Rows()
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงข้อมูลไม่สำเร็จ"})
@@ -135,3 +137,49 @@ func GetAllOrderBills(c *gin.Context) {
         "data": orders,
     })
 }
+
+func DeleteOrderBill(c *gin.Context) {
+    db := config.DB()
+    
+    id := c.Param("id")
+    orderID, err := strconv.ParseUint(id, 10, 64)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "id ไม่ถูกต้อง"})
+        return
+    }
+
+    tx := db.Begin()
+    defer func() {
+        if r := recover(); r != nil {
+            tx.Rollback()
+        }
+    }()
+
+    var orderBill entity.OrderBill
+    if err := tx.First(&orderBill, orderID).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusNotFound, gin.H{"message": "ไม่พบ OrderBill id นี้", "error": err.Error()})
+        return
+    }
+
+    // ลบ OrderProducts ที่เกี่ยวข้องแบบ Soft Delete
+    if err := tx.Where("order_bill_id = ?", orderID).Delete(&entity.OrderProduct{}).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "ลบรายการสินค้าไม่สำเร็จ"})
+        return
+    }
+
+    // ลบ OrderBill แบบ Soft Delete
+    if err := tx.Delete(&orderBill).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "ลบคำสั่งซื้อไม่สำเร็จ"})
+        return
+    }
+
+    tx.Commit()
+
+    c.JSON(http.StatusOK, gin.H{
+        "message": "ลบคำสั่งซื้อและรายการสินค้าที่เกี่ยวข้องเรียบร้อย",
+    })
+}
+

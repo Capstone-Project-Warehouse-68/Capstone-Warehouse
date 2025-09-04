@@ -48,6 +48,12 @@ func AddOrderBillWithProducts(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": "ข้อมูลไม่ถูกต้อง"})
         return
     }
+	tx := db.Begin() // เริ่ม transaction
+    defer func() {
+        if r := recover(); r != nil {
+            tx.Rollback()
+        }
+    }()
 
     var createdOrders []entity.OrderBill
 
@@ -58,6 +64,7 @@ func AddOrderBillWithProducts(c *gin.Context) {
             Description: order.Description,
         }
         if err := db.Create(&orderBill).Error; err != nil {
+			tx.Rollback()
             c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างคำสั่งซื้อไม่สำเร็จ"})
             return
         }
@@ -70,6 +77,7 @@ func AddOrderBillWithProducts(c *gin.Context) {
                 Quantity:          p.Quantity,
             }
             if err := db.Create(&orderProduct).Error; err != nil {
+				tx.Rollback()
                 c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างรายการสินค้าไม่สำเร็จ"})
                 return
             }
@@ -78,6 +86,11 @@ func AddOrderBillWithProducts(c *gin.Context) {
         createdOrders = append(createdOrders, orderBill)
     }
 
+	if err := tx.Commit().Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "เกิดข้อผิดพลาดขณะบันทึกข้อมูล"})
+        return
+    }
+	
     c.JSON(http.StatusOK, gin.H{
         "message":     "สร้างคำสั่งซื้อและสินค้าทั้งหมดเรียบร้อย",
         "order_bills": createdOrders,

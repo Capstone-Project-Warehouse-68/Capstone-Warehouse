@@ -82,4 +82,25 @@ async function GetAllOrderBills() {
     };
   }
 }
-export { GetProductPDF, AddOrderBillWithProducts ,GetAllOrderBills};
+
+async function DeleteOrderBill(id: number) {
+  try {
+    const response = await fetch(`${apiUrl}/DeleteOrderBill/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+    const { message, error } = await response.json();
+    if (response.ok) {
+      return { message };
+    } else {
+      return {
+        status: response.status,
+        error: error || "Unknown error occurred",
+      };
+    }
+  } catch (error: any) {
+    console.error("Error fetching DeleteOrderBill:", error);
+    return { error: "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้" };
+  }
+}
+export { GetProductPDF, AddOrderBillWithProducts, GetAllOrderBills, DeleteOrderBill};

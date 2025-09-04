@@ -52,6 +52,7 @@ func main() {
 		r.GET("/GetProductPDF", controller.GetProductPDF)
 		r.POST("/AddOrderBillWithProducts", controller.AddOrderBillWithProducts)
 		r.GET("/GetAllOrderBills", controller.GetAllOrderBills)
+		r.DELETE("/DeleteOrderBill/:id",controller.DeleteOrderBill)
 		// r.PATCH("/UpdateOrderBill:id",controller.UpdateOrderBill)
 		router.Use(middlewares.Authorizes())
 	}
