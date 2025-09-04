@@ -264,7 +264,7 @@ func GetLowStockProducts(c *gin.Context) {
 
 	var products []entity.Product
 
-	if err := db.Preload("UnitPerQuantity").Where("quantity <= limit_quantity").Find(&products).Error; err != nil {
+	if err := db.Preload("UnitPerQuantity").Where("quantity < limit_quantity").Find(&products).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลสินค้าได้"})
 		return
 	}

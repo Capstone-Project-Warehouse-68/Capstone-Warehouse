@@ -68,7 +68,7 @@ const allColumns = [
     render: (text: string) => {
       const date = dayjs(text);
       const buddhistYear = date.year() + 543;
-      return `${date.date()} ${date.format("MMMM")} ${buddhistYear}`;
+       return `${date.date()} ${date.format("MMMM")} ${buddhistYear} เวลา ${date.format("HH:mm")} น.`;
     },
   },
   {

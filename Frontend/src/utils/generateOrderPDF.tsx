@@ -2,6 +2,7 @@
 import pdfFonts from "../../pdfmake/vfs_fonts";
 import pdfMake from "pdfmake/build/pdfmake";
 import groupOrdersBySupplier from "./groupOrdersBySupplier";
+import type { SelectedOrderPdf } from "../interfaces/Product";
 import dayjs from "dayjs";
 import "dayjs/locale/th";
 dayjs.locale("th");
@@ -17,7 +18,7 @@ pdfMake.fonts = {
   },
 };
 
-const generateOrderPDF = (orders: any[]) => {
+const generateOrderPDF = (orders: SelectedOrderPdf[]) => {
   const ordersBySupplier = groupOrdersBySupplier(orders);
 
   Object.entries(ordersBySupplier).forEach(

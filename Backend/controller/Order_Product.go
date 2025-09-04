@@ -84,23 +84,7 @@ func AddOrderBillWithProducts(c *gin.Context) {
     })
 }
 
-type (
-	OutputOrderProduct struct {
-		ProductID         uint   `json:"product_id"`
-		ProductName       string `json:"product_name"`
-		UnitPerQuantityID uint   `json:"unit_per_quantity_id"`
-		UnitName          string `json:"unit_name"`
-		Quantity          int    `json:"quantity"`
-	}
-	OutputOrderbill struct {
-		OrderBillId          uint                 `json:"order_bill_id"`
-		UpdatedAt   string               `json:"updated_at"`
-		Description string               `json:"description"`
-		SupplyID    uint                 `json:"supply_id"`
-		SupplyName  string               `json:"supply_name"`
-		Products    []OutputOrderProduct `json:"products"`
-	}
-)
+
 
 
 func UpdateOrderBill(c *gin.Context) {

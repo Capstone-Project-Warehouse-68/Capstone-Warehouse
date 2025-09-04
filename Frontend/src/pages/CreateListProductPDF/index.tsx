@@ -15,6 +15,7 @@ import pdfMake from "pdfmake/build/pdfmake";
 import type { Category } from "../../interfaces/Category";
 import type { SupplySelect } from "../../interfaces/Supply";
 import type { ProductPDF } from "../../interfaces/Product";
+import type {SelectedOrderPdf} from "../../interfaces/Product";
 import generateOrderPDF from "../../utils/generateOrderPDF";
 import groupOrdersBySupplier from "../../utils/groupOrdersBySupplier";
 import type { MultiOrderBillInput } from "../../interfaces/OderProduct";
@@ -220,11 +221,12 @@ const OrderTable = () => {
       title: "วันที่นำเข้า",
       dataIndex: "date_import",
       key: "date_import",
+      sorter: (a : any, b : any) => dayjs(a.updated_at).unix() - dayjs(b.updated_at).unix(),
       with: 80,
       render: (text: string) => {
         const date = dayjs(text);
         const buddhistYear = date.year() + 543;
-        return `${date.date()} ${date.format("MMMM")} ${buddhistYear}`;
+         return `${date.date()} ${date.format("MMMM")} ${buddhistYear} เวลา ${date.format("HH:mm")} น.`;
       },
     },
     {
@@ -375,7 +377,12 @@ const OrderTable = () => {
 
       await addOrderBill(multiOrderData);
 
-      generateOrderPDF(selectedOrders);
+      
+      const pdfDocGenerator : SelectedOrderPdf[] = [
+        ...selectedOrders
+      ];
+      console.log("pdfDocGenerator =:", pdfDocGenerator);
+      generateOrderPDF(pdfDocGenerator);
       setSelectedOrders([]);
     } catch (error: any) {
       console.error("handleConfirm error:", error);

@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Table, Modal, Button, message, DatePicker , ConfigProvider} from "antd";
 import generateOrderPDF from "../../../utils/generateOrderPDF";
+import type { SelectedOrderPdf } from "../../../interfaces/Product";
 import {
   EyeOutlined,
   FilePdfOutlined,
@@ -50,6 +51,24 @@ const HistoryPdf = () => {
     fetchOrderBills();
   }, []);
 
+  const CreatePdf = (record: OrderBill)=> {
+  const data : SelectedOrderPdf[]  = record.products.map((p) => ({
+    category_name: p.category_name, 
+    date_import: record.updated_at, // ใช้วันที่อัปเดตจาก OrderBill
+    name_of_unit: p.unit_name,
+    orderQuantity: p.quantity,       // จำนวนที่สั่ง
+    product_code: p.product_code,                
+    product_id: p.product_id,
+    product_name: p.product_name,
+    quantity: p.quantity,            // จำนวนคงเหลือหรือจำนวนจริง
+    supply_name: record.supply_name,
+    unit: p.unit_name,
+    supply_id: record.supply_id,
+  }));
+  console.log("data for pdf",data)
+  generateOrderPDF(data)
+};
+
   const columns = [
     {
       title: "รหัสใบสั่งซื้อ",
@@ -59,6 +78,7 @@ const HistoryPdf = () => {
     {
       title: "วันที่ทำรายการ",
       dataIndex: "updated_at",
+      sorter: (a : any, b : any) => dayjs(a.updated_at).unix() - dayjs(b.updated_at).unix(),
       key: "updated_at",
       render: (text: string) => {
         const date = dayjs(text);
@@ -130,7 +150,7 @@ const HistoryPdf = () => {
       render: (_: any, record: OrderBill) => (
         <Button
           icon={<FilePdfOutlined />}
-          onClick={() => generateOrderPDF(record.products)}
+          onClick={() => CreatePdf(record)}
         >
           PDF
         </Button>
@@ -189,6 +209,7 @@ const HistoryPdf = () => {
     <div
       className="layout"
       style={{
+        background: "#d3d3d3",
         height: "100vh",
         minWidth: "1000px",
         padding: 24,
@@ -233,12 +254,14 @@ const HistoryPdf = () => {
         >
         <ConfigProvider locale={thTH}>
           <DatePicker
+            style={{height:50, width: 150 , borderRadius: 50}}
             value={selectedDay}
             onChange={handleDayChange}
             format="DD/MM/YYYY"
             placeholder="เลือกวันที่"
           />
           <DatePicker
+            style={{height:50, width: 150 , borderRadius: 50}}
             value={selectedMonth}
             onChange={handleMonthChange}
             picker="month"
