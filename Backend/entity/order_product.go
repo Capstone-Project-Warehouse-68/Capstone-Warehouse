@@ -14,5 +14,6 @@ type OrderProduct struct {
     //กรณีสินค้าตัวใหม่ที่เพิ่มลงในใบสั่งซื้อ
 	ProductDraftName string
 	SupplyDraftName string
-	StatusDraft bool
+	UnitDrafName string
+	StatusDraft bool `gorm:"default:false"`
 }

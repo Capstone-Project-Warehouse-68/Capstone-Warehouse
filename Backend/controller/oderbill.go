@@ -11,6 +11,14 @@ import (
 )
 
 type (
+    OutputOrderDraft struct {
+        ProductDraftName  string `json:"product_draft_name"`
+        SupplyDraftName   string `json:"supply_draft_name"`
+        CategoryName      string `json:"category_name"`
+        UnitDrafName          string `json:"unit_draf_name"`
+        Quantity          int    `json:"quantity"`
+    }
+
 	OutputOrderProduct struct {
 		ProductID         uint   `json:"product_id"`
 		ProductName       string `json:"product_name"`
@@ -27,6 +35,7 @@ type (
 		SupplyID    uint                 `json:"supply_id"`
 		SupplyName  string               `json:"supply_name"`
 		Products    []OutputOrderProduct `json:"products"`
+        ProductsDraft []OutputOrderDraft   `json:"products_draft"`
 	}
 )
 
@@ -47,7 +56,11 @@ func GetAllOrderBills(c *gin.Context) {
             c.category_name,
             op.unit_per_quantity_id,
             u.name_of_unit as unit_name,
-            op.quantity
+            op.quantity,
+            op.status_draft,
+            op.unit_draf_name,
+            op.product_draft_name,
+            op.supply_draft_name
         FROM order_bills ob
         JOIN supplies s ON ob.supply_id = s.id
         LEFT JOIN order_products op ON ob.id = op.order_bill_id
@@ -80,6 +93,10 @@ func GetAllOrderBills(c *gin.Context) {
             unitPerQuantityID *uint
             unitName          *string
             quantity          *int
+            statusDraft *bool
+            unitDrafName *string
+            productDraftName *string
+            supplyDraftName *string
 
         )
 
@@ -96,6 +113,10 @@ func GetAllOrderBills(c *gin.Context) {
                 &unitPerQuantityID, // op.unit_per_quantity_id
                 &unitName,          // u.name_of_unit
                 &quantity,          // op.quantity
+                &statusDraft,
+                &unitDrafName,
+                &productDraftName,
+                &supplyDraftName,
         ); err != nil {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "แปลงข้อมูลล้มเหลว"})
             return
@@ -114,14 +135,22 @@ func GetAllOrderBills(c *gin.Context) {
         }
 
         // ถ้ามี product ให้ add เข้าไป
-        if productID != nil {
+        if productID != nil && *productID != 0 {
             orderMap[orderBillID].Products = append(orderMap[orderBillID].Products, OutputOrderProduct{
                 ProductID:         *productID,
                 ProductName:       *productName,
                 SupplyProductCode: *supplyProductCode,
-                CategoryName: *categoryName,
+                CategoryName:      *categoryName,
                 UnitPerQuantityID: *unitPerQuantityID,
                 UnitName:          *unitName,
+                Quantity:          *quantity,
+            })
+        } else if statusDraft  != nil && *statusDraft  { 
+            orderMap[orderBillID].ProductsDraft = append(orderMap[orderBillID].ProductsDraft, OutputOrderDraft{
+                ProductDraftName:  *productDraftName,
+                SupplyDraftName:   *supplyDraftName,
+                CategoryName:      *categoryName,
+                UnitDrafName:      *unitDrafName,
                 Quantity:          *quantity,
             })
         }

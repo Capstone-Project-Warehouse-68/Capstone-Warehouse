@@ -79,22 +79,49 @@ const HistoryPdf = () => {
   }, []);
 
   const CreatePdf = (record: OrderBill) => {
-    const data: SelectedOrderPdf[] = record.products.map((p) => ({
+  // สร้าง array สำหรับ PDF
+  let allProducts: SelectedOrderPdf[] = [];
+
+  // ใส่ products ปกติ
+  if (record.products && record.products.length > 0) {
+    allProducts = record.products.map((p) => ({
       category_name: p.category_name,
-      date_import: record.updated_at, // ใช้วันที่อัปเดตจาก OrderBill
+      date_import: record.updated_at,
       name_of_unit: p.unit_name,
-      orderQuantity: p.quantity, // จำนวนที่สั่ง
+      orderQuantity: p.quantity,
       supply_product_code: p.supply_product_code,
       product_id: p.product_id,
       product_name: p.product_name,
-      quantity: p.quantity, // จำนวนคงเหลือหรือจำนวนจริง
+      quantity: p.quantity,
       supply_name: record.supply_name,
       unit: p.unit_name,
       supply_id: record.supply_id,
     }));
-    console.log("data for pdf", data);
-    generateOrderPDF(data);
-  };
+  }
+
+  // ต่อท้าย products_draft ถ้ามี
+  if (record.products_draft && record.products_draft.length > 0) {
+    const draftProducts = record.products_draft.map((p) => ({
+      category_name: p.category_name,
+      date_import: record.updated_at,
+      name_of_unit: p.unit_draf_name,
+      orderQuantity: p.quantity,
+      supply_product_code: "", // draft ไม่มีรหัส
+      product_id: 0, // draft ไม่มี ID
+      product_name: p.product_draft_name,
+      quantity: p.quantity,
+      supply_name: p.supply_draft_name, // ใช้ชื่อ supplier ของ draft
+      unit: p.unit_draf_name,
+      supply_id: record.supply_id,
+    }));
+
+    allProducts = allProducts.concat(draftProducts);
+  }
+
+  console.log("data for pdf", allProducts);
+  generateOrderPDF(allProducts);
+};
+
 
   const columns = [
     {

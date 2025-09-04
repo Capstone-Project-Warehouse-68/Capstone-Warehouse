@@ -10,9 +10,12 @@ import (
 
 type( 
 	OrderProductInput struct {
-		ProductID         uint  `json:"product_id" binding:"required"`
-		UnitPerQuantityID uint  `json:"unit_per_quantity_id" binding:"required"`
-		Quantity          int   `json:"quantity" binding:"required"`
+		ProductID         uint   `json:"product_id"`                  // ถ้า 0 คือ draft
+		ProductDraftName  string `json:"product_draft_name,omitempty"` // สำหรับสินค้าตัวใหม่
+		SupplyDraftName   string `json:"supply_draft_name,omitempty"` // สำหรับสินค้าตัวใหม่
+		UnitDrafName      string `json:"unit_draf_name,omitempty"` // สำหรับสินค้าตัวใหม่
+		UnitPerQuantityID uint   `json:"unit_per_quantity_id" binding:"required"`
+		Quantity          int    `json:"quantity" binding:"required"`
 	}
 	OrderBillInput struct {
 		SupplyID    uint               `json:"supply_id" binding:"required"`
@@ -25,7 +28,8 @@ type(
     	EmployeeID uint             `json:"employee_id" binding:"required"`
     	Orders     []OrderBillInput `json:"orders"` // ใส่คำสั่งซื้อแยก supplier
 	}
-
+)
+type(
 	UpdateOrderProductInput struct {
 		ProductID         uint  `json:"product_id"`
 		UnitPerQuantityID uint  `json:"unit_per_quantity_id"`
@@ -36,8 +40,6 @@ type(
 		Description string                   `json:"description"`
 		Products    []UpdateOrderProductInput `json:"products"`
 	}
-
-	
 )
 
 func AddOrderBillWithProducts(c *gin.Context) {
@@ -70,18 +72,27 @@ func AddOrderBillWithProducts(c *gin.Context) {
         }
 
         for _, p := range order.Products {
-            orderProduct := entity.OrderProduct{
-                OrderBillID:       orderBill.ID,
-                ProductID:         p.ProductID,
-                UnitPerQuantityID: p.UnitPerQuantityID,
-                Quantity:          p.Quantity,
-            }
-            if err := db.Create(&orderProduct).Error; err != nil {
+			orderProduct := entity.OrderProduct{
+				OrderBillID:       orderBill.ID,
+				ProductID:         p.ProductID,
+				UnitPerQuantityID: p.UnitPerQuantityID,
+				Quantity:          p.Quantity,
+			}
+
+			// ถ้า ProductID = 0 คือ draft
+			if p.ProductID == 0 {
+				orderProduct.ProductDraftName = p.ProductDraftName
+				orderProduct.SupplyDraftName = p.SupplyDraftName
+				orderProduct.UnitDrafName = p.UnitDrafName
+				orderProduct.StatusDraft = true
+			}
+
+			if err := db.Create(&orderProduct).Error; err != nil {
 				tx.Rollback()
-                c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างรายการสินค้าไม่สำเร็จ"})
-                return
-            }
-        }
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างรายการสินค้าไม่สำเร็จ"})
+				return
+			}
+		}
 
         createdOrders = append(createdOrders, orderBill)
     }

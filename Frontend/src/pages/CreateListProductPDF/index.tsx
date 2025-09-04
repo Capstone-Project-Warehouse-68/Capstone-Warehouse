@@ -65,6 +65,17 @@ const OrderTable = () => {
     undefined
   );
 
+  // state สำหรับ modal เพิ่มสินค้า
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [newDraftProduct, setNewDraftProduct] = useState({
+    productDraftName: "",
+    supplyDraftName: "",
+    quantity: 1,
+    unit: undefined,
+  });
+  const [draftProducts, setDraftProducts] = useState<ProductPDF[]>([]);
+
+
   // ฟังก์ชันดึงข้อมูล
   const fetchCategory = async () => {
     try {
@@ -169,7 +180,9 @@ const OrderTable = () => {
   const filteredData = useMemo(() => {
     return productPDF.filter((item) => {
       const matchSearch =
-        item.supply_product_code.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.supply_product_code
+          .toLowerCase()
+          .includes(searchText.toLowerCase()) ||
         item.product_name.toLowerCase().includes(searchText.toLowerCase());
 
       const matchCategory = selectedCategory
@@ -408,6 +421,34 @@ const OrderTable = () => {
     }
   };
 
+  const handleAddDraftProduct = () => {
+  if (
+    !newDraftProduct.productDraftName ||
+    !newDraftProduct.supplyDraftName ||
+    !newDraftProduct.unit
+  ) {
+    message.error("กรุณากรอกข้อมูลให้ครบ");
+    return;
+  }
+
+  // สร้าง object draft แบบเดียวกับ ProductPDF
+  const draft: ProductPDF = {
+    id: Date.now(), // ใช้ timestamp เป็น id ชั่วคราว
+    product_id: Date.now(),
+    product_name: newDraftProduct.productDraftName,
+    supply_name: newDraftProduct.supplyDraftName,
+    quantity: newDraftProduct.quantity,
+    name_of_unit: newDraftProduct.unit,
+    supply_product_code: "-", // ถ้าไม่มีโค้ดจริง
+    date_import: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+    category_name: "",
+  };
+
+  setDraftProducts(prev => [...prev, draft]); // ต่อท้าย table
+  setIsAddProductModalOpen(false);
+  setNewDraftProduct({ productDraftName: "", supplyDraftName: "", quantity: 1, unit: undefined });
+};
+
   return (
     <div
       style={{
@@ -506,7 +547,7 @@ const OrderTable = () => {
       {/* Table */}
       <div style={{ marginTop: 20 }}>
         <Table
-          dataSource={filteredData}
+          dataSource={[...filteredData, ...draftProducts]}
           rowKey="id"
           columns={columns}
           pagination={false}
@@ -514,6 +555,29 @@ const OrderTable = () => {
           bordered={false}
           rowClassName={() => "custom-row"}
         />
+      </div>
+
+      <div
+        className="button-add-product"
+        style={{
+          width: "100%",
+          height: 50,
+          display: "flex",
+          justifyContent: "flex-end",
+        }}
+      >
+        <Button
+          style={{
+            marginRight: 8,
+            borderRadius: 50,
+            color: "blue",
+            height: 40,
+            marginTop: 10,
+          }}
+          onClick={() => setIsAddProductModalOpen(true)}
+        >
+          เพิ่มสินค้าลงใบสั่งซื้อ
+        </Button>
       </div>
 
       {/* Modal */}
@@ -540,7 +604,10 @@ const OrderTable = () => {
                   title: "ลำดับ",
                   render: (_: any, __: any, i: number) => i + 1,
                 },
-                { title: "รหัสสินค้าบริษัทขายส่ง", dataIndex: "supply_product_code" },
+                {
+                  title: "รหัสสินค้าบริษัทขายส่ง",
+                  dataIndex: "supply_product_code",
+                },
                 { title: "ชื่อสินค้า", dataIndex: "product_name" },
                 { title: "จำนวนที่สั่ง", dataIndex: "orderQuantity" },
                 {
@@ -586,6 +653,83 @@ const OrderTable = () => {
             ยืนยัน
           </Button>
         </div>
+      </Modal>
+
+      <Modal
+        open={isAddProductModalOpen}
+        onCancel={() => setIsAddProductModalOpen(false)}
+        footer={null}
+        title="เพิ่มสินค้า draft"
+      >
+        <div style={{ display: "block" }}>
+          <div style={{ display: "flex" }}>
+            <p>กรอกชื่อสินค้า :</p>
+            <Input
+              placeholder="ชื่อสินค้า"
+              value={newDraftProduct.productDraftName}
+              onChange={(e) =>
+                setNewDraftProduct((prev) => ({
+                  ...prev,
+                  productDraftName: e.target.value,
+                }))
+              }
+              style={{ marginBottom: 10 }}
+            />
+          </div>
+          <div style={{ display: "flex" }}>
+            <p>กรอกชื่อบริษัทขายส่ง :</p>
+            <Input
+              placeholder="ชื่อบริษัทขายส่ง"
+              value={newDraftProduct.supplyDraftName}
+              onChange={(e) =>
+                setNewDraftProduct((prev) => ({
+                  ...prev,
+                  supplyDraftName: e.target.value,
+                }))
+              }
+              style={{ marginBottom: 10 }}
+            />
+          </div>
+          <div style={{ display: "flex" }}>
+            <p>กรอกจำนวน :</p>
+            <Input
+              type="number"
+              placeholder="จำนวน"
+              value={newDraftProduct.quantity}
+              onChange={(e) =>
+                setNewDraftProduct((prev) => ({
+                  ...prev,
+                  quantity: Number(e.target.value),
+                }))
+              }
+              style={{ marginBottom: 10 }}
+            />
+          </div>
+          <div style={{ display: "flex" }}>
+            <p>เลือกหน่วย :</p>
+          </div>
+          <Select
+            placeholder="หน่วย"
+            style={{ width: 200, marginBottom: 10 }}
+            value={newDraftProduct.unit}
+            onChange={(value) =>
+              setNewDraftProduct((prev) => ({ ...prev, unit: value }))
+            }
+            options={unitPerQuantity.map((u) => ({
+              value: u.NameOfUnit,
+              label: u.NameOfUnit,
+            }))}
+          />
+        </div>
+        <Button
+            onClick={() => setIsModalOpen(false)}
+            style={{ marginRight: 8 }}
+          >
+            ยกเลิก
+          </Button>
+        <Button type="primary" onClick={handleAddDraftProduct}>
+          บันทึก
+        </Button>
       </Modal>
 
       {/* ปุ่ม */}
