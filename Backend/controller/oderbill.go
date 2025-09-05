@@ -39,6 +39,34 @@ type (
 	}
 )
 
+// --- Helpers กัน nil ---
+func strOrEmpty(s *string) string {
+    if s != nil {
+        return *s
+    }
+    return ""
+}
+
+func intOrZero(i *int) int {
+    if i != nil {
+        return *i
+    }
+    return 0
+}
+
+func uintOrZero(u *uint) uint {
+    if u != nil {
+        return *u
+    }
+    return 0
+}
+
+func boolOrFalse(b *bool) bool {
+    if b != nil {
+        return *b
+    }
+    return false
+}
 func GetAllOrderBills(c *gin.Context) {
     db := config.DB()
 
@@ -134,24 +162,26 @@ func GetAllOrderBills(c *gin.Context) {
             }
         }
 
-        // ถ้ามี product ให้ add เข้าไป
+         // product จริง
         if productID != nil && *productID != 0 {
             orderMap[orderBillID].Products = append(orderMap[orderBillID].Products, OutputOrderProduct{
                 ProductID:         *productID,
-                ProductName:       *productName,
-                SupplyProductCode: *supplyProductCode,
-                CategoryName:      *categoryName,
-                UnitPerQuantityID: *unitPerQuantityID,
-                UnitName:          *unitName,
-                Quantity:          *quantity,
+                ProductName:       strOrEmpty(productName),
+                SupplyProductCode: strOrEmpty(supplyProductCode),
+                CategoryName:      strOrEmpty(categoryName),
+                UnitPerQuantityID: uintOrZero(unitPerQuantityID),
+                UnitName:          strOrEmpty(unitName),
+                Quantity:          intOrZero(quantity),
             })
-        } else if statusDraft  != nil && *statusDraft  { 
+        } 
+        // draft
+        if boolOrFalse(statusDraft) {
             orderMap[orderBillID].ProductsDraft = append(orderMap[orderBillID].ProductsDraft, OutputOrderDraft{
-                ProductDraftName:  *productDraftName,
-                SupplyDraftName:   *supplyDraftName,
-                CategoryName:      *categoryName,
-                UnitDrafName:      *unitDrafName,
-                Quantity:          *quantity,
+                ProductDraftName: strOrEmpty(productDraftName),
+                SupplyDraftName:  strOrEmpty(supplyDraftName),
+                CategoryName:     strOrEmpty(categoryName),
+                UnitDrafName:     strOrEmpty(unitDrafName),
+                Quantity:         intOrZero(quantity),
             })
         }
     }

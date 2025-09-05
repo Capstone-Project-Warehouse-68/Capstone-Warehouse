@@ -74,7 +74,9 @@ const OrderTable = () => {
     unit: undefined,
   });
   const [draftProducts, setDraftProducts] = useState<ProductPDF[]>([]);
-
+  const [selectDraftSupply, setSelectDraftSupply] = useState<
+    string | undefined
+  >(undefined);
 
   // ฟังก์ชันดึงข้อมูล
   const fetchCategory = async () => {
@@ -200,10 +202,9 @@ const OrderTable = () => {
   const columns = [
     {
       title: "ลำดับ",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "number",
+      key: "number",
       width: 80,
-      render: (_: any, __: any, index: number) => index + 1,
     },
     {
       title: "รหัสสินค้าบริษัทขายส่ง",
@@ -255,7 +256,7 @@ const OrderTable = () => {
       width: 300,
       render: (_: any, record: ProductPDF) => {
         const currentOrder = selectedOrders.find(
-          (o) => o.product_id === record.product_id
+          (o) => o.number === record.number
         );
 
         const isSelected = !!currentOrder;
@@ -277,7 +278,7 @@ const OrderTable = () => {
               onChange={(e) =>
                 setSelectedOrders((prev) =>
                   prev.map((o) =>
-                    o.product_id === record.product_id
+                    o.number === record.number
                       ? { ...o, orderQuantity: Number(e.target.value) }
                       : o
                   )
@@ -299,9 +300,7 @@ const OrderTable = () => {
               onChange={(value) =>
                 setSelectedOrders((prev) =>
                   prev.map((o) =>
-                    o.product_id === record.product_id
-                      ? { ...o, unit: value }
-                      : o
+                    o.number === record.number ? { ...o, unit: value } : o
                   )
                 )
               }
@@ -316,7 +315,7 @@ const OrderTable = () => {
               icon={<CloseCircleOutlined />}
               onClick={() =>
                 setSelectedOrders((prev) =>
-                  prev.filter((o) => o.product_id !== record.product_id)
+                  prev.filter((o) => o.number !== record.number)
                 )
               }
             >
@@ -395,26 +394,50 @@ const OrderTable = () => {
             },
             {}
           )
-        ).map((items) => ({
-          employee_id: 1,
-          supply_id:
-            supplySelect.find((s) => s.SupplyName === items[0].supply_name)
-              ?.ID ?? 0,
-          description: `สั่งซื้อจาก supplier ${items[0].supply_name}`,
-          products: items.map((o) => ({
-            product_id: o.product_id,
-            unit_per_quantity_id: unitMap[o.unit] ?? 0,
-            quantity: o.orderQuantity,
-          })),
-        })),
+        ).map((items) => {
+          const supplierInfo = supplySelect.find(
+            (s) => s.SupplyName === items[0].supply_name
+          );
+
+          return {
+            employee_id: 1,
+            supply_id: supplierInfo?.ID ?? 0,
+            description: `สั่งซื้อจาก supplier ${
+              supplierInfo?.SupplyName ?? ""
+            }`,
+            products: items.map((o) => {
+              if (o.product_id && o.product_id !== 0) {
+                // กรณีสินค้าปกติ
+                return {
+                  product_id: o.product_id,
+                  unit_per_quantity_id: unitMap[o.unit] ?? 0,
+                  quantity: o.orderQuantity,
+                };
+              } else {
+                // กรณี draft product
+                return {
+                  product_id: 0,
+                  product_draft_name: o.product_name || "",
+                  supply_draft_name: supplierInfo?.SupplyName ?? "",
+                  unit_draf_name:
+                    unitPerQuantity.find((u) => u.NameOfUnit === o.unit)
+                      ?.NameOfUnit ?? "",
+                  unit_per_quantity_id: unitMap[o.unit] ?? 0,
+                  quantity: o.orderQuantity,
+                };
+              }
+            }),
+          };
+        }),
       };
 
       await addOrderBill(multiOrderData);
+      console.log("multiOrderData :", multiOrderData);
 
-      const pdfDocGenerator: SelectedOrderPdf[] = [...selectedOrders];
-      console.log("pdfDocGenerator =:", pdfDocGenerator);
-      generateOrderPDF(pdfDocGenerator);
-      setSelectedOrders([]);
+      // const pdfDocGenerator: SelectedOrderPdf[] = [...selectedOrders];
+      // console.log("pdfDocGenerator =:", pdfDocGenerator);
+      // generateOrderPDF(pdfDocGenerator);
+      // setSelectedOrders([]);
     } catch (error: any) {
       console.error("handleConfirm error:", error);
       message.error(error.error || "เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ");
@@ -422,32 +445,40 @@ const OrderTable = () => {
   };
 
   const handleAddDraftProduct = () => {
-  if (
-    !newDraftProduct.productDraftName ||
-    !newDraftProduct.supplyDraftName ||
-    !newDraftProduct.unit
-  ) {
-    message.error("กรุณากรอกข้อมูลให้ครบ");
-    return;
-  }
+    if (
+      !newDraftProduct.productDraftName ||
+      !newDraftProduct.supplyDraftName ||
+      !newDraftProduct.unit
+    ) {
+      message.error("กรุณากรอกข้อมูลให้ครบ");
+      return;
+    }
+    // หา id ล่าสุดจาก productPDF
+    const lastId =
+      productPDF.length > 0 ? Math.max(...productPDF.map((p) => p.number)) : 0;
 
-  // สร้าง object draft แบบเดียวกับ ProductPDF
-  const draft: ProductPDF = {
-    id: Date.now(), // ใช้ timestamp เป็น id ชั่วคราว
-    product_id: Date.now(),
-    product_name: newDraftProduct.productDraftName,
-    supply_name: newDraftProduct.supplyDraftName,
-    quantity: newDraftProduct.quantity,
-    name_of_unit: newDraftProduct.unit,
-    supply_product_code: "-", // ถ้าไม่มีโค้ดจริง
-    date_import: dayjs().format("YYYY-MM-DD HH:mm:ss"),
-    category_name: "",
+    // สร้าง object draft แบบเดียวกับ ProductPDF
+    const draft: ProductPDF = {
+      number: lastId + 1,
+      product_id: 0,
+      product_name: newDraftProduct.productDraftName,
+      supply_name: newDraftProduct.supplyDraftName,
+      quantity: newDraftProduct.quantity,
+      name_of_unit: newDraftProduct.unit,
+      supply_product_code: "-", // ถ้าไม่มีโค้ดจริง
+      date_import: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+      category_name: "",
+    };
+
+    setDraftProducts((prev) => [...prev, draft]); // ต่อท้าย table
+    setIsAddProductModalOpen(false);
+    setNewDraftProduct({
+      productDraftName: "",
+      supplyDraftName: "",
+      quantity: 1,
+      unit: undefined,
+    });
   };
-
-  setDraftProducts(prev => [...prev, draft]); // ต่อท้าย table
-  setIsAddProductModalOpen(false);
-  setNewDraftProduct({ productDraftName: "", supplyDraftName: "", quantity: 1, unit: undefined });
-};
 
   return (
     <div
@@ -677,18 +708,31 @@ const OrderTable = () => {
             />
           </div>
           <div style={{ display: "flex" }}>
-            <p>กรอกชื่อบริษัทขายส่ง :</p>
-            <Input
-              placeholder="ชื่อบริษัทขายส่ง"
-              value={newDraftProduct.supplyDraftName}
-              onChange={(e) =>
+            <p>เลือกบริษัทขายส่ง :</p>
+            <Select
+              placeholder={
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <FilterOutlined style={{ color: "#1890ff" }} />
+                  บริษัทขายส่ง
+                </span>
+              }
+              style={{ width: 300, height: 50, borderRadius: 50 }}
+              allowClear
+              value={selectDraftSupply}
+              onChange={(value) => {
                 setNewDraftProduct((prev) => ({
                   ...prev,
-                  supplyDraftName: e.target.value,
-                }))
-              }
-              style={{ marginBottom: 10 }}
-            />
+                  supplyDraftName: value,
+                }));
+                setSelectDraftSupply(value);
+              }}
+            >
+              {supplySelect.map((sup) => (
+                <Option key={sup.ID} value={sup.SupplyName}>
+                  {sup.SupplyName}
+                </Option>
+              ))}
+            </Select>
           </div>
           <div style={{ display: "flex" }}>
             <p>กรอกจำนวน :</p>
@@ -722,11 +766,11 @@ const OrderTable = () => {
           />
         </div>
         <Button
-            onClick={() => setIsModalOpen(false)}
-            style={{ marginRight: 8 }}
-          >
-            ยกเลิก
-          </Button>
+          onClick={() => setIsAddProductModalOpen(false)}
+          style={{ marginRight: 8 }}
+        >
+          ยกเลิก
+        </Button>
         <Button type="primary" onClick={handleAddDraftProduct}>
           บันทึก
         </Button>

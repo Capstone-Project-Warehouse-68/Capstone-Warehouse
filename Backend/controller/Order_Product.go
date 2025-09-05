@@ -14,8 +14,8 @@ type(
 		ProductDraftName  string `json:"product_draft_name,omitempty"` // สำหรับสินค้าตัวใหม่
 		SupplyDraftName   string `json:"supply_draft_name,omitempty"` // สำหรับสินค้าตัวใหม่
 		UnitDrafName      string `json:"unit_draf_name,omitempty"` // สำหรับสินค้าตัวใหม่
-		UnitPerQuantityID uint   `json:"unit_per_quantity_id" binding:"required"`
-		Quantity          int    `json:"quantity" binding:"required"`
+		UnitPerQuantityID uint   `json:"unit_per_quantity_id" `
+		Quantity          int    `json:"quantity"`
 	}
 	OrderBillInput struct {
 		SupplyID    uint               `json:"supply_id" binding:"required"`

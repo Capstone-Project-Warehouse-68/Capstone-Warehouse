@@ -1,6 +1,9 @@
 // type ของ Product ที่จะส่งไป
 export interface OrderProductInput {
   product_id: number;
+  product_draft_name?: string;
+  supply_draft_name?: string;
+  unit_draf_name?: string;
   unit_per_quantity_id: number;
   quantity: number;
 }

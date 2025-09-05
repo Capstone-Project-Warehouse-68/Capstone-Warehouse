@@ -62,14 +62,14 @@ const HistoryPdf = () => {
       const result = await DeleteOrderBill(id);
       if (result.error) {
         console.error("Delete failed:", result.error);
-        message.error("เกิดข้อผิดพลาดในการลบข้อมูล")
+        message.error("เกิดข้อผิดพลาดในการลบข้อมูล");
       } else {
         console.log("Delete successful:", result.message);
-        message.success(result.message)
+        message.success(result.message);
       }
     } catch (error: unknown) {
       console.error("Unexpected error:", error);
-      message.error("เกิดข้อผิดพลาดที่ไม่ทราบ")
+      message.error("เกิดข้อผิดพลาดที่ไม่ทราบ");
     }
     fetchOrderBills();
   };
@@ -79,49 +79,48 @@ const HistoryPdf = () => {
   }, []);
 
   const CreatePdf = (record: OrderBill) => {
-  // สร้าง array สำหรับ PDF
-  let allProducts: SelectedOrderPdf[] = [];
+    // สร้าง array สำหรับ PDF
+    let allProducts: SelectedOrderPdf[] = [];
 
-  // ใส่ products ปกติ
-  if (record.products && record.products.length > 0) {
-    allProducts = record.products.map((p) => ({
-      category_name: p.category_name,
-      date_import: record.updated_at,
-      name_of_unit: p.unit_name,
-      orderQuantity: p.quantity,
-      supply_product_code: p.supply_product_code,
-      product_id: p.product_id,
-      product_name: p.product_name,
-      quantity: p.quantity,
-      supply_name: record.supply_name,
-      unit: p.unit_name,
-      supply_id: record.supply_id,
-    }));
-  }
+    // ใส่ products ปกติ
+    if (record.products && record.products.length > 0) {
+      allProducts = record.products.map((p) => ({
+        category_name: p.category_name,
+        date_import: record.updated_at,
+        name_of_unit: p.unit_name,
+        orderQuantity: p.quantity,
+        supply_product_code: p.supply_product_code,
+        product_id: p.product_id,
+        product_name: p.product_name,
+        quantity: p.quantity,
+        supply_name: record.supply_name,
+        unit: p.unit_name,
+        supply_id: record.supply_id,
+      }));
+    }
 
-  // ต่อท้าย products_draft ถ้ามี
-  if (record.products_draft && record.products_draft.length > 0) {
-    const draftProducts = record.products_draft.map((p) => ({
-      category_name: p.category_name,
-      date_import: record.updated_at,
-      name_of_unit: p.unit_draf_name,
-      orderQuantity: p.quantity,
-      supply_product_code: "", // draft ไม่มีรหัส
-      product_id: 0, // draft ไม่มี ID
-      product_name: p.product_draft_name,
-      quantity: p.quantity,
-      supply_name: p.supply_draft_name, // ใช้ชื่อ supplier ของ draft
-      unit: p.unit_draf_name,
-      supply_id: record.supply_id,
-    }));
+    // ต่อท้าย products_draft ถ้ามี
+    if (record.products_draft && record.products_draft.length > 0) {
+      const draftProducts = record.products_draft.map((p) => ({
+        category_name: p.category_name,
+        date_import: record.updated_at,
+        name_of_unit: p.unit_draf_name,
+        orderQuantity: p.quantity,
+        supply_product_code: "", // draft ไม่มีรหัส
+        product_id: 0, // draft ไม่มี ID
+        product_name: p.product_draft_name,
+        quantity: p.quantity,
+        supply_name: p.supply_draft_name, // ใช้ชื่อ supplier ของ draft
+        unit: p.unit_draf_name,
+        supply_id: record.supply_id,
+      }));
 
-    allProducts = allProducts.concat(draftProducts);
-  }
+      allProducts = allProducts.concat(draftProducts);
+    }
 
-  console.log("data for pdf", allProducts);
-  generateOrderPDF(allProducts);
-};
-
+    console.log("data for pdf", allProducts);
+    generateOrderPDF(allProducts);
+  };
 
   const columns = [
     {
@@ -168,15 +167,30 @@ const HistoryPdf = () => {
                     {dayjs(record.updated_at).format("DD/MM/YYYY HH:mm")}
                   </p>
                   <Table
-                    dataSource={record.products}
-                    rowKey="product_id"
+                    dataSource={[
+                      ...(record.products || []),
+                      ...(record.products_draft || []).map((p) => ({
+                        product_id: 0,
+                        product_name: p.product_draft_name || "-",
+                        quantity: p.quantity,
+                        unit_name: p.unit_draf_name,
+                        supply_product_code: "-",
+                        category_name: p.category_name || "-",
+                        isDraft: true,
+                      })),
+                    ]}
+                    rowKey={(item) => `${item.product_id}-${item.product_name}`}
                     pagination={false}
                     size="small"
                     columns={[
                       {
                         title: "รหัสสินค้า",
-                        dataIndex: "product_id",
-                        key: "product_id",
+                        dataIndex: "supply_product_code",
+                        key: "supply_product_code",
+                        render: (_, record) =>
+                          (record as any).isDraft
+                            ? "ยังไม่มีสินค้าจริง"
+                            : record.supply_product_code,
                       },
                       {
                         title: "ชื่อสินค้า",
@@ -192,6 +206,11 @@ const HistoryPdf = () => {
                         title: "หน่วย",
                         dataIndex: "unit_name",
                         key: "unit_name",
+                      },
+                      {
+                        title: "ประเภท",
+                        dataIndex: "category_name",
+                        key: "category_name",
                       },
                     ]}
                   />
