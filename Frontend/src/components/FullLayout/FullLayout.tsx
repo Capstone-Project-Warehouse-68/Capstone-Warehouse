@@ -7,6 +7,8 @@ import SignInPages from "../../pages/authentication/Login";
 import SiderOwner from "../SiderOwner";
 import ImportProduct from "../../pages/ImportProduct/importproduct";
 import CreateSupplyer from "../../pages/CreateSupplyer/CreateSupplyer";
+import CreateUnitQuantity from "../../pages/CreateUnitQuantity/CreateUnitQuantity";
+import CreateBankType from "../../pages/CreateBankType/CreateBanktype";
 
 
 const { Header, Content } = Layout;
@@ -40,6 +42,8 @@ const FullLayout: React.FC = () => {
                                 <Route path="/" element={<SignInPages />} />
                                 <Route path="/importproduct" element={<ImportProduct />}/>
                                 <Route path="/createsupplyer" element={<CreateSupplyer />}/>
+                                <Route path="/createunitquantity" element={<CreateUnitQuantity />}/>
+                                <Route path="/createbanktype" element={<CreateBankType />}/>
                             </Routes>
                         </div>
                     </Content>

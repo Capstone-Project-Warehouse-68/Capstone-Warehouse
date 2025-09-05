@@ -1,0 +1,28 @@
+/* แบบไม่เห็น overflow */
+.custom-sider {
+  overflow-y: auto;
+  scrollbar-width: none;    
+}
+.custom-sider::-webkit-scrollbar {
+  display: none;              
+}
+
+/* แบบเห็น overflow */
+/* .custom-sider {
+  overflow-y: auto;
+  scrollbar-width: thin;             
+  scrollbar-color: #1890ff #001529;   
+}
+
+.custom-sider::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-sider::-webkit-scrollbar-track {
+  background: #001529; 
+}
+
+.custom-sider::-webkit-scrollbar-thumb {
+  background-color: #1890ff; 
+  border-radius: 3px;
+} */

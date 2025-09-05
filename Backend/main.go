@@ -42,6 +42,11 @@ func main() {
 		r.POST("/CreateProductWithBill", controller.CreateBillWithProducts)
 		r.PATCH("/Updatebillwithproduct", controller.UpdateBillWithProducts)
 		r.DELETE("/deletebillwithproduct/:id", controller.DeleteBill)
+		r.POST("/createunitquantity", controller.CreateUnitPerQuantity)
+		r.POST("/createbanktype", controller.CreateBankType)
+		r.GET("/getBankType", controller.GetBankType)
+		r.DELETE("/deleteBank/:id", controller.DeleteBankType)
+		r.PATCH("/updateBank/:id", controller.UpdateBankType)
 		r.POST("/signin", controller.SignIn)
 		router.Use(middlewares.Authorizes())
 	}

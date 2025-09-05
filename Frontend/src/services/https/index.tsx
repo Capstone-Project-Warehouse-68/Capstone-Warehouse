@@ -1,6 +1,8 @@
 import axios from "axios";
 import type { LoginInterface } from "../../interfaces/Login";
 import type { EmployeeInterface } from "../../interfaces/Employee";
+import type { UnitPerQuantityInterface } from "../../interfaces/UnitPerQuantity";
+import type { BankTypeInterface } from "../../interfaces/BankType";
 
 const apiUrl = "http://localhost:8000";
 const Authorization = localStorage.getItem("token");
@@ -119,6 +121,41 @@ async function DeleteBill(id: number) {
     .catch((e) => e.response);
 }
 
+async function CreateUnitOfQuantity(data: UnitPerQuantityInterface) {
+  return await axios
+    .post(`${apiUrl}/createunitquantity`, data, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function CreateBank(data: BankTypeInterface) {
+  return await axios
+    .post(`${apiUrl}/createbanktype`, data, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function GetBankTypes() {
+  return await axios
+    .get(`${apiUrl}/getBankType`, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function DeleteBankType(id: number) {
+  return await axios
+    .delete(`${apiUrl}/deleteBank/${id}`, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function UpdateBankType(id: number, data: BankTypeInterface) {
+  return await axios
+    .patch(`${apiUrl}/updateBank/${id}`, data, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
 export {
     SignIn,
     CreateEmployee,
@@ -135,4 +172,9 @@ export {
     CreateBillwithProduct,
     GetSupply,
     DeleteBill,
+    CreateUnitOfQuantity,
+    CreateBank,
+    GetBankTypes,
+    DeleteBankType,
+    UpdateBankType,
 };

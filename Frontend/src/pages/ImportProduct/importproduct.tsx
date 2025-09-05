@@ -44,8 +44,7 @@ function ImportProduct() {
         reader.onload = (e) => {
             const data = new Uint8Array(e.target?.result as ArrayBuffer);
             const workbook = XLSX.read(data, { type: "array" });
-
-            const newBills: any[] = [];
+            const formValues: any = { bills: [] };
 
             workbook.SheetNames.forEach((sheetName) => {
                 const worksheet = workbook.Sheets[sheetName];
@@ -68,7 +67,9 @@ function ImportProduct() {
                 });
 
                 // หาตำแหน่ง header ของ products
-                const headerIndex = jsonData.findIndex(row => row[0] === "ลำดับ");
+                const headerIndex = jsonData.findIndex(
+                    row => row[0] === "ลำดับ"
+                );
 
                 if (headerIndex !== -1) {
                     const productRows = jsonData.slice(headerIndex + 1).filter(row => row && row.length > 0);
@@ -79,16 +80,12 @@ function ImportProduct() {
                         if (row[3] === "จำนวนเงินรวมทั้งสิ้น") {
                             summaryPrice = row[8] !== undefined ? parseFloat(row[8].toString().replace(/,/g, "")) : 0;
                         } else {
-                            const unitNameFromExcel = row[5] ?? "";
-                            const unitObj = Units.find(u => u.NameOfUnit === unitNameFromExcel);
-                            const unitID = unitObj ? unitObj.ID : null;
-
                             products.push({
                                 ManufacturerCode: row[1] ?? "",
                                 SupplyProductCode: row[2] ?? "",
                                 ProductName: row[3] ?? "",
                                 Quantity: row[4] ?? 0,
-                                UnitPerQuantityID: unitID,
+                                UnitPerQuantityID: row[5] ?? "",
                                 PricePerPiece: row[6] ?? 0,
                                 Discount: row[7] ?? 0,
                                 SumPriceProduct: row[8] ?? 0,
@@ -97,26 +94,20 @@ function ImportProduct() {
                             });
                         }
                     }
-
                     bill.products = products;
                     if (summaryPrice !== null) bill.SummaryPrice = summaryPrice;
                 }
 
-                newBills.push(bill);
+                formValues.bills.push(bill);
+
             });
-
-            console.log("Excel Bills:", newBills);
-
-            // Merge กับ tempBills ปัจจุบัน
-            const mergedBills = [...tempBills, ...newBills];
-
-            // บันทึกลง localStorage และ state
-            saveTempBills(mergedBills);
-
-            // ใส่ค่าเข้า form สำหรับบิลแรก
-            form.setFieldsValue({ bills: mergedBills });
-
-            setTempBills(mergedBills);
+            console.log("Form Values (All Bills):", formValues);
+            // ใส่ค่าเข้า form
+            form.setFieldsValue(formValues);
+            // บันทึกลง localStorage
+            saveTempBills(formValues.bills);
+            // ตั้งค่า state สำหรับ currentStep
+            setTempBills(formValues.bills);
             setCurrentStep(0);
             setIsCreateModalOpen(true);
         };
@@ -124,7 +115,6 @@ function ImportProduct() {
         reader.readAsArrayBuffer(file);
         return false;
     };
-
 
     const saveTempBills = (bills: any[]) => {
         try {
@@ -815,7 +805,7 @@ function ImportProduct() {
                                                     label="คำอธิบายสินค้า"
                                                     rules={[{ required: true, message: 'กรุณากรอกคำอธิบายสินค้า' }]}
                                                 >
-                                                    <Input placeholder="กรอกคำอธิบายสินค้า" />
+                                                    <Input.TextArea rows={3} placeholder="กรอกคำอธิบายสินค้า" />
                                                 </Form.Item>
                                             </Col>
 

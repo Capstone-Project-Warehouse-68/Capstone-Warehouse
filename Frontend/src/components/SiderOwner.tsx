@@ -12,12 +12,16 @@ import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import HistoryIcon from '@mui/icons-material/History';
 import PostAddIcon from '@mui/icons-material/PostAdd';
 import AddBusinessIcon from '@mui/icons-material/AddBusiness';
+import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import NotificationImportantIcon from '@mui/icons-material/NotificationImportant';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Link } from "react-router-dom";
 import { GetEmployeeById } from "../services/https";
 import type { EmployeeInterface } from "../interfaces/Employee";
+import './Sider.css'
 
 function SiderOwner() {
   const page = localStorage.getItem("page");
@@ -32,7 +36,7 @@ function SiderOwner() {
   const employeeID = localStorage.getItem("id");
 
   const getEmployeeById = async () => {
-    
+
     try {
       const res = await GetEmployeeById(Number(employeeID || 0));
       if (res.status === 200) {
@@ -93,7 +97,11 @@ function SiderOwner() {
   return (
     <>
       {contextHolder}
-      <Sider collapsed={collapsed} className="custom-sider" width={window.innerWidth * 0.16}>
+      <Sider collapsed={collapsed} className="custom-sider" width={window.innerWidth * 0.16}
+        style={{
+          height: "100vh",
+          overflowY: "auto",
+        }}>
         <div
           style={{
             display: "flex",
@@ -196,8 +204,8 @@ function SiderOwner() {
                 </Menu.Item>
               </SubMenu>
 
-              <Menu.Item
-                key="createsupplyer"
+              <SubMenu
+                key="sub2"
                 icon={
                   <div
                     style={{
@@ -207,13 +215,21 @@ function SiderOwner() {
                       height: "100%",
                     }}
                   >
-                    <AddBusinessIcon style={{ fontSize: 26 }} />
+                    <CreateNewFolderIcon style={{ fontSize: 26 }} />
                   </div>
                 }
-                onClick={() => setCurrentPage("createsupplyer")}
+                title="สร้างข้อมูลสินค้า"
               >
-                <Link to="/createsupplyer" style={{ fontSize: 16 }}>สร้างข้อมูลบริษัทสั่งซื้อ</Link>
-              </Menu.Item>
+                <Menu.Item key="s1" icon={<AccountBalanceIcon />}>
+                  <Link to="/createbanktype " style={{ fontSize: 14 }}>สร้างข้อมูลธนาคาร</Link>
+                </Menu.Item>
+                <Menu.Item key="s2" icon={<AddBusinessIcon />}>
+                  <Link to="/createsupplyer" style={{ fontSize: 14 }}>สร้างข้อมูลบริษัทสั่งซื้อ</Link>
+                </Menu.Item>
+                <Menu.Item key="s3" icon={<InventoryIcon />}>
+                  <Link to="/createunitquantity" style={{ fontSize: 14 }}>สร้างหน่วยของสินค้า</Link>
+                </Menu.Item>
+              </SubMenu>
 
               <Menu.Item
                 key="importproduct"
