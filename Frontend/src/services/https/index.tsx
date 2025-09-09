@@ -3,6 +3,7 @@ import type { LoginInterface } from "../../interfaces/Login";
 import type { EmployeeInterface } from "../../interfaces/Employee";
 import type { UnitPerQuantityInterface } from "../../interfaces/UnitPerQuantity";
 import type { BankTypeInterface } from "../../interfaces/BankType";
+import type { SupplyInterface } from "../../interfaces/Supply";
 
 const apiUrl = "http://localhost:8000";
 const Authorization = localStorage.getItem("token");
@@ -156,6 +157,27 @@ async function UpdateBankType(id: number, data: BankTypeInterface) {
     .catch((e) => e.response);
 }
 
+async function CreateSupplys(data: SupplyInterface) {
+  return await axios
+    .post(`${apiUrl}/CreateSupply`, data, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function UpdateSupply(id: number, data: SupplyInterface) {
+  return await axios
+    .patch(`${apiUrl}/UpdateSupply/${id}`, data, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function DeleteSupply(id: number) {
+  return await axios
+    .delete(`${apiUrl}/DeleteSupply/${id}`, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
 export {
     SignIn,
     CreateEmployee,
@@ -177,4 +199,7 @@ export {
     GetBankTypes,
     DeleteBankType,
     UpdateBankType,
+    CreateSupplys,
+    UpdateSupply,
+    DeleteSupply,
 };

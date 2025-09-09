@@ -33,7 +33,6 @@ function ImportProduct() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [currentStep, setCurrentStep] = useState(0); // index ของบิลที่กำลังแก้
     const [form] = Form.useForm();
-    const [billForms, setBillForms] = useState<any[]>([{}]);
     const [tempBills, setTempBills] = useState<any[]>(() => {
         const saved = localStorage.getItem("tempBills");
         return saved ? JSON.parse(saved) : [];
@@ -254,7 +253,6 @@ function ImportProduct() {
             // 4. Reset form และ state
             form.resetFields();
             setIsCreateModalOpen(false);
-            setBillForms([{ products: [{}] }]);
             setCurrentStep(0);
             setTempBills([]);
             localStorage.removeItem("tempBills");
@@ -586,6 +584,7 @@ function ImportProduct() {
                 onCancel={handleCreateCancel}
                 okText="บันทึก"
                 cancelText="ยกเลิก"
+                centered
                 footer={[
                     <Button key="cancel" onClick={() => setIsCreateModalOpen(false)}>ยกเลิก</Button>,
                     <Button

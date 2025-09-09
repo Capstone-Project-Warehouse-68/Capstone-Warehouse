@@ -256,6 +256,7 @@ function CreateBankType() {
                 okText="บันทึก"
                 cancelText="ยกเลิก"
                 width={650}
+                centered
             >
                 <Form
                     form={form}
