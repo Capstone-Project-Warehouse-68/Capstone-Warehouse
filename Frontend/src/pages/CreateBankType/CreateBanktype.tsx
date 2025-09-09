@@ -238,12 +238,10 @@ function CreateBankType() {
                 </span>
             </div>
 
-            <div style={{ padding: "0 16px" }}>
-                <Card>
-                    <Button type="primary" onClick={showModal}>
-                        สร้างข้อมูลธนาคาร
-                    </Button>
-                </Card>
+            <div style={{ padding: "16px 16px" }}>
+                <Button type="primary" onClick={showModal}>
+                    สร้างข้อมูลธนาคาร
+                </Button>
 
                 <div style={{ marginTop: 16 }}>
                     {renderBankCards()}
@@ -341,11 +339,29 @@ function CreateBankType() {
                                                     {...restField}
                                                     name={[name, "BankTypeName"]}
                                                     label="ชื่อธนาคาร"
-                                                    rules={[{ required: true, message: "กรุณากรอกชื่อธนาคาร" }]}
+                                                    rules={[
+                                                        { required: true, message: "กรุณากรอกชื่อธนาคาร" },
+                                                        {
+                                                            validator: async (_, value) => {
+                                                                if (!value) return Promise.resolve();
+                                                                const trimmed = value.trim();
+                                                                const exists = Banks.some(
+                                                                    (b) => b.BankTypeName.trim() === trimmed
+                                                                );
+
+                                                                if (exists) {
+                                                                    return Promise.reject(new Error("มีธนาคารนี้อยู่แล้ว"));
+                                                                }
+
+                                                                return Promise.resolve();
+                                                            },
+                                                        },
+                                                    ]}
                                                 >
                                                     <Input placeholder="กรุณากรอกชื่อธนาคาร" />
                                                 </Form.Item>
                                             </Col>
+
                                         </Row>
                                     </Card>
                                 ))}

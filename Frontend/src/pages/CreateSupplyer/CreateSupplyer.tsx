@@ -14,7 +14,7 @@ function CreateSupplyer() {
     const handleOk = () => {
         form.validateFields().then(values => {
             console.log("ค่าที่กรอก:", values);
-            messageApi.success("บันทึกข้อมูลเรียบร้อยแล้ว ✅");
+            messageApi.success("บันทึกข้อมูลเรียบร้อยแล้ว");
             setIsModalOpen(false);
             form.resetFields();
         }).catch(info => {
