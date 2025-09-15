@@ -32,12 +32,12 @@ func main() {
 	router := r.Group("/")
 	router.Use(middlewares.Authorizes())
 	{	
-		// Employee
+				// Employee
 		router.POST("/CreateEmployee", controller.CreateEmployee)
 		router.PATCH("/UpdateEmployee/:id", controller.UpdateEmployee)
 		router.DELETE("/DeleteEmployee/:id", controller.DeleteEmployee)
 		router.GET("/GetAllEmployees", controller.GetAllEmployees)
-		router.GET("/GetEmployeeById/:id",controller.GetEmployeeByID)
+		router.GET("/GetEmployeeById/:id", controller.GetEmployeeByID)
 		
 		// Bill & Product
 		router.GET("/getAllBill", controller.GetAllBill)
@@ -61,7 +61,9 @@ func main() {
 		router.POST("/AddOrderBillWithProducts", controller.AddOrderBillWithProducts)
 		router.GET("/GetAllOrderBills", controller.GetAllOrderBills)
 		router.DELETE("/DeleteOrderBill/:id", controller.DeleteOrderBill)
-		// r.PATCH("/UpdateOrderBill:id",controller.UpdateOrderBill)
+		// router.PATCH("/UpdateOrderBill:id", controller.UpdateOrderBill)
+
+		// Dashboard
 		router.GET("/GetDashboardSummary", controller.GetDashboardSummary)
 		router.GET("/GetDashboardSupplier", controller.GetDashboardSupplier)
 		router.GET("/GetDashboardTrend", controller.GetDashboardTrend)
