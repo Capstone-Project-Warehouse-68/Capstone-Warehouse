@@ -202,20 +202,21 @@ func UpdateLimitQuantity(c *gin.Context) {
 		"limit_quantity": product.LimitQuantity,
 	})
 }
-type LimitQuantity struct {
-	ProductID        uint      `json:"product_id"`
-	LimitQuantity    uint      `json:"limit_quantity"`
-	ProductCode      string    `json:"product_code"`
-	ProductName      string    `json:"product_name"`
-	SupplierName     string    `json:"supplier_name"`
-	UnitPerQuantity  string    `json:"unit_per_quantity"`
-	ProductUpdatedAt time.Time `json:"product_updated_at"`
-	Quantity          uint		`json:"quantity"`
-	CategoryName     string    `json:"category_name"`
 
-}
 
 func GetLimitQuantity(c *gin.Context) {
+	type LimitQuantity struct {
+		ProductID        uint      `json:"product_id"`
+		LimitQuantity    uint      `json:"limit_quantity"`
+		ProductCode      string    `json:"product_code"`
+		ProductName      string    `json:"product_name"`
+		SupplierName     string    `json:"supplier_name"`
+		UnitPerQuantity  string    `json:"unit_per_quantity"`
+		ProductUpdatedAt time.Time `json:"product_updated_at"`
+		Quantity          uint		`json:"quantity"`
+		CategoryName     string    `json:"category_name"`
+
+	}
 	db := config.DB()
 	var limitQuantities []LimitQuantity
 	
@@ -282,20 +283,21 @@ func GetLowStockProducts(c *gin.Context) {
 	c.JSON(http.StatusOK, notifications)
 }
 
-type ShowProductResponse struct {
-	ID                uint    `json:"ID"`
-	ProductCode       string  `json:"ProductCode"`
-	ProductName       string  `json:"ProductName"`
-	Quantity          int     `json:"Quantity"`
-	NameOfUnit	   string  `json:"NameOfUnit"`
-	SupplyProductCode string  `json:"SupplyProductCode"`
-	SupplyName	   string  `json:"SupplyName"`
-	Shelf        string  `json:"Shelf"`
-	Zone 	  string  `json:"Zone"`
-	UpdatedAt        time.Time `json:"UpdatedAt"`
-	Description       string  `json:"Description"`
-}
+
 func GetShowProduct(c *gin.Context) {
+	type ShowProductResponse struct {
+		ID                uint    `json:"ID"`
+		ProductCode       string  `json:"ProductCode"`
+		ProductName       string  `json:"ProductName"`
+		Quantity          int     `json:"Quantity"`
+		NameOfUnit	   string  `json:"NameOfUnit"`
+		SupplyProductCode string  `json:"SupplyProductCode"`
+		SupplyName	   string  `json:"SupplyName"`
+		Shelf        string  `json:"Shelf"`
+		Zone 	  string  `json:"Zone"`
+		UpdatedAt        time.Time `json:"UpdatedAt"`
+		Description       string  `json:"Description"`
+	}
 	db := config.DB()
 
 	var products []ShowProductResponse
@@ -394,19 +396,21 @@ func GetProductsforShowlist(c *gin.Context) {
 }
 
 
-type ProductReport struct {
-	Number  uint `json:"number"`
-	ProductID           int       `json:"product_id"`
-	SupplyProductCode  string    `json:"supply_product_code"`
-	ProductName  string    `json:"product_name"`
-	Quantity     int       `json:"quantity"`
-	NameOfUnit  string    `json:"name_of_unit"`
-	SupplyName   string    `json:"supply_name"`
-	DateImport   time.Time `json:"date_import"`
-	CategoryName      string    `json:"category_name"`
-}
+
 
 func GetProductPDF(c *gin.Context) {
+	type ProductReport struct {
+		Number  uint `json:"number"`
+		ProductID           int       `json:"product_id"`
+		SupplyProductCode  string    `json:"supply_product_code"`
+		ProductName  string    `json:"product_name"`
+		Quantity     int       `json:"quantity"`
+		NameOfUnit  string    `json:"name_of_unit"`
+		SupplyName   string    `json:"supply_name"`
+		DateImport   time.Time `json:"date_import"`
+		CategoryName      string    `json:"category_name"`
+	}
+
 	db := config.DB()
 
 	var results []ProductReport
@@ -436,4 +440,111 @@ func GetProductPDF(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": results})
+}
+
+//สำหรับแดชบอร์ด
+type ( 
+	SummaryReport struct {
+		MonthTotal float64 `json:"month_total"`
+		YearTotal  float64 `json:"year_total"`
+	}
+	SupplierReport struct {
+		SupplyName string  `json:"supply_name"`
+		Total      float64 `json:"total"`
+	}
+	TrendReport struct {
+		Month int     `json:"month"`
+		Total float64 `json:"total"`
+	}
+)
+// Summary
+func GetDashboardSummary(c *gin.Context) {
+	db := config.DB()
+
+	year := c.Query("year")
+	month := c.Query("month") // optional
+
+	var result SummaryReport
+
+	// ปี
+	var yearSum *float64
+	if err := db.Table("bills").
+		Select("COALESCE(SUM(summary_price), 0)").
+		Where("strftime('%Y', date_import) = ?", year).
+		Scan(&yearSum).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if yearSum != nil {
+		result.YearTotal = *yearSum
+	}
+
+	// เดือน (ถ้ามี)
+	if month != "" {
+		var monthSum *float64
+		if err := db.Table("bills").
+			Select("COALESCE(SUM(summary_price), 0)").
+			Where("strftime('%Y', date_import) = ? AND strftime('%m', date_import) = ?", year, month).
+			Scan(&monthSum).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		if monthSum != nil {
+			result.MonthTotal = *monthSum
+		}
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+
+
+// Supplier
+func GetDashboardSupplier(c *gin.Context) {
+	db := config.DB()
+
+	year := c.Query("year")
+	month := c.Query("month")
+
+	var results []SupplierReport
+
+	query := db.Table("bills").
+		Select("supplies.supply_name, SUM(bills.summary_price) as total").
+		Joins("JOIN supplies ON supplies.id = bills.supply_id").
+		Where("strftime('%Y', bills.date_import) = ?", year)
+
+	if month != "" {
+		query = query.Where("strftime('%m', bills.date_import) = ?", month)
+	}
+
+	if err := query.Group("supplies.supply_name").
+		Having("total > 0"). // <- filter ออกถ้าไม่มียอด
+		Order("total DESC").
+		Scan(&results).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, results)
+}
+
+
+// Trend
+func GetDashboardTrend(c *gin.Context) {
+	db := config.DB()
+
+	year := c.Query("year")
+	var results []TrendReport
+
+	if err := db.Table("bills").
+		Select("CAST(strftime('%m', date_import) AS INTEGER) as month, SUM(summary_price) as total").
+		Where("strftime('%Y', date_import) = ?", year).
+		Group("month").
+		Order("month").
+		Scan(&results).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, results)
 }
