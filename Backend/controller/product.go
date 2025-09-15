@@ -209,7 +209,7 @@ type LimitQuantity struct {
 	ProductName      string    `json:"product_name"`
 	SupplierName     string    `json:"supplier_name"`
 	UnitPerQuantity  string    `json:"unit_per_quantity"`
-	ProductCreatedAt time.Time `json:"product_created_at"`
+	ProductUpdatedAt time.Time `json:"product_updated_at"`
 	Quantity          uint		`json:"quantity"`
 	CategoryName     string    `json:"category_name"`
 
@@ -227,7 +227,7 @@ func GetLimitQuantity(c *gin.Context) {
 				s.supply_name AS supplier_name,
 				p.limit_quantity AS limit_quantity,
 				upq.name_of_unit AS unit_per_quantity,
-				p.created_at AS product_created_at,
+				p.updated_at AS product_updated_at,
 				p.quantity AS quantity,
 				c.category_name AS category_name
 			FROM 
@@ -264,7 +264,7 @@ func GetLowStockProducts(c *gin.Context) {
 
 	var products []entity.Product
 
-	if err := db.Preload("UnitPerQuantity").Where("quantity <= limit_quantity").Find(&products).Error; err != nil {
+	if err := db.Preload("UnitPerQuantity").Where("quantity < limit_quantity").Find(&products).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลสินค้าได้"})
 		return
 	}
@@ -292,7 +292,7 @@ type ShowProductResponse struct {
 	SupplyName	   string  `json:"SupplyName"`
 	Shelf        string  `json:"Shelf"`
 	Zone 	  string  `json:"Zone"`
-	CreatedAt        time.Time `json:"CreatedAt"`
+	UpdatedAt        time.Time `json:"UpdatedAt"`
 	Description       string  `json:"Description"`
 }
 func GetShowProduct(c *gin.Context) {
@@ -311,7 +311,7 @@ func GetShowProduct(c *gin.Context) {
 		su.supply_name,
 		sh.shelf_name AS shelf,
 		z.zone_name AS zone,
-		p.created_at,
+		p.updated_at,
 		p.description
 	FROM products p
 	LEFT JOIN unit_per_quantities u ON p.unit_per_quantity_id = u.id
@@ -345,7 +345,7 @@ func GetProductsforShowlist(c *gin.Context) {
         SupplyName        string    `json:"SupplyName"`
         Shelf             string    `json:"Shelf"`
         Zone              string    `json:"Zone"`
-        CreatedAt         time.Time `json:"CreatedAt"`
+        UpdatedAt         time.Time `json:"UpdatedAt"`
         Description       string    `json:"Description"`
         CategoryName      string    `json:"CategoryName"`
     }
@@ -372,7 +372,7 @@ func GetProductsforShowlist(c *gin.Context) {
             COALESCE(ls.supply_name, '') AS supply_name,
             COALESCE(s.shelf_name, '') AS shelf,
             COALESCE(z.zone_name, '') AS zone,
-            p.created_at,
+            p.updated_at,
             COALESCE(p.description, '') AS description,
             COALESCE(c.category_name, '') AS category_name
         `).
@@ -395,8 +395,9 @@ func GetProductsforShowlist(c *gin.Context) {
 
 
 type ProductReport struct {
-	ID           int       `json:"id"`
-	ProductCode  string    `json:"product_code"`
+	Number  uint `json:"number"`
+	ProductID           int       `json:"product_id"`
+	SupplyProductCode  string    `json:"supply_product_code"`
 	ProductName  string    `json:"product_name"`
 	Quantity     int       `json:"quantity"`
 	NameOfUnit  string    `json:"name_of_unit"`
@@ -412,8 +413,9 @@ func GetProductPDF(c *gin.Context) {
 
 	err := db.Raw(`
 		SELECT 
-			ROW_NUMBER() OVER (ORDER BY p.id) as id,
-			p.product_code,
+			ROW_NUMBER() OVER (ORDER BY p.id) AS number,
+			p.id as product_id,
+			p.supply_product_code,
 			p.product_name,
 			p.quantity,
 			u.name_of_unit,

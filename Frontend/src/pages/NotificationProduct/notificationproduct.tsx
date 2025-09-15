@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   Table,
   Input,
@@ -43,8 +43,10 @@ const StockAlertSetting: React.FC = () => {
   const [form] = Form.useForm();
   const [dataSource, setDataSource] = useState<NotificationProduct[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [filteredData, setFilteredData] = useState<NotificationProduct[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [searchText, setSearchText] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<
+    string | undefined
+  >();
 
   const fetchLimitQuantity = async () => {
     try {
@@ -69,77 +71,106 @@ const StockAlertSetting: React.FC = () => {
     }
   };
 
-  const fetchCategory = async () => {
-    try {
-      const response = await GetCategory();
-      console.log("Response from GetCategory:", response);
-      if (
-        response.data &&
-        Array.isArray(response.data) &&
-        response.data.length > 0
-      ) {
-        console.log("Categories fetched:", response.data);
-        setCategories(response.data);
-      } else if (response && response.error) {
-        message.error(response.error);
-      } else {
-        message.error("ไม่สามารถดึงข้อมูลประเภทสินค้าได้");
-      }
-    } catch (error) {
-      message.error("เกิดข้อผิดพลาดในการดึงข้อมูลประเภทสินค้า");
-      console.error(error);
-    }
-  };
+  // const fetchCategory = async () => {
+  //   try {
+  //     const response = await GetCategory();
+  //     console.log("Response from GetCategory:", response);
+  //     if (
+  //       response.data &&
+  //       Array.isArray(response.data) &&
+  //       response.data.length > 0
+  //     ) {
+  //       console.log("Categories fetched:", response.data);
+  //       setCategories(response.data);
+  //     } else if (response && response.error) {
+  //       message.error(response.error);
+  //     } else {
+  //       message.error("ไม่สามารถดึงข้อมูลประเภทสินค้าได้");
+  //     }
+  //   } catch (error) {
+  //     message.error("เกิดข้อผิดพลาดในการดึงข้อมูลประเภทสินค้า");
+  //     console.error(error);
+  //   }
+  // };
 
+  // ดึงข้อมูล
   useEffect(() => {
-    fetchLimitQuantity();
-    fetchCategory();
+    const fetchData = async () => {
+      try {
+        const [limitRes, catRes] = await Promise.all([
+          GetLimitQuantity(),
+          GetCategory(),
+        ]);
+
+        if (limitRes?.data && Array.isArray(limitRes.data)) {
+          setDataSource(limitRes.data);
+        } else {
+          message.error("ไม่สามารถดึงข้อมูลกำหนดการแจ้งเตือนได้");
+        }
+
+        if (catRes?.data && Array.isArray(catRes.data)) {
+          setCategories(catRes.data);
+        } else {
+          message.error("ไม่สามารถดึงข้อมูลประเภทสินค้าได้");
+        }
+      } catch (error) {
+        message.error("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+        console.error(error);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  useEffect(() => {
-    setFilteredData(dataSource);
-  }, [dataSource]);
 
-  const filterData = (searchValue: string = "", category: string = "all") => {
-    let filtered = [...dataSource];
+  // ใช้ useCallback สำหรับ handler
+  const handleCategoryChange = useCallback((value?: string) => {
+    setSelectedCategory(value);
+  }, []);
 
-    // filter by search
-    if (searchValue) {
-      const lowerSearch = searchValue.toLowerCase();
-      filtered = filtered.filter(
+  const filteredData = useMemo(() => {
+    let data = [...dataSource];
+
+    if (searchText) {
+      const lower = searchText.toLowerCase();
+      data = data.filter(
         (item) =>
-          item.product_name.toLowerCase().includes(lowerSearch) ||
-          item.product_code.toLowerCase().includes(lowerSearch)
+          item.product_code.toLowerCase().includes(lower) ||
+          item.product_name.toLowerCase().includes(lower)
       );
     }
 
-    // filter by category
-    if (category !== "all") {
-      filtered = filtered.filter((item) => item.category_name === category);
+    if (selectedCategory) {
+      data = data.filter((item) => item.category_name === selectedCategory);
     }
 
-    setFilteredData(filtered);
-  };
+    return data;
+  }, [dataSource, searchText, selectedCategory]);
 
-  const onSearchDynamic = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const searchValue = e.target.value.trim();
-    filterData(searchValue, selectedCategory);
-  };
+  const onSearchDynamic = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchText(e.target.value.trim());
+    },
+    []
+  );
 
-  const handleEditClick = (record: NotificationProduct) => {
-    setEditingProduct(record);
-    console.log("Editing product:", record);
-    form.setFieldsValue(record);
-    setIsModalOpen(true);
-  };
+  const handleEditClick = useCallback(
+    (record: NotificationProduct) => {
+      setEditingProduct(record);
+      console.log("Editing product:", record);
+      form.setFieldsValue(record);
+      setIsModalOpen(true);
+    },
+    [form]
+  );
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setIsModalOpen(false);
     form.resetFields();
     setEditingProduct(null);
-  };
+  }, [form]);
 
-  const handleOk = () => {
+  const handleOk = useCallback(() => {
     form.validateFields().then((values) => {
       if (editingProduct) {
         const updatedData: UpdateNotificationProduct = {
@@ -153,7 +184,7 @@ const StockAlertSetting: React.FC = () => {
       form.resetFields();
       setEditingProduct(null);
     });
-  };
+  }, [editingProduct, form]);
 
   const LimitQuantity = async (data: UpdateNotificationProduct) => {
     try {
@@ -175,71 +206,87 @@ const StockAlertSetting: React.FC = () => {
     }
   };
 
-  const columns = [
-    {
-      title: "ชื่อสินค้า",
-      dataIndex: "product_name",
-      key: "product_name",
-    },
-    {
-      title: "โค้ดสินค้า",
-      dataIndex: "product_code",
-      key: "product_code",
-    },
-    {
-      title: "บริษัทขายส่ง",
-      dataIndex: "supplier_name",
-      key: "supplier_name",
-    },
-    {
-      title: "นำเข้าวันที่",
-      dataIndex: "product_created_at",
-      key: "product_created_at",
-      render: (text: string) => {
-        const date = dayjs(text);
-        const buddhistYear = date.year() + 543;
-        return `${date.date()} ${date.format("MMMM")} ${buddhistYear}`;
+  const columns = useMemo(
+    () => [
+      {
+        title: "ชื่อสินค้า",
+        dataIndex: "product_name",
+        key: "product_name",
       },
-    },
-    {
-      title: "ประเภทสินค้า",
-      dataIndex: "category_name",
-      key: "category_name",
-    },
-    {
-      title: "จำนวนคงเหลือ",
-      dataIndex: "quantity",
-      key: "quantity",
-      render: (val: number, record: any) =>
-        val < record.limit_quantity ? (
-          <Tag color="red">{val}</Tag>
-        ) : (
-          <Tag color="green">{val}</Tag>
+      {
+        title: "โค้ดสินค้า",
+        dataIndex: "product_code",
+        key: "product_code",
+      },
+      {
+        title: "บริษัทขายส่ง",
+        dataIndex: "supplier_name",
+        key: "supplier_name",
+      },
+      {
+        title: "นำเข้าล่าสุดวันที่",
+        dataIndex: "product_updated_at",
+        key: "product_updated_at",
+        render: (text: string) => {
+          const date = dayjs(text);
+          const buddhistYear = date.year() + 543;
+          return `${date.date()} ${date.format("MMMM")} ${buddhistYear}`;
+        },
+      },
+      {
+        title: "ประเภทสินค้า",
+        dataIndex: "category_name",
+        key: "category_name",
+      },
+      {
+        title: "จำนวนคงเหลือ",
+        dataIndex: "quantity",
+        key: "quantity",
+        render: (val: number, record: any) => (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100%", // บังคับให้เท่ากับ cell
+            }}
+          >
+            {val < record.limit_quantity ? (
+              <Tag color="red" style={{ margin: 0 }}>
+                {val}
+              </Tag>
+            ) : (
+              <span style={{ lineHeight: "22px" }}>{val}</span>
+              // กำหนด lineHeight ให้ใกล้เคียงกับ Tag
+            )}
+          </div>
         ),
-    },
+      },
 
-    {
-      title: "แจ้งเตือนเมื่อต่ำกว่า",
-      dataIndex: "limit_quantity",
-      key: "limit_quantity",
-    },
-    {
-      title: "หน่วย",
-      dataIndex: "unit_per_quantity",
-      key: "unit_per_quantity",
-    },
-    {
-      title: "แก้ไข",
-      key: "edit",
-      render: (_: any, record: NotificationProduct) => (
-        <Button
-          icon={<EditOutlined />}
-          type="text"
-          onClick={() => handleEditClick(record)}
-        />
-      ),
-    },
-  ];
+      {
+        title: "แจ้งเตือนเมื่อต่ำกว่า",
+        dataIndex: "limit_quantity",
+        key: "limit_quantity",
+      },
+      {
+        title: "หน่วย",
+        dataIndex: "unit_per_quantity",
+        key: "unit_per_quantity",
+      },
+      {
+        title: "แก้ไข",
+        key: "edit",
+        render: (_: any, record: NotificationProduct) => (
+          <Button
+            icon={<EditOutlined />}
+            type="text"
+            onClick={() => handleEditClick(record)}
+          />
+        ),
+      },
+    ],
+    [handleEditClick]
+  );
 
   return (
     <div
@@ -300,7 +347,6 @@ const StockAlertSetting: React.FC = () => {
                 <SearchOutlined style={{ color: "#1890ff", fontSize: 20 }} />
               }
             />
-
             <Select
               placeholder={
                 <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -309,16 +355,10 @@ const StockAlertSetting: React.FC = () => {
                 </span>
               }
               style={{ width: 300, height: 50, borderRadius: 50 }}
-              onChange={(value) => {
-                setSelectedCategory(value);
-                filterData(
-                  (document.getElementById("search-input") as HTMLInputElement)
-                    ?.value || "",
-                  value
-                );
-              }}
+              value={selectedCategory}
+              onChange={handleCategoryChange}
+              allowClear
             >
-              <Option value="all">ทั้งหมด</Option>
               {categories.map((cat) => (
                 <Option key={cat.id} value={cat.category_name}>
                   {cat.category_name}
@@ -333,7 +373,7 @@ const StockAlertSetting: React.FC = () => {
           columns={columns}
           dataSource={filteredData}
           bordered={false} // ไม่ต้องใช้ bordered ของ antd
-          pagination={{pageSize: 7}}
+          pagination={{ pageSize: 7, showSizeChanger: true, pageSizeOptions: ["7", "14", "21", "50"] }}
           className="custom-table"
         />
       </div>

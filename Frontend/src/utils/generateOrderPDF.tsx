@@ -2,6 +2,7 @@
 import pdfFonts from "../../pdfmake/vfs_fonts";
 import pdfMake from "pdfmake/build/pdfmake";
 import groupOrdersBySupplier from "./groupOrdersBySupplier";
+import type { SelectedOrderPdf } from "../interfaces/Product";
 import dayjs from "dayjs";
 import "dayjs/locale/th";
 dayjs.locale("th");
@@ -17,7 +18,7 @@ pdfMake.fonts = {
   },
 };
 
-const generateOrderPDF = (orders: any[]) => {
+const generateOrderPDF = (orders: SelectedOrderPdf[]) => {
   const ordersBySupplier = groupOrdersBySupplier(orders);
 
   Object.entries(ordersBySupplier).forEach(
@@ -32,14 +33,14 @@ const generateOrderPDF = (orders: any[]) => {
           body: [
             [
               { text: "ลำดับ", fontSize: 14, bold: true },
-              { text: "รหัสสินค้า", fontSize: 14, bold: true },
+              { text: "รหัสสินค้าบริษัทขายส่ง", fontSize: 14, bold: true },
               { text: "ชื่อสินค้า", fontSize: 14, bold: true },
               { text: "จำนวน", fontSize: 14, bold: true },
               { text: "หน่วย", fontSize: 14, bold: true },
             ],
             ...supplierOrders.map((o: any, i: number) => [
               { text: i + 1, fontSize: 12 },
-              { text: o.product_code, fontSize: 12 },
+              { text: o.supply_product_code, fontSize: 12 },
               { text: o.product_name, fontSize: 12 },
               { text: o.orderQuantity, fontSize: 12 },
               { text: o.unit, fontSize: 12 },

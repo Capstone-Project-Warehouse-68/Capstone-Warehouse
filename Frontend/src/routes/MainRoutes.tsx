@@ -9,6 +9,7 @@ const MainPages = Loadable(lazy(() => import("../pages/authentication/Login")));
 const NotificationProduct = Loadable(lazy(() => import("../pages/NotificationProduct/notificationproduct")));
 const ProductList = Loadable(lazy(() => import("../pages/ShowProduct/index")));
 const OrderCreate = Loadable(lazy(() => import("../pages/CreateListProductPDF/index")));
+const HistoryPdf = Loadable(lazy(() => import("../pages/CreateListProductPDF/History/HistoryPdf")));
 //Course
 
 const MainRoutes = (): RouteObject => {
@@ -36,6 +37,10 @@ const MainRoutes = (): RouteObject => {
       {
         path: "/createlistproduct",
         element: <OrderCreate />,
+      },
+      {
+        path: "/historylistproduct",
+        element: <HistoryPdf />,
       },
     ],
   };

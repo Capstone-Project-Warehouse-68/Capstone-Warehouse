@@ -9,6 +9,7 @@ import ProductList from "../../pages/ShowProduct";
 import SiderOwner from "../SiderOwner";
 import ImportProduct from "../../pages/ImportProduct/importproduct";
 import OrderCreate from "../../pages/CreateListProductPDF/index";
+import HistoryPdf from "../../pages/CreateListProductPDF/History/HistoryPdf";
 
 
 const { Header, Content } = Layout;
@@ -44,6 +45,7 @@ const FullLayout: React.FC = () => {
                                 <Route path="/notificationproduct" element={<NotificationProduct />} />
                                 <Route path="/productList" element={<ProductList />} />
                                 <Route path="/createlistproduct" element={<OrderCreate />} />
+                                <Route path="/historylistproduct" element={<HistoryPdf />} />
                             </Routes>
                         </div>
                     </Content>
