@@ -4,6 +4,7 @@ import type { EmployeeInterface } from "../../interfaces/Employee";
 import type { UnitPerQuantityInterface } from "../../interfaces/UnitPerQuantity";
 import type { BankTypeInterface } from "../../interfaces/BankType";
 import type { SupplyInterface } from "../../interfaces/Supply";
+import type { CategoryInterface } from "../../interfaces/Category";
 
 const apiUrl = "http://localhost:8000";
 const Authorization = localStorage.getItem("token");
@@ -143,13 +144,6 @@ async function GetBankTypes() {
     .catch((e) => e.response);
 }
 
-async function DeleteBankType(id: number) {
-  return await axios
-    .delete(`${apiUrl}/deleteBank/${id}`, requestOptions)
-    .then((res) => res)
-    .catch((e) => e.response);
-}
-
 async function UpdateBankType(id: number, data: BankTypeInterface) {
   return await axios
     .patch(`${apiUrl}/updateBank/${id}`, data, requestOptions)
@@ -178,6 +172,27 @@ async function DeleteSupply(id: number) {
     .catch((e) => e.response);
 }
 
+async function CreateCategory(data: CategoryInterface) {
+  return await axios
+    .post(`${apiUrl}/CreateCategory`, data, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function UpdateCategory(id: number, data: CategoryInterface) {
+  return await axios
+    .patch(`${apiUrl}/UpdateCategory/${id}`, data, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function UpdateUnitPerQuantity(id: number, data: UnitPerQuantityInterface) {
+  return await axios
+    .patch(`${apiUrl}/updateUnitPerQuantity/${id}`, data, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
 export {
     SignIn,
     CreateEmployee,
@@ -197,9 +212,11 @@ export {
     CreateUnitOfQuantity,
     CreateBank,
     GetBankTypes,
-    DeleteBankType,
     UpdateBankType,
     CreateSupplys,
     UpdateSupply,
     DeleteSupply,
+    UpdateCategory,
+    CreateCategory,
+    UpdateUnitPerQuantity,
 };

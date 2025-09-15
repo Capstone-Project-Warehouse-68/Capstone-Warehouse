@@ -168,7 +168,6 @@ func SetupDatabase() {
 		ProductID:        product.ID,
 		BillID:           bill.ID,
 		ManufacturerCode: "MNFC-12345",
-		Quantity:         20,
 		PricePerPiece:    800,
 		Discount:         5,
 	}

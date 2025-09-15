@@ -4,7 +4,7 @@ import { PlusOutlined, DeleteOutlined, DashOutlined, EditOutlined } from "@ant-d
 import AddBusinessIcon from '@mui/icons-material/AddBusiness';
 import ImgCrop from "antd-img-crop";
 import type { UploadFile, UploadProps } from "antd";
-import { CreateBank, DeleteBankType, GetBankTypes, UpdateBankType } from "../../services/https";
+import { CreateBank, GetBankTypes, UpdateBankType } from "../../services/https";
 import type { BankTypeInterface } from "../../interfaces/BankType";
 
 type FileType = Parameters<NonNullable<UploadProps["beforeUpload"]>>[0];
@@ -53,30 +53,6 @@ function CreateBankType() {
     };
 
     const showModal = () => setIsModalOpen(true);
-
-    const showDeleteConfirmModal = (bankID: number) => {
-        Modal.confirm({
-            title: "ยืนยันการลบ",
-            content: "คุณแน่ใจว่าต้องการลบธนาคารนี้หรือไม่?",
-            okText: "ลบ",
-            okType: "danger",
-            cancelText: "ยกเลิก",
-            onOk: async () => {
-                try {
-                    const res = await DeleteBankType(bankID);
-                    if (res.status === 200) {
-                        message.success("ลบธนาคารเรียบร้อยแล้ว");
-                        getBankType();
-                    } else {
-                        message.error(res.data?.error || "ลบไม่สำเร็จ");
-                    }
-                } catch (error) {
-                    console.error("[Delete Error]", error);
-                    message.error("เกิดข้อผิดพลาดในการลบธนาคาร");
-                }
-            },
-        });
-    };
 
     const getBankType = async () => {
         try {
@@ -169,19 +145,6 @@ function CreateBankType() {
                         menu={{
                             items: [
                                 { label: "แก้ไขข้อมูล", key: "1", icon: <EditOutlined />, onClick: () => openUpdateModal(bank) },
-                                {
-                                    label: "ลบข้อมูล",
-                                    key: "2",
-                                    icon: <DeleteOutlined />,
-                                    onClick: () => {
-                                        if (bank.ID) {
-                                            showDeleteConfirmModal(bank.ID);
-                                        } else {
-                                            messageApi.error("ไม่พบ ID");
-                                        }
-                                    },
-                                    danger: true,
-                                },
                             ],
                         }}
                     >

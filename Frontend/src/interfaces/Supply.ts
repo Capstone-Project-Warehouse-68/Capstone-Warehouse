@@ -1,6 +1,7 @@
 export interface SupplyInterface {
     ID: number,
     SupplyName?: string,
+    SupplyAbbrev?: string,
     Address?: string,
     PhoneNumberSale?: string,
     SaleName?: string,

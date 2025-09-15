@@ -77,25 +77,6 @@ func UpdateSupply(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, supply)
-}
-
-func DeleteSupply(c *gin.Context) {
-	id := c.Param("id")
-
-	db := config.DB()
-	var supply entity.Supply
-
-	// ตรวจสอบว่ามี Supply หรือไม่
-	if err := db.First(&supply, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบบริษัทสั่งซื้อ"})
-		return
-	}
-
-	if err := db.Delete(&supply).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
 	c.Status(http.StatusOK)
 }
+

@@ -1,7 +1,7 @@
 import { Row, Col, message, Button, Form, Input, Modal, Select } from "antd"
 import { useEffect, useState } from "react";
 import AddBusinessIcon from '@mui/icons-material/AddBusiness';
-import { CreateSupplys, DeleteSupply, GetBankTypes, GetSupply, UpdateSupply } from "../../services/https";
+import { CreateSupplys, GetBankTypes, GetSupply, UpdateSupply } from "../../services/https";
 import type { BankTypeInterface } from "../../interfaces/BankType";
 import type { SupplyInterface } from "../../interfaces/Supply";
 
@@ -14,7 +14,6 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { IconButton } from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 
 function CreateSupplyer() {
     const [messageApi, contextHolder] = message.useMessage();
@@ -23,17 +22,11 @@ function CreateSupplyer() {
     const [Supplyer, setSupplyer] = useState<SupplyInterface[]>([]);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingSupply, setEditingSupply] = useState<SupplyInterface | null>(null);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [deletingId, setDeletingId] = useState<number | null>(null);
     const [form] = Form.useForm();
 
     const showModal = () => {
+        form.resetFields();
         setIsModalOpen(true);
-    };
-
-    const showDeleteModal = (id: number) => {
-        setDeletingId(id);
-        setIsDeleteModalOpen(true);
     };
 
 
@@ -56,6 +49,7 @@ function CreateSupplyer() {
     };
 
     const handleCancel = () => {
+        form.resetFields();
         setIsModalOpen(false);
     };
 
@@ -63,6 +57,7 @@ function CreateSupplyer() {
         setEditingSupply(supply);
         form.setFieldsValue({
             SupplyName: supply.SupplyName,
+            SupplyAbbrev: supply.SupplyAbbrev,
             Address: supply.Address,
             SaleName: supply.SaleName,
             PhoneNumberSale: supply.PhoneNumberSale,
@@ -77,6 +72,8 @@ function CreateSupplyer() {
         if (!editingSupply) return;
         try {
             const values = await form.validateFields();
+            console.log(values);
+
             const res = await UpdateSupply(editingSupply.ID, values);
             if (res.status === 200) {
                 messageApi.success("แก้ไขข้อมูลเรียบร้อยแล้ว");
@@ -88,28 +85,6 @@ function CreateSupplyer() {
             }
         } catch (error: any) {
             messageApi.error("เกิดข้อผิดพลาดในการแก้ไขข้อมูล");
-        }
-    };
-
-    const confirmDelete = () => {
-        if (deletingId !== null) {
-            handleDelete(deletingId);
-            setIsDeleteModalOpen(false);
-            setDeletingId(null);
-        }
-    };
-
-    const handleDelete = async (id: number) => {
-        try {
-            const res = await DeleteSupply(id);
-            if (res.status === 200) {
-                messageApi.success("ลบข้อมูลเรียบร้อยแล้ว");
-                getSupply();
-            } else {
-                messageApi.error(res.data?.error || "ไม่สามารถลบข้อมูลได้");
-            }
-        } catch (error) {
-            messageApi.error("เกิดข้อผิดพลาดในการลบข้อมูล");
         }
     };
 
@@ -138,6 +113,7 @@ function CreateSupplyer() {
                 const sup = res.data.map((item: SupplyInterface) => ({
                     ID: item.ID,
                     SupplyName: item.SupplyName || "-",
+                    SupplyAbbrev: item.SupplyAbbrev || "-",
                     Address: item.Address || "-",
                     PhoneNumberSale: item.PhoneNumberSale || "-",
                     SaleName: item.SaleName || "-",
@@ -186,6 +162,7 @@ function CreateSupplyer() {
                             <TableHead>
                                 <TableRow>
                                     <TableCell>ชื่อบริษัท</TableCell>
+                                    <TableCell>ชื่อย่อบริษัท</TableCell>
                                     <TableCell>ที่อยู่</TableCell>
                                     <TableCell>ผู้ขาย</TableCell>
                                     <TableCell>เบอร์โทรศัพท์</TableCell>
@@ -201,6 +178,7 @@ function CreateSupplyer() {
                                     return (
                                         <TableRow key={supply.ID}>
                                             <TableCell>{supply.SupplyName}</TableCell>
+                                            <TableCell>{supply.SupplyAbbrev}</TableCell>
                                             <TableCell>{supply.Address}</TableCell>
                                             <TableCell>{supply.SaleName}</TableCell>
                                             <TableCell>{supply.PhoneNumberSale}</TableCell>
@@ -225,12 +203,6 @@ function CreateSupplyer() {
                                                 >
                                                     <EditIcon />
                                                 </IconButton>
-                                                <IconButton
-                                                    color="error"
-                                                    onClick={() => showDeleteModal(supply.ID)}
-                                                >
-                                                    <DeleteIcon />
-                                                </IconButton>
                                             </TableCell>
                                         </TableRow>
                                     );
@@ -252,7 +224,7 @@ function CreateSupplyer() {
             >
                 <Form form={form} layout="vertical">
                     <Row gutter={[16, 8]}>
-                        <Col xl={24}>
+                        <Col xl={12}>
                             <Form.Item
                                 label="ชื่อบริษัท"
                                 name="SupplyName"
@@ -261,6 +233,30 @@ function CreateSupplyer() {
                                 <Input placeholder="กรอกชื่อบริษัท" />
                             </Form.Item>
                         </Col>
+
+                        <Col xl={12}>
+                            <Form.Item
+                                label="ชื่อย่อบริษัท (ภาษาอังกฤษ)"
+                                name="SupplyAbbrev"
+                                rules={[
+                                    { required: true, message: "กรุณากรอกชื่อย่อบริษัทพิมพ์ใหญ่" },
+                                    {
+                                        pattern: /^[A-Z]{2,3}$/,
+                                        message: "ต้องเป็นภาษาอังกฤษพิมพ์ใหญ่ 2-3 ตัวอักษร",
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    placeholder="กรอกชื่อย่อบริษัท"
+                                    maxLength={3}
+                                    onChange={(e) => {
+                                        const value = e.target.value.toUpperCase();
+                                        e.target.value = value;
+                                    }}
+                                />
+                            </Form.Item>
+                        </Col>
+
 
                         <Col xl={24}>
                             <Form.Item
@@ -286,9 +282,23 @@ function CreateSupplyer() {
                             <Form.Item
                                 label="เบอร์โทรศัพท์"
                                 name="PhoneNumberSale"
-                                rules={[{ required: true, message: "กรุณากรอกเบอร์โทรศัพท์" }]}
+                                rules={[
+                                    { required: true, message: "กรุณากรอกเบอร์โทรศัพท์" },
+                                    {
+                                        pattern: /^0\d{9}$/,
+                                        message: "เบอร์โทรต้องเป็นตัวเลข 10 หลัก และขึ้นต้นด้วย 0",
+                                    },
+                                ]}
                             >
-                                <Input placeholder="กรอกเบอร์โทรศัพท์" />
+                                <Input
+                                    placeholder="กรอกเบอร์โทรศัพท์"
+                                    maxLength={10}
+                                    onKeyPress={(e) => {
+                                        if (!/[0-9]/.test(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                />
                             </Form.Item>
                         </Col>
 
@@ -318,13 +328,27 @@ function CreateSupplyer() {
                                 </Select>
                             </Form.Item>
                         </Col>
+
                         <Col xl={12}>
                             <Form.Item
                                 label="เลขบัญชี"
                                 name="BankAccountNumber"
-                                rules={[{ required: true, message: "กรุณากรอกเลขบัญชี" }]}
+                                rules={[
+                                    { required: true, message: "กรุณากรอกเลขบัญชี" },
+                                    {
+                                        pattern: /^\d+$/,
+                                        message: "กรุณากรอกเฉพาะตัวเลขเท่านั้น",
+                                    },
+                                ]}
                             >
-                                <Input placeholder="กรอกเลขบัญชี" />
+                                <Input
+                                    placeholder="กรอกเลขบัญชี"
+                                    onKeyPress={(e) => {
+                                        if (!/[0-9]/.test(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                />
                             </Form.Item>
                         </Col>
 
@@ -352,13 +376,36 @@ function CreateSupplyer() {
             >
                 <Form form={form} layout="vertical">
                     <Row gutter={[16, 8]}>
-                        <Col xl={24}>
+                        <Col xl={12}>
                             <Form.Item
                                 label="ชื่อบริษัท"
                                 name="SupplyName"
                                 rules={[{ required: true, message: "กรุณากรอกชื่อบริษัท" }]}
                             >
                                 <Input placeholder="กรอกชื่อบริษัท" />
+                            </Form.Item>
+                        </Col>
+
+                        <Col xl={12}>
+                            <Form.Item
+                                label="ชื่อย่อบริษัท (ภาษาอังกฤษ)"
+                                name="SupplyAbbrev"
+                                rules={[
+                                    { required: true, message: "กรุณากรอกชื่อย่อบริษัทพิมพ์ใหญ่" },
+                                    {
+                                        pattern: /^[A-Z]{2,3}$/,
+                                        message: "ต้องเป็นภาษาอังกฤษพิมพ์ใหญ่ 2-3 ตัวอักษร",
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    placeholder="กรอกชื่อย่อบริษัท"
+                                    maxLength={3}
+                                    onChange={(e) => {
+                                        const value = e.target.value.toUpperCase();
+                                        e.target.value = value;
+                                    }}
+                                />
                             </Form.Item>
                         </Col>
 
@@ -386,9 +433,23 @@ function CreateSupplyer() {
                             <Form.Item
                                 label="เบอร์โทรศัพท์"
                                 name="PhoneNumberSale"
-                                rules={[{ required: true, message: "กรุณากรอกเบอร์โทรศัพท์" }]}
+                                rules={[
+                                    { required: true, message: "กรุณากรอกเบอร์โทรศัพท์" },
+                                    {
+                                        pattern: /^0\d{9}$/,
+                                        message: "เบอร์โทรต้องเป็นตัวเลข 10 หลัก และขึ้นต้นด้วย 0",
+                                    },
+                                ]}
                             >
-                                <Input placeholder="กรอกเบอร์โทรศัพท์" />
+                                <Input
+                                    placeholder="กรอกเบอร์โทรศัพท์"
+                                    maxLength={10}
+                                    onKeyPress={(e) => {
+                                        if (!/[0-9]/.test(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                />
                             </Form.Item>
                         </Col>
 
@@ -418,13 +479,27 @@ function CreateSupplyer() {
                                 </Select>
                             </Form.Item>
                         </Col>
+
                         <Col xl={12}>
                             <Form.Item
                                 label="เลขบัญชี"
                                 name="BankAccountNumber"
-                                rules={[{ required: true, message: "กรุณากรอกเลขบัญชี" }]}
+                                rules={[
+                                    { required: true, message: "กรุณากรอกเลขบัญชี" },
+                                    {
+                                        pattern: /^\d+$/,
+                                        message: "กรุณากรอกเฉพาะตัวเลขเท่านั้น",
+                                    },
+                                ]}
                             >
-                                <Input placeholder="กรอกเลขบัญชี" />
+                                <Input
+                                    placeholder="กรอกเลขบัญชี"
+                                    onKeyPress={(e) => {
+                                        if (!/[0-9]/.test(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                />
                             </Form.Item>
                         </Col>
 
@@ -440,19 +515,6 @@ function CreateSupplyer() {
                     </Row>
                 </Form>
             </Modal>
-
-            <Modal
-                title="ยืนยันการลบ"
-                open={isDeleteModalOpen}
-                onOk={confirmDelete}
-                onCancel={() => setIsDeleteModalOpen(false)}
-                okText="ลบ"
-                cancelText="ยกเลิก"
-                centered
-            >
-                <p>คุณแน่ใจหรือไม่ว่าต้องการลบบริษัทนี้?</p>
-            </Modal>
-
 
         </>
     );

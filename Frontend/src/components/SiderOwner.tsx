@@ -97,7 +97,7 @@ function SiderOwner() {
   return (
     <>
       {contextHolder}
-      <Sider collapsed={collapsed} className="custom-sider" width={window.innerWidth * 0.16}
+      <Sider collapsed={collapsed} className="custom-sider" width={window.innerWidth * 0.17}
         style={{
           height: "100vh",
           overflowY: "auto",
@@ -227,7 +227,7 @@ function SiderOwner() {
                   <Link to="/createsupplyer" style={{ fontSize: 14 }}>สร้างข้อมูลบริษัทสั่งซื้อ</Link>
                 </Menu.Item>
                 <Menu.Item key="s3" icon={<InventoryIcon />}>
-                  <Link to="/createunitquantity" style={{ fontSize: 14 }}>สร้างหน่วยของสินค้า</Link>
+                  <Link to="/createunitquantity" style={{ fontSize: 14 }}>สร้างประเภทและหน่วยสินค้า</Link>
                 </Menu.Item>
               </SubMenu>
 

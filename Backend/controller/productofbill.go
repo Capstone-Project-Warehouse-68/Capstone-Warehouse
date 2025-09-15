@@ -126,7 +126,6 @@ func CreateBillWithProducts(c *gin.Context) {
 			ProductID:        productIDs[i], // ใช้ ID จาก index เดียวกัน
 			BillID:           bill.ID,
 			ManufacturerCode: pb.ManufacturerCode,
-			Quantity:         pb.Quantity,
 			PricePerPiece:    pb.PricePerPiece,
 			Discount:         pb.Discount,
 		}
@@ -284,7 +283,6 @@ func UpdateBillWithProducts(c *gin.Context) {
 			existingPOB.ProductID = productIDs[i]
 			existingPOB.BillID = bill.ID
 			existingPOB.ManufacturerCode = pb.ManufacturerCode
-			existingPOB.Quantity = pb.Quantity
 			existingPOB.PricePerPiece = pb.PricePerPiece
 			existingPOB.Discount = pb.Discount
 
@@ -298,7 +296,6 @@ func UpdateBillWithProducts(c *gin.Context) {
 				ProductID:        productIDs[i],
 				BillID:           bill.ID,
 				ManufacturerCode: pb.ManufacturerCode,
-				Quantity:         pb.Quantity,
 				PricePerPiece:    pb.PricePerPiece,
 				Discount:         pb.Discount,
 			}

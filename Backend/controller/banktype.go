@@ -44,26 +44,6 @@ func CreateBankType(c *gin.Context) {
 	c.Status(http.StatusCreated)
 }
 
-func DeleteBankType(c *gin.Context) {
-	id := c.Param("id")
-
-	db := config.DB()
-
-	var bank entity.BankType
-	if err := db.First(&bank, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบธนาคารนี้"})
-		return
-	}
-
-	// ลบแบบ hard delete ข้าม soft delete
-	if err := db.Unscoped().Delete(&bank).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถลบธนาคารได้"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "ลบธนาคารเรียบร้อยแล้ว"})
-}
-
 func UpdateBankType(c *gin.Context) {
 	id := c.Param("id")
 	var bank entity.BankType

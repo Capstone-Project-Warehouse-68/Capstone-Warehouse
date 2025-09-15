@@ -38,18 +38,22 @@ func main() {
 		r.GET("/GetshelfByzone/:id", controller.GetShelfByZoneID)
 		r.GET("/Getzone", controller.GetZone)
 		r.GET("/GetSupply", controller.GetSupply)
+
 		r.POST("/CreateProduct", controller.CreateProduct)
 		r.POST("/CreateProductWithBill", controller.CreateBillWithProducts)
 		r.PATCH("/Updatebillwithproduct", controller.UpdateBillWithProducts)
 		r.DELETE("/deletebillwithproduct/:id", controller.DeleteBill)
+
 		r.POST("/createunitquantity", controller.CreateUnitPerQuantity)
+		r.PATCH("/updateUnitPerQuantity/:id", controller.UpdateUnitPerQuantity)
+		r.POST("/CreateCategory", controller.CreateCategory)
+		r.PATCH("/UpdateCategory/:id", controller.UpdateCategory)
 		r.POST("/createbanktype", controller.CreateBankType)
 		r.GET("/getBankType", controller.GetBankType)
-		r.DELETE("/deleteBank/:id", controller.DeleteBankType)
 		r.PATCH("/updateBank/:id", controller.UpdateBankType)
 		r.POST("/CreateSupply", controller.CreateSupply)
 		r.PATCH("/UpdateSupply/:id", controller.UpdateSupply)
-		r.DELETE("/DeleteSupply/:id", controller.DeleteSupply)
+
 		r.POST("/signin", controller.SignIn)
 		router.Use(middlewares.Authorizes())
 	}
