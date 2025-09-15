@@ -8,7 +8,7 @@ export interface ProductItem {
   SupplyName: string;
   Shelf: string;
   Zone: string;
-  CreatedAt: string; 
+  UpdatedAt: string; 
   Description: string;
 CategoryName: string;
 }

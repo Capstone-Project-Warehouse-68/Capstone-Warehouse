@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import HistoryIcon from '@mui/icons-material/History';
 import {
   Table,
   Modal,
@@ -106,7 +107,7 @@ const HistoryPdf = () => {
         date_import: record.updated_at,
         name_of_unit: p.unit_draf_name,
         orderQuantity: p.quantity,
-        supply_product_code: "", // draft ไม่มีรหัส
+        supply_product_code: "-", // draft ไม่มีรหัส
         product_id: 0, // draft ไม่มี ID
         product_name: p.product_draft_name,
         quantity: p.quantity,
@@ -298,21 +299,23 @@ const HistoryPdf = () => {
           <div
             className="title"
             style={{
-              background: "#2980B9",
+              backgroundColor: "#2980B9",
               color: "white",
               borderRadius: 50,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: 60,
-              padding: "0 20px",
+              fontWeight: "bold",
               textAlign: "center",
-              flexShrink: 0,
+              height: "60px",
+              padding: "0 20px",
+              display: "flex", // ใช้ flex
+              alignItems: "center", // vertical center
+              justifyContent: "center", // horizontal center
+              gap: "8px", // ช่องว่างระหว่าง icon กับ text
+              fontSize: "30px", // ขนาดตัวอักษร
             }}
           >
-            <h1 style={{ margin: 0, fontSize: "36px" }}>
+            <HistoryIcon/>
               ประวัติรายการสั่งซื้อสินค้า
-            </h1>
+            
           </div>
         </div>
         <div
@@ -350,6 +353,7 @@ const HistoryPdf = () => {
           dataSource={filteredBills}
           rowKey="order_bill_id"
           loading={loading}
+          className="custom-table"
           pagination={{ pageSize: 5 }}
         />
       </div>

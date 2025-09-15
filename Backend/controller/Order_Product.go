@@ -6,27 +6,28 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"gorm.io/gorm"
+	"github.com/asaskevich/govalidator"
 )
 
 type( 
 	OrderProductInput struct {
-		ProductID         uint   `json:"product_id"`                  // ถ้า 0 คือ draft
-		ProductDraftName  string `json:"product_draft_name,omitempty"` // สำหรับสินค้าตัวใหม่
-		SupplyDraftName   string `json:"supply_draft_name,omitempty"` // สำหรับสินค้าตัวใหม่
-		UnitDrafName      string `json:"unit_draf_name,omitempty"` // สำหรับสินค้าตัวใหม่
-		UnitPerQuantityID uint   `json:"unit_per_quantity_id" `
-		Quantity          int    `json:"quantity"`
+		ProductID         uint   `json:"product_id" valid:"-"`                  // ถ้า 0 คือ draft
+		ProductDraftName  string `json:"product_draft_name,omitempty" valid:"optional"` // สำหรับสินค้าตัวใหม่
+		SupplyDraftName   string `json:"supply_draft_name,omitempty" valid:"optional"` // สำหรับสินค้าตัวใหม่
+		UnitDrafName      string `json:"unit_draf_name,omitempty" valid:"optional"` // สำหรับสินค้าตัวใหม่
+		UnitPerQuantityID uint   `json:"unit_per_quantity_id" valid:"optional"`
+		Quantity          int    `json:"quantity" valid:"required~Quantity is required,int~Quantity must be integer"`
 	}
 	OrderBillInput struct {
-		SupplyID    uint               `json:"supply_id" binding:"required"`
-		EmployeeID  uint               `json:"employee_id"`
-		Description string             `json:"description"`
-		Products    []OrderProductInput `json:"products"`
+		SupplyID    uint               `json:"supply_id"  valid:"required~Supply is required"`
+		EmployeeID  uint               `json:"employee_id" valid:"required~Employee is required"`
+		Description string             `json:"description" valid:"optional"`
+		Products    []OrderProductInput `json:"products" valid:"required"`
 	}
 
     MultiOrderBillInput struct {
-    	EmployeeID uint             `json:"employee_id" binding:"required"`
-    	Orders     []OrderBillInput `json:"orders"` // ใส่คำสั่งซื้อแยก supplier
+    	EmployeeID uint             `json:"employee_id" valid:"required"`
+    	Orders     []OrderBillInput `json:"orders" valid:"required"` 
 	}
 )
 type(
@@ -50,6 +51,26 @@ func AddOrderBillWithProducts(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": "ข้อมูลไม่ถูกต้อง"})
         return
     }
+
+	// ใช้ govalidator ตรวจ
+    if ok, err := govalidator.ValidateStruct(input); !ok {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+	// Validate nested Orders + Products
+	for _, order := range input.Orders {
+		if ok, err := govalidator.ValidateStruct(order); !ok {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		for _, p := range order.Products {
+			if ok, err := govalidator.ValidateStruct(p); !ok {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+		}
+	}
+
 	tx := db.Begin() // เริ่ม transaction
     defer func() {
         if r := recover(); r != nil {
@@ -65,7 +86,7 @@ func AddOrderBillWithProducts(c *gin.Context) {
             EmployeeID:  input.EmployeeID,
             Description: order.Description,
         }
-        if err := db.Create(&orderBill).Error; err != nil {
+        if err := tx.Create(&orderBill).Error; err != nil {
 			tx.Rollback()
             c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างคำสั่งซื้อไม่สำเร็จ"})
             return
@@ -77,17 +98,29 @@ func AddOrderBillWithProducts(c *gin.Context) {
 				ProductID:         p.ProductID,
 				UnitPerQuantityID: p.UnitPerQuantityID,
 				Quantity:          p.Quantity,
+				StatusDraft:       false,
 			}
 
-			// ถ้า ProductID = 0 คือ draft
-			if p.ProductID == 0 {
-				orderProduct.ProductDraftName = p.ProductDraftName
-				orderProduct.SupplyDraftName = p.SupplyDraftName
-				orderProduct.UnitDrafName = p.UnitDrafName
-				orderProduct.StatusDraft = true
-			}
+			// ถ้า ProductID = 0 → แสดงว่าเป็นสินค้าใหม่ (draft)
+            if p.ProductID == 0 {
+                draft := entity.OrderProductDraft{
+                    ProductDraftName: p.ProductDraftName,
+                    SupplyDraftName:  p.SupplyDraftName,
+                    UnitDrafName:     p.UnitDrafName,
+                    Quantity:         p.Quantity,
+                }
 
-			if err := db.Create(&orderProduct).Error; err != nil {
+                if err := tx.Create(&draft).Error; err != nil {
+                    tx.Rollback()
+                    c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสินค้า draft ไม่สำเร็จ"})
+                    return
+                }
+
+                orderProduct.StatusDraft = true
+                orderProduct.OrderProductDraftID = draft.ID
+            }
+
+			if err := tx.Create(&orderProduct).Error; err != nil {
 				tx.Rollback()
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างรายการสินค้าไม่สำเร็จ"})
 				return

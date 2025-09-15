@@ -1,17 +1,17 @@
-/* ปรับเส้นแนวตั้ง */
-.ant-table-thead > tr > th,
-.ant-table-tbody > tr > td {
-  border-right: none; /* เอาเส้นแนวตั้ง */
+/* index.css หรือไฟล์ CSS ของคุณ */
+.custom-table .ant-table-container {
+  background: none !important;  /* ลบพื้นหลัง */
 }
 
-/* เอาเส้นกรอบทั้งหมด */
-.ant-table {
-  border: none;
-  background: transparent; /* พื้นหลังล่องหน */
+/* เส้น header เข้มขึ้น */
+.custom-table .ant-table-thead > tr > th {
+  border-bottom: 2px solid #333; /* เส้น header เข้ม */
+  background: #f5f5f5;           /* ถ้าอยาก header มีสีอ่อน */
+  font-weight: bold;
 }
 
-/* hover effect ของ row */
-.ant-table-tbody > tr:hover > td {
-  background-color: rgba(131, 184, 233, 0.2) !important; /* สีฟ้าอ่อน */
+/* เส้นแนวนอน row */
+.custom-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #e0e0e0; /* เส้น row สีอ่อน */
+  background: none;                  /* ลบพื้นหลัง cell */
 }
-

@@ -86,17 +86,18 @@ func GetAllOrderBills(c *gin.Context) {
             u.name_of_unit as unit_name,
             op.quantity,
             op.status_draft,
-            op.unit_draf_name,
-            op.product_draft_name,
-            op.supply_draft_name
+            opd.unit_draf_name,
+            opd.product_draft_name,
+            opd.supply_draft_name
         FROM order_bills ob
         JOIN supplies s ON ob.supply_id = s.id
         LEFT JOIN order_products op ON ob.id = op.order_bill_id
         LEFT JOIN products p ON op.product_id = p.id
         LEFT JOIN unit_per_quantities u ON op.unit_per_quantity_id = u.id
         LEFT JOIN categories c on c.id = p.category_id
+        LEFT JOIN order_product_drafts opd on op.order_product_draft_id = opd.id
         WHERE ob.deleted_at IS NULL
-        ORDER BY ob.updated_at DESC, op.id ASC
+        ORDER BY ob.id DESC
     `).Rows()
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงข้อมูลไม่สำเร็จ"})
