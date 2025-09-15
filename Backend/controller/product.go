@@ -469,8 +469,8 @@ func GetDashboardSummary(c *gin.Context) {
 	// ปี
 	var yearSum *float64
 	if err := db.Table("bills").
-		Select("COALESCE(SUM(summary_price), 0)").
-		Where("strftime('%Y', date_import) = ?", year).
+		Select("COALESCE(SUM(summary_price),0)").
+		Where("EXTRACT(YEAR FROM date_import) = ?", year).
 		Scan(&yearSum).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -479,12 +479,12 @@ func GetDashboardSummary(c *gin.Context) {
 		result.YearTotal = *yearSum
 	}
 
-	// เดือน (ถ้ามี)
+	// เดือน
 	if month != "" {
 		var monthSum *float64
 		if err := db.Table("bills").
-			Select("COALESCE(SUM(summary_price), 0)").
-			Where("strftime('%Y', date_import) = ? AND strftime('%m', date_import) = ?", year, month).
+			Select("COALESCE(SUM(summary_price),0)").
+			Where("EXTRACT(YEAR FROM date_import) = ? AND EXTRACT(MONTH FROM date_import) = ?", year, month).
 			Scan(&monthSum).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -496,6 +496,7 @@ func GetDashboardSummary(c *gin.Context) {
 
 	c.JSON(http.StatusOK, result)
 }
+
 
 
 
@@ -511,11 +512,12 @@ func GetDashboardSupplier(c *gin.Context) {
 	query := db.Table("bills").
 		Select("supplies.supply_name, SUM(bills.summary_price) as total").
 		Joins("JOIN supplies ON supplies.id = bills.supply_id").
-		Where("strftime('%Y', bills.date_import) = ?", year)
+		Where("EXTRACT(YEAR FROM bills.date_import) = ?", year)
 
 	if month != "" {
-		query = query.Where("strftime('%m', bills.date_import) = ?", month)
+		query = query.Where("EXTRACT(MONTH FROM bills.date_import) = ?", month)
 	}
+
 
 	if err := query.Group("supplies.supply_name").
 		Having("total > 0"). // <- filter ออกถ้าไม่มียอด
@@ -537,8 +539,8 @@ func GetDashboardTrend(c *gin.Context) {
 	var results []TrendReport
 
 	if err := db.Table("bills").
-		Select("CAST(strftime('%m', date_import) AS INTEGER) as month, SUM(summary_price) as total").
-		Where("strftime('%Y', date_import) = ?", year).
+		Select("EXTRACT(MONTH FROM date_import) AS month, SUM(summary_price) AS total").
+		Where("EXTRACT(YEAR FROM date_import) = ?", year).
 		Group("month").
 		Order("month").
 		Scan(&results).Error; err != nil {
