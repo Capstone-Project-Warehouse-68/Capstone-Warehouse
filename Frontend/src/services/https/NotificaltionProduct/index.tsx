@@ -1,9 +1,9 @@
-import axios from "axios";
+
 // import type { NotificationProduct } from "../../../interfaces/NotificationProduct";
 import type {UpdateNotificationProduct } from "../../../interfaces/NotificationProduct";
 
 
-const apiUrl = "http://localhost/api";
+const apiUrl = "/api";
 
 
 function getAuthHeaders() {

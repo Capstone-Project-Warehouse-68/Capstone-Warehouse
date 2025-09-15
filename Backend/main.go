@@ -15,9 +15,9 @@ const PORT = "8000"
 
 func main() {
 	// โหลด .env จาก folder ปัจจุบัน (Backend/)
-	err := godotenv.Load(".env")
+	err := godotenv.Load()
 	if err != nil {
-		log.Println("No .env file found or failed to load")
+		log.Println("No .env file found (using container environment variables)")
 	}
 	// open connection database
 	config.ConnectionDB()

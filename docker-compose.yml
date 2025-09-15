@@ -1,4 +1,5 @@
-# version: '1.0'
+version: '3.9'
+
 services:
   postgres:
     image: postgres:13
@@ -16,61 +17,35 @@ services:
       - network_microservice
 
   backend:
-    container_name: backend
-    build:
-      context: .
-      dockerfile: Backend/Dockerfile
     image: jarntae/backend:1.0.0
-    ports:
-      - "8000:8000"
-    depends_on:
-      - postgres
+    container_name: backend
     restart: unless-stopped
     env_file:
-      - backend/.env
-    networks:
-      - network_microservice
-      - network_Webapp
-
-
-  frontend:
-    container_name: frontend
-    build:
-      context: .
-      dockerfile: Frontend/Dockerfile
-    image: jarntae/frontend:1.0.0
+      - ./Backend/.env
     depends_on:
-      - backend
-    restart: always
+      - postgres
     ports:
-      - "5173:5173"
+      - "8000:8000"
     networks:
-      - network_Webapp
       - network_microservice
-
-
-
-
+      - network_webapp
 
   nginx:
-    container_name: nginx
     build:
       context: .
       dockerfile: nginx/Dockerfile
-    image: jarntae/nginx:1.0.0
-    ports:
-      - 80:80
-    depends_on:
-      - frontend
-      - backend
-    networks:
-      - network_Webapp
-      - network_microservice
+    container_name: nginx
     restart: always
-
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - network_webapp
+      - network_microservice
 
 networks:
-  network_Webapp:
+  network_webapp:
   network_microservice:
 
 volumes:

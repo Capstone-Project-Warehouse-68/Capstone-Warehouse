@@ -176,7 +176,8 @@ function ImportProduct() {
             .then((values) => {
                 // แปลง Object form values เป็น array ของ products ตาม index
                 const products = Object.entries(values).reduce((acc, [key, value]) => {
-                    const [field, index] = key.split("-");
+                    const [field, indexStr] = key.split("-");
+                    const index = Number(indexStr);  // แปลงเป็น number
                     if (field && index !== undefined) {
                         if (!acc[index]) acc[index] = {};
                         acc[index][field] = value;
