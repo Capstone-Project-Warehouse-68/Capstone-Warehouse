@@ -1,5 +1,5 @@
-const apiUrl = "http://localhost/api";
-
+const apiUrl = "/api";
+import type { MultiOrderBillInput } from "../../../interfaces/OderProduct";
 
 function getAuthHeaders() {
   const Authorization = localStorage.getItem("token");

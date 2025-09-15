@@ -2,7 +2,7 @@ import axios from "axios";
 import type { LoginInterface } from "../../interfaces/Login";
 import type { EmployeeInterface } from "../../interfaces/Employee";
 
-const apiUrl = "http://localhost/api";
+const apiUrl = "/api";
 const Authorization = localStorage.getItem("token");
 const Bearer = localStorage.getItem("token_type");
 

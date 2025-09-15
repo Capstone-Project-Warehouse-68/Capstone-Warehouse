@@ -13,11 +13,11 @@ import HistoryPdf from "../../pages/CreateListProductPDF/History/HistoryPdf";
 import Dashboard from "../../pages/Dashboard";
 
 
-const { Header, Content } = Layout;
+const {  Content } = Layout;
 
 const FullLayout: React.FC = () => {
     const {
-        token: { colorBgContainer },
+        token: { colorBgContainer: _colorBgContainer },
     } = theme.useToken();
     const location = useLocation();
     const [checkLogin, setCheckLogin] = useState(false);

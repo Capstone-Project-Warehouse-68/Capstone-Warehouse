@@ -1,13 +1,10 @@
-FROM node:18 as builder
-
+# Frontend/Dockerfile
+FROM node:18 as build
 WORKDIR /app
-
 COPY package.json package-lock.json ./
-
 RUN npm install
-
 COPY . .
+RUN npm run build  # สร้างไฟล์ dist
 
-EXPOSE 5173
-
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# ไม่ต้องใช้ nginx ใน frontend container
+# nginx container ตัวเดียว serve static + proxy API
