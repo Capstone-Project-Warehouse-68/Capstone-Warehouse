@@ -2,7 +2,7 @@ services:
   jenkins:
     build:
       context: .
-      dockerfile: Jenkins/Dockerfile
+      dockerfile: /Dockerfile
     container_name: jenkins
     privileged: true
     user: root

@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	// "gorm.io/gorm"
+    "sort"
     "strconv"
 	"time"
 )
@@ -70,7 +71,7 @@ func boolOrFalse(b *bool) bool {
 func GetAllOrderBills(c *gin.Context) {
     db := config.DB()
 
-    // query join order_bills + supplies + products + unit_per_quantities
+    // --- Query join order_bills + supplies + products + unit_per_quantities + drafts ---
     rows, err := db.Raw(`
         SELECT 
             ob.id as order_bill_id,
@@ -94,8 +95,8 @@ func GetAllOrderBills(c *gin.Context) {
         LEFT JOIN order_products op ON ob.id = op.order_bill_id
         LEFT JOIN products p ON op.product_id = p.id
         LEFT JOIN unit_per_quantities u ON op.unit_per_quantity_id = u.id
-        LEFT JOIN categories c on c.id = p.category_id
-        LEFT JOIN order_product_drafts opd on op.order_product_draft_id = opd.id
+        LEFT JOIN categories c ON c.id = p.category_id
+        LEFT JOIN order_product_drafts opd ON op.order_product_draft_id = opd.id
         WHERE ob.deleted_at IS NULL
         ORDER BY ob.id DESC
     `).Rows()
@@ -105,7 +106,6 @@ func GetAllOrderBills(c *gin.Context) {
     }
     defer rows.Close()
 
-    // เก็บผลลัพธ์
     orderMap := make(map[uint]*OutputOrderbill)
 
     for rows.Next() {
@@ -115,88 +115,95 @@ func GetAllOrderBills(c *gin.Context) {
             description       string
             supplyID          uint
             supplyName        string
-            productID         *uint  // ใช้ pointer กัน null (เผื่อ order ไม่มีสินค้า)
-            supplyProductCode        *string
+            productID         *uint
+            supplyProductCode *string
             productName       *string
-            categoryName        *string
+            categoryName      *string
             unitPerQuantityID *uint
             unitName          *string
             quantity          *int
-            statusDraft *bool
-            unitDrafName *string
-            productDraftName *string
-            supplyDraftName *string
-
+            statusDraft       *bool
+            unitDrafName      *string
+            productDraftName  *string
+            supplyDraftName   *string
         )
 
         if err := rows.Scan(
-                &orderBillID,       // ob.id
-                &updatedAt,         // ob.updated_at
-                &description,       // ob.description
-                &supplyID,          // s.id
-                &supplyName,        // s.supply_name
-                &productID,         // op.product_id
-                &productName,       // p.product_name
-                &supplyProductCode,       // p.product_code
-                &categoryName,      // c.category_name
-                &unitPerQuantityID, // op.unit_per_quantity_id
-                &unitName,          // u.name_of_unit
-                &quantity,          // op.quantity
-                &statusDraft,
-                &unitDrafName,
-                &productDraftName,
-                &supplyDraftName,
+            &orderBillID,
+            &updatedAt,
+            &description,
+            &supplyID,
+            &supplyName,
+            &productID,
+            &productName,
+            &supplyProductCode,
+            &categoryName,
+            &unitPerQuantityID,
+            &unitName,
+            &quantity,
+            &statusDraft,
+            &unitDrafName,
+            &productDraftName,
+            &supplyDraftName,
         ); err != nil {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "แปลงข้อมูลล้มเหลว"})
             return
         }
 
-        // ถ้ายังไม่มี orderBill นี้ใน map ให้สร้างใหม่
+        // --- ถ้ายังไม่มี orderBill ใน map ให้สร้างใหม่ ---
         if _, ok := orderMap[orderBillID]; !ok {
             orderMap[orderBillID] = &OutputOrderbill{
-                OrderBillId:          orderBillID,
+                OrderBillId: orderBillID,
                 UpdatedAt:   updatedAt.Format("2006-01-02 15:04:05"),
                 Description: description,
                 SupplyID:    supplyID,
                 SupplyName:  supplyName,
                 Products:    []OutputOrderProduct{},
+                ProductsDraft: []OutputOrderDraft{},
             }
         }
 
-         // product จริง
+        // --- Product จริง ---
         if productID != nil && *productID != 0 {
             orderMap[orderBillID].Products = append(orderMap[orderBillID].Products, OutputOrderProduct{
                 ProductID:         *productID,
                 ProductName:       strOrEmpty(productName),
                 SupplyProductCode: strOrEmpty(supplyProductCode),
-                CategoryName:      strOrEmpty(categoryName),
+                CategoryName:      strOrEmpty(categoryName), // ถ้า null จะเป็น ""
                 UnitPerQuantityID: uintOrZero(unitPerQuantityID),
                 UnitName:          strOrEmpty(unitName),
                 Quantity:          intOrZero(quantity),
             })
-        } 
-        // draft
+        }
+
+        // --- Draft products ---
         if boolOrFalse(statusDraft) {
             orderMap[orderBillID].ProductsDraft = append(orderMap[orderBillID].ProductsDraft, OutputOrderDraft{
                 ProductDraftName: strOrEmpty(productDraftName),
                 SupplyDraftName:  strOrEmpty(supplyDraftName),
-                CategoryName:     strOrEmpty(categoryName),
-                UnitDrafName:     strOrEmpty(unitDrafName),
+                CategoryName:     strOrEmpty(categoryName),       // ถ้าไม่มี category ให้เป็น ""
+                UnitDrafName:     strOrEmpty(unitDrafName),       // ถ้า null ให้เป็น ""
                 Quantity:         intOrZero(quantity),
             })
         }
     }
 
-    // แปลง map → slice
+    // --- แปลง map → slice ---
     var orders []OutputOrderbill
     for _, ob := range orderMap {
         orders = append(orders, *ob)
     }
 
+    // --- Sort slice ตาม OrderBillId DESC ---
+    sort.Slice(orders, func(i, j int) bool {
+        return orders[i].OrderBillId > orders[j].OrderBillId
+    })
+
     c.JSON(http.StatusOK, gin.H{
         "data": orders,
     })
 }
+
 
 func DeleteOrderBill(c *gin.Context) {
     db := config.DB()
