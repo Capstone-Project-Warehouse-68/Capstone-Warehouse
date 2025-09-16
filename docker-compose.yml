@@ -31,7 +31,7 @@ services:
       - network_webapp
 
   nginx:
-    image: jarntae/nginx:latest
+    image: jarntae/nginx:letest
     container_name: nginx
     restart: always
     depends_on:

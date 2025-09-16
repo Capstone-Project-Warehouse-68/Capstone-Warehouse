@@ -507,7 +507,7 @@ const OrderTable = () => {
         product_id: 0,
         product_name: values.productDraftName,
         supply_name: values.supplyDraftName,
-        quantity: values.quantity,
+        quantity: 0,
         name_of_unit: values.unit,
         supply_product_code: "-", // ถ้าไม่มีโค้ดจริง
         date_import: dayjs().format("YYYY-MM-DD HH:mm:ss"),
@@ -782,13 +782,13 @@ const OrderTable = () => {
             </Select>
           </Form.Item>
 
-          <Form.Item
+          {/* <Form.Item
             label="จำนวน"
             name="quantity"
             rules={[{ required: true, message: "กรุณากรอกจำนวน" }]}
           >
-            <Input type="number" min={1} placeholder="จำนวน" />
-          </Form.Item>
+            <Input type="number" min={1} placeholder="จำนวน" disabled ={true}/>
+          </Form.Item> */}
 
           <Form.Item
             label="หน่วย"
