@@ -1,4 +1,4 @@
-const apiUrl = "http://localhost:8000";
+const apiUrl = "/api";
 
 function getAuthHeaders() {
   const Authorization = localStorage.getItem("token");

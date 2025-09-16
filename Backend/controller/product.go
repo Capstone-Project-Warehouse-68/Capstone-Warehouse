@@ -520,7 +520,7 @@ func GetDashboardSupplier(c *gin.Context) {
 
 
 	if err := query.Group("supplies.supply_name").
-		Having("total > 0"). // <- filter ออกถ้าไม่มียอด
+		Having("SUM(bills.summary_price) > 0"). // <- filter ออกถ้าไม่มียอด
 		Order("total DESC").
 		Scan(&results).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

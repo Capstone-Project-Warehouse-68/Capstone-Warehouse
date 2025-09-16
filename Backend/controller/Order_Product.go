@@ -100,6 +100,7 @@ func AddOrderBillWithProducts(c *gin.Context) {
 				UnitPerQuantityID: p.UnitPerQuantityID,
 				Quantity:          p.Quantity,
 				StatusDraft:       false,
+				OrderProductDraftID: nil,
 			}
 
 			// ถ้า ProductID = 0 → แสดงว่าเป็นสินค้าใหม่ (draft)
@@ -118,7 +119,7 @@ func AddOrderBillWithProducts(c *gin.Context) {
                 }
 
                 orderProduct.StatusDraft = true
-                orderProduct.OrderProductDraftID = draft.ID
+                orderProduct.OrderProductDraftID = &draft.ID // <- ใช้ pointer
             }
 
 			if err := tx.Create(&orderProduct).Error; err != nil {
