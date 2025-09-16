@@ -1,0 +1,18 @@
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: Jenkins/Dockerfile
+    container_name: jenkins
+    privileged: true
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+
+volumes:
+  jenkins_home:

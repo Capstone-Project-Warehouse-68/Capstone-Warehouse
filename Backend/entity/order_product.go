@@ -14,6 +14,6 @@ type OrderProduct struct {
 
     //กรณีสินค้าตัวใหม่ที่เพิ่มลงในใบสั่งซื้อ
 	StatusDraft bool `gorm:"default:false"`
-	OrderProductDraftID uint
+	OrderProductDraftID *uint
 	OrderProductDraft OrderProductDraft `gorm:"foreignkey:OrderProductDraftID"`
 }
