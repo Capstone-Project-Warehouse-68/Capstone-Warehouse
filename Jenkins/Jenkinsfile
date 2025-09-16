@@ -1,11 +1,15 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKERHUB_CREDENTIALS = 'dockerhub-cred' // ใส่ ID ของ Docker Hub credentials
+    }
+
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'testdeploy',
-                    credentialsId: 'ce02cb56-bbec-4734-9d12-44b8ecda24af',
+                    credentialsId: 'github-cred', // ใส่ ID GitHub Personal Access Token
                     url: 'https://github.com/Capstone-Project-Warehouse-68/Capstone-Warehouse.git'
             }
         }
@@ -22,9 +26,19 @@ pipeline {
             }
         }
 
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh 'docker push jarntae/backend:latest'
+                    sh 'docker push jarntae/nginx:latest'
+                }
+            }
+        }
+
         stage('Deploy') {
             steps {
-                sh 'docker compose -f docker-compose.yml up -d --build'
+                sh 'docker-compose -f docker-compose.yml up -d --build'
             }
         }
     }
