@@ -1,0 +1,30 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'testdeploy',
+                    url: 'https://github.com/your-repo/Capstone-Warehouse.git'
+            }
+        }
+
+        stage('Build Backend') {
+            steps {
+                sh 'docker build -t jarntae/backend:latest -f Backend/Dockerfile Backend'
+            }
+        }
+
+        stage('Build Frontend + Nginx') {
+            steps {
+                sh 'docker build -t jarntae/frontend:latest -f nginx/Dockerfile .'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh 'docker compose -f docker-compose.yml up -d --build'
+            }
+        }
+    }
+}
