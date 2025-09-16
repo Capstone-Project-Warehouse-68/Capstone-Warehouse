@@ -5,7 +5,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'testdeploy',
-                    url: 'https://github.com/your-repo/Capstone-Warehouse.git'
+                    credentialsId: 'ce02cb56-bbec-4734-9d12-44b8ecda24af',
+                    url: 'https://github.com/Capstone-Project-Warehouse-68/Capstone-Warehouse.git'
             }
         }
 
@@ -17,7 +18,7 @@ pipeline {
 
         stage('Build Frontend + Nginx') {
             steps {
-                sh 'docker build -t jarntae/frontend:latest -f nginx/Dockerfile .'
+                sh 'docker build -t jarntae/nginx:latest -f nginx/Dockerfile .'
             }
         }
 
