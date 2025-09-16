@@ -95,7 +95,7 @@ func AddOrderBillWithProducts(c *gin.Context) {
         for _, p := range order.Products {
 			orderProduct := entity.OrderProduct{
 				OrderBillID:       orderBill.ID,
-				ProductID:         p.ProductID,
+				ProductID:         &p.ProductID,
 				UnitPerQuantityID: p.UnitPerQuantityID,
 				Quantity:          p.Quantity,
 				StatusDraft:       false,
@@ -119,6 +119,7 @@ func AddOrderBillWithProducts(c *gin.Context) {
 
                 orderProduct.StatusDraft = true
                 orderProduct.OrderProductDraftID = &draft.ID // <- ใช้ pointer
+				orderProduct.ProductID = nil
             }
 
 			if err := tx.Create(&orderProduct).Error; err != nil {
@@ -185,7 +186,7 @@ func UpdateOrderBill(c *gin.Context) {
 				// ถ้าไม่เจอ สร้างใหม่
 				newOrderProduct := entity.OrderProduct{
 					OrderBillID:       orderBill.ID,
-					ProductID:         p.ProductID,
+					ProductID:         &p.ProductID,
 					UnitPerQuantityID: p.UnitPerQuantityID,
 					Quantity:          p.Quantity,
 				}

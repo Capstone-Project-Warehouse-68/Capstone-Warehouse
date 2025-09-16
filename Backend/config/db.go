@@ -258,7 +258,7 @@ func SetupDatabase() {
 
 	// ===== OrderProduct =====
 	orderProduct := entity.OrderProduct{
-		ProductID:         product.ID,
+		ProductID:         &product.ID,
 		UnitPerQuantityID: unit.ID,
 		Quantity:          10,
 		OrderBillID:       orderBill.ID,

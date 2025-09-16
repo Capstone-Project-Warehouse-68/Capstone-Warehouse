@@ -17,7 +17,7 @@ services:
       - network_microservice
 
   backend:
-    image: jarntae/backend:1.0.0
+    image: jarntae/backend:latest
     container_name: backend
     restart: unless-stopped
     env_file:
@@ -31,9 +31,7 @@ services:
       - network_webapp
 
   nginx:
-    build:
-      context: .
-      dockerfile: nginx/Dockerfile
+    image: jarntae/nginx:latest
     container_name: nginx
     restart: always
     depends_on:

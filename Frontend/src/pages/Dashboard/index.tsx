@@ -82,10 +82,14 @@ export default function Dashboard() {
   ];
 
   // แปลง monthlyTrend ให้เป็นเดือนภาษาไทย
-  const monthlyTrendTH = monthlyTrend.map((item) => ({
-    ...item,
-    month: monthLabelsTH[Number(item.month) - 1] || item.month,
-  }));
+  const monthlyTrendTH = useMemo(
+    () =>
+      monthlyTrend.map((item) => ({
+        ...item,
+        month: monthLabelsTH[Number(item.month) - 1] || item.month,
+      })),
+    [monthlyTrend]
+  );
 
   // Fetch data
   const fetchData = useCallback(
@@ -93,51 +97,51 @@ export default function Dashboard() {
       try {
         setLoading(true);
 
+        // ใช้ปี/เดือนที่เลือก หรือ state ปัจจุบัน
         const selectedYear = filterYear || year.year().toString();
         const selectedMonth =
           filterMonth || (month.month() + 1).toString().padStart(2, "0");
 
-        let SumRes: any = {};
-        let SupRes: DashboardSupplier[] = [];
-        let TreRes: DashboardTrend[] = [];
+        let summaryRes: any = {};
+        let supplierRes: DashboardSupplier[] = [];
+        let trendRes: DashboardTrend[] = [];
 
         if (filterYear) {
-          // ถ้าเปลี่ยนปี => update ทุกอย่าง
-          [SumRes, SupRes, TreRes] = await Promise.all([
-            GetDashboardSummary(selectedYear),
-            GetDashboardSupplier(selectedYear),
-            GetDashboardTrend(selectedYear),
+          // เปลี่ยนปี -> update ทุกอย่าง: summary ปี+เดือน, supplier, monthlyTrend
+          [summaryRes, supplierRes, trendRes] = await Promise.all([
+            GetDashboardSummary(selectedYear, selectedMonth), // summary เดือน
+            GetDashboardSupplier(selectedYear, selectedMonth), // pie + table เดือน
+            GetDashboardTrend(selectedYear), // monthly trend ปี
           ]);
+
+          setSummary(summaryRes);
+          setSupplierData(Array.isArray(supplierRes) ? supplierRes : []);
+          setMonthlyTrend(Array.isArray(trendRes) ? trendRes : []);
         } else if (filterMonth) {
-          // ถ้าเปลี่ยนเดือน => update Pie + Table + Summary เดือน
-          [SumRes, SupRes] = await Promise.all([
+          // เปลี่ยนเดือน -> update summary เดือน + supplier
+          [summaryRes, supplierRes] = await Promise.all([
             GetDashboardSummary(selectedYear, selectedMonth),
             GetDashboardSupplier(selectedYear, selectedMonth),
           ]);
-          // BarChart และ Summary ปี ไม่เปลี่ยน
+
+          setSummary((prev) => ({
+            ...prev,
+            month_total: summaryRes.month_total,
+          }));
+          setSupplierData(Array.isArray(supplierRes) ? supplierRes : []);
+          // monthlyTrend ไม่เปลี่ยน
         } else {
           // โหลดครั้งแรก
-          [SumRes, SupRes, TreRes] = await Promise.all([
+          [summaryRes, supplierRes, trendRes] = await Promise.all([
             GetDashboardSummary(selectedYear, selectedMonth),
             GetDashboardSupplier(selectedYear, selectedMonth),
             GetDashboardTrend(selectedYear),
           ]);
-        }
 
-        if (!("error" in SumRes)) {
-          // ถ้าเลือกเดือน ให้ update month_total เท่านั้น
-          if (filterMonth && !filterYear) {
-            setSummary((prev) => ({
-              ...prev,
-              month_total: SumRes.month_total,
-            }));
-          } else {
-            setSummary(SumRes);
-          }
+          setSummary(summaryRes);
+          setSupplierData(Array.isArray(supplierRes) ? supplierRes : []);
+          setMonthlyTrend(Array.isArray(trendRes) ? trendRes : []);
         }
-
-        setSupplierData(Array.isArray(SupRes) ? SupRes : []);
-        if (TreRes) setMonthlyTrend(Array.isArray(TreRes) ? TreRes : []);
       } catch (error) {
         message.error("เกิดข้อผิดพลาดในการโหลดข้อมูล");
         console.error(error);
@@ -155,24 +159,23 @@ export default function Dashboard() {
     fetchData();
   }, [fetchData]);
 
-  // Handler เปลี่ยนเดือน
+  // --- Handler เปลี่ยนเดือน ---
   const handleMonthChange = useCallback(
     (date: Dayjs | null) => {
       if (date) {
         setMonth(date);
-        // ส่ง filterMonth เพื่อให้ fetchData รู้ว่าเปลี่ยนเดือน
         fetchData(undefined, (date.month() + 1).toString().padStart(2, "0"));
       }
     },
     [fetchData]
   );
 
-  // Handler เปลี่ยนปี
+  // --- Handler เปลี่ยนปี ---
   const handleYearChange = useCallback(
     (date: Dayjs | null) => {
       if (date) {
         setYear(date);
-        // ส่ง filterYear เพื่อให้ fetchData update ทุกอย่าง
+        setMonth(date); // reset month ให้ตรงปีใหม่
         fetchData(date.year().toString());
       }
     },
