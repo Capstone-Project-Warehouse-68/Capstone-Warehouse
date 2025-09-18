@@ -952,48 +952,6 @@ function Employee() {
                                 />
                             </Form.Item>
                         </Col>
-                        {/* <Col xl={12}>
-                            <Form.Item
-                                name="NationalID"
-                                label="บัตรประชาชน"
-                                hasFeedback
-                                rules={[
-                                    {
-                                        required: true,
-                                        message: "กรุณากรอกรหัสบัตรประชาชน!",
-                                    },
-                                    {
-                                        pattern: /^\d{13}$/,
-                                        message: "กรุณากรอกเลขบัตรให้ครบ 13 หลัก",
-                                    },
-                                    {
-                                        validator: async (_, value) => {
-                                            if (!value) return Promise.resolve(); // ให้ validator อื่นจัดการ required
-                                            const res = await CheckNationalID(value);
-                                            if (!res.data.isValid) {
-                                                return Promise.reject(new Error("เลขบัตรประชาชนนี้มีอยู่แล้ว"));
-                                            }
-                                            return Promise.resolve();
-                                        },
-                                    },
-                                ]}
-                                >
-                                <Input
-                                    type="nationalid"
-                                    autoComplete="new-password" // Prevent browser autofill
-                                    maxLength={13}
-                                    // onChange={handleNationalIDChange}
-                                    onKeyPress={(event) => {
-                                    if (!/[0-9]/.test(event.key)) {
-                                        event.preventDefault();
-                                    }
-                                    }}
-                                    onCopy={(e) => e.preventDefault()} // Prevent copy
-                                    onCut={(e) => e.preventDefault()} // Prevent cut
-                                    onPaste={(e) => e.preventDefault()} // Prevent paste
-                                />
-                            </Form.Item>
-                        </Col> */}
                     </Row>
                     <Row>
                         <Col span={24} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -1047,24 +1005,6 @@ function Employee() {
                 >
                     <Row gutter={[8,8]}>
                         <Col xs={24} sm={24} md={24} lg={24} xl={24}>
-                            {/* <Form.Item label="รูปประจำตัว" required >
-                                <ImgCrop rotationSlider>
-                                <Upload
-                                    beforeUpload={() => false}
-                                    fileList={fileList}
-                                    onChange={onChange}
-                                    maxCount={1}
-                                    multiple={false}
-                                    listType="picture-card"
-                                    onPreview={onPreview}
-                                >
-                                    <div>
-                                    <PlusOutlined />
-                                    <div style={{ marginTop: 8 }}>อัพโหลด</div>
-                                    </div>
-                                </Upload>
-                                </ImgCrop>
-                            </Form.Item> */}
                             <Form.Item
                                 label="รูปประจำตัว"
                                 name="Profile"
@@ -1297,49 +1237,6 @@ function Employee() {
                                 />
                             </Form.Item>
                         </Col>
-                        {/* <Col xl={12}>
-                            <Form.Item
-                                name="NationalID"
-                                label="บัตรประชาชน"
-                                hasFeedback
-                                rules={[
-                                    {
-                                        required: true,
-                                        message: "กรุณากรอกรหัสบัตรประชาชน!",
-                                    },
-                                    {
-                                        pattern: /^\d{13}$/,
-                                        message: "กรุณากรอกเลขบัตรให้ครบ 13 หลัก",
-                                    },
-                                    {
-                                        validator: async (_, value) => {
-                                            if (!value) return Promise.resolve(); // ให้ validator อื่นจัดการ required
-                                            if (value === currentNationalID) return Promise.resolve(); // ถ้าเหมือนของเดิม ให้ผ่าน
-                                            const res = await CheckNationalID(value);
-                                            if (!res.data.isValid) {
-                                                return Promise.reject(new Error("เลขบัตรประชาชนนี้มีอยู่แล้ว"));
-                                            }
-                                            return Promise.resolve();
-                                        },
-                                    },
-                                ]}
-                                >
-                                <Input
-                                    type="nationalid"
-                                    autoComplete="new-password" // Prevent browser autofill
-                                    maxLength={13}
-                                    // onChange={handleNationalIDChange}
-                                    onKeyPress={(event) => {
-                                    if (!/[0-9]/.test(event.key)) {
-                                        event.preventDefault();
-                                    }
-                                    }}
-                                    onCopy={(e) => e.preventDefault()} // Prevent copy
-                                    onCut={(e) => e.preventDefault()} // Prevent cut
-                                    onPaste={(e) => e.preventDefault()} // Prevent paste
-                                />
-                            </Form.Item>
-                        </Col> */}
                     </Row>
                     <Row>
                         <Col span={24} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
