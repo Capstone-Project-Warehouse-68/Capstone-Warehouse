@@ -17,6 +17,7 @@ func TestSupply(t *testing.T){
 	t.Run(`Supply is valid`, func(t *testing.T){
 		e := entity.Supply{
 			SupplyName: "ABC",
+			SupplyAbbrev: "ABC",
 			Address: "XXX",
 			PhoneNumberSale: "01234567890",
 			SaleName: "ABC",
@@ -34,6 +35,7 @@ func TestSupply(t *testing.T){
 	t.Run(`supply_name is required`, func(t *testing.T){
 		e := entity.Supply{
 			SupplyName: "",//ผิดตรงนี้
+			SupplyAbbrev: "ABC",
 			Address: "XXX",
 			PhoneNumberSale: "01234567890",
 			SaleName: "ABC",
@@ -49,9 +51,48 @@ func TestSupply(t *testing.T){
 		g.Expect(err.Error()).To(Equal("SupplyName is required"))
 	})
 
+	t.Run(`supply_abbrev is required`, func(t *testing.T){
+		e := entity.Supply{
+			SupplyName: "ABC",
+			SupplyAbbrev: "", //ผิดตรงนี้
+			Address: "XXX",
+			PhoneNumberSale: "01234567890",
+			SaleName: "ABC",
+			BankTypeID: uint(1),
+			BankType: b,
+			BankAccountNumber: "01234567890",
+			LineIDSale: "ABC",
+		}
+		ok, err := govalidator.ValidateStruct(e)
+
+		g.Expect(ok).NotTo(BeTrue())
+		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("SupplyAbbrev is required"))
+	})
+
+	t.Run(`supply_abbrev must be 2-3 character`, func(t *testing.T){
+		e := entity.Supply{
+			SupplyName: "ABC",
+			SupplyAbbrev: "a", //ผิดตรงนี้
+			Address: "XXX",
+			PhoneNumberSale: "01234567890",
+			SaleName: "ABC",
+			BankTypeID: uint(1),
+			BankType: b,
+			BankAccountNumber: "01234567890",
+			LineIDSale: "ABC",
+		}
+		ok, err := govalidator.ValidateStruct(e)
+
+		g.Expect(ok).NotTo(BeTrue())
+		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("SupplyAbbrev must be 2-3 characters"))
+	})
+
 	t.Run(`address is required`, func(t *testing.T){
 		e := entity.Supply{
 			SupplyName: "ABC",
+			SupplyAbbrev: "ABC",
 			Address: "",//ผิดตรงนี้
 			PhoneNumberSale: "01234567890",
 			SaleName: "ABC",
@@ -70,6 +111,7 @@ func TestSupply(t *testing.T){
 	t.Run(`phone_number_sale is required`, func(t *testing.T){
 		e := entity.Supply{
 			SupplyName: "ABC",
+			SupplyAbbrev: "ABC",
 			Address: "XXX",
 			PhoneNumberSale: "",//ผิดตรงนี้
 			SaleName: "ABC",
@@ -88,6 +130,7 @@ func TestSupply(t *testing.T){
 	t.Run(`sale_name is required`, func(t *testing.T){
 		e := entity.Supply{
 			SupplyName: "ABC",
+			SupplyAbbrev: "ABC",
 			Address: "XXX",
 			PhoneNumberSale: "01234567890",
 			SaleName: "",//ผิดตรงนี้
@@ -106,6 +149,7 @@ func TestSupply(t *testing.T){
 	t.Run(`bank_type_id is required`, func(t *testing.T){
 		e := entity.Supply{
 			SupplyName: "ABC",
+			SupplyAbbrev: "ABC",
 			Address: "XXX",
 			PhoneNumberSale: "01234567890",
 			SaleName: "ABC",
@@ -124,6 +168,7 @@ func TestSupply(t *testing.T){
 	t.Run(`bank_account_number is required`, func(t *testing.T){
 		e := entity.Supply{
 			SupplyName: "ABC",
+			SupplyAbbrev: "ABC",
 			Address: "XXX",
 			PhoneNumberSale: "01234567890",
 			SaleName: "ABC",
@@ -142,6 +187,7 @@ func TestSupply(t *testing.T){
 	t.Run(`line_id_sale is required`, func(t *testing.T){
 		e := entity.Supply{
 			SupplyName: "ABC",
+			SupplyAbbrev: "ABC",
 			Address: "XXX",
 			PhoneNumberSale: "01234567890",
 			SaleName: "ABC",

@@ -61,7 +61,7 @@ func SignIn(c *gin.Context) {
 			"token_type":      "Bearer",
 			"role":				employee.RoleID,
 			"token":           	signedToken,
-			"employeeID":      	employee.ID,
+			"id":      	employee.ID,
 			"token_expiration": expirationTime,
 		})
 	}

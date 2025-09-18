@@ -9,21 +9,6 @@ import (
 	"github.com/project_capstone/WareHouse/entity"
 )
 
-type ProductResponse struct {
-	ID                uint    `json:"ID"`
-	SupplyProductCode string  `json:"SupplyProductCode"`
-	ProductCode       string  `json:"ProductCode"`
-	ProductName       string  `json:"ProductName"`
-	Description       string  `json:"Description"`
-	Picture           string  `json:"Picture"`
-	Quantity          int     `json:"Quantity"`
-	UnitPerQuantityID uint    `json:"UnitPerQuantityID"`
-	LimitQuantity     int     `json:"LimitQuantity"`
-	SalePrice         float32 `json:"SalePrice"`
-	CategoryID        uint    `json:"CategoryID"`
-	ShelfID           uint    `json:"ShelfID"`
-}
-
 type Limituantity struct {
 	ProductID     uint `json:"product_id"`
 	LimitQuantity uint `json:"limit_quantity"`

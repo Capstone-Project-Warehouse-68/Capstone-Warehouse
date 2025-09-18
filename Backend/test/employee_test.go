@@ -14,13 +14,14 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "12345",
 			BankTypeID:	uint(1),
 			BankAccountNumber: "1234567890",
+			Line: "ABC",
 			RoleID: uint(1),
 		}
 		ok, err := govalidator.ValidateStruct(e)
@@ -33,13 +34,14 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "", //ผิดตรงนี้
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "12345",
 			BankTypeID:	uint(1),
 			BankAccountNumber: "1234567890",
+			Line: "ABC",
 			RoleID: uint(1),
 		}
 
@@ -54,13 +56,14 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "", //ผิดตรงนี้
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "12345",
 			BankTypeID:	uint(1),
 			BankAccountNumber: "1234567890",
+			Line: "ABC",
 			RoleID: uint(1),
 		}
 
@@ -75,13 +78,14 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "", //ผิดตรงนี้
+			EMPCode: "", //ผิดตรงนี้
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "12345",
 			BankTypeID:	uint(1),
 			BankAccountNumber: "1234567890",
+			Line: "ABC",
 			RoleID: uint(1),
 		}
 
@@ -89,20 +93,21 @@ func TestEmployee(t *testing.T){
 
 		g.Expect(ok).NotTo(BeTrue())
 		g.Expect(err).NotTo(BeNil())
-		g.Expect(err.Error()).To(Equal("NationalID is required"))
+		g.Expect(err.Error()).To(Equal("EMPCode is required"))
 	})
 
 	t.Run(`phone_number is required`, func(t *testing.T) {
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "",//ผิดตรงนี้
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "12345",
 			BankTypeID:	uint(1),
 			BankAccountNumber: "1234567890",
+			Line: "ABC",
 			RoleID: uint(1),
 		}
 
@@ -117,13 +122,14 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "", //ผิดตรงนี้
 			Profile: "longtext",
 			Password: "12345",
 			BankTypeID:	uint(1),
 			BankAccountNumber: "1234567890",
+			Line: "ABC",
 			RoleID: uint(1),
 		}
 
@@ -138,13 +144,14 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@.com", //ผิดตรงนี้
 			Profile: "longtext",
 			Password: "12345",
 			BankTypeID:	uint(1),
 			BankAccountNumber: "1234567890",
+			Line: "ABC",
 			RoleID: uint(1),
 		}
 
@@ -159,13 +166,14 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "",//ผิดตรงนี้
 			Password: "12345",
 			BankTypeID:	uint(1),
 			BankAccountNumber: "1234567890",
+			Line: "ABC",
 			RoleID: uint(1),
 		}
 
@@ -180,13 +188,14 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "",//ผิดตรงนี้
 			BankTypeID:	uint(1),
 			BankAccountNumber: "1234567890",
+			Line: "ABC",
 			RoleID: uint(1),
 		}
 
@@ -201,13 +210,14 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "12345",
 			BankTypeID:	uint(0),//ผิดตรงนี้
 			BankAccountNumber: "1234567890",
+			Line: "ABC",
 			RoleID: uint(1),
 		}
 
@@ -222,13 +232,14 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "12345",
 			BankTypeID:	uint(1),
 			BankAccountNumber: "",//ผิดตรงนี้
+			Line: "ABC",
 			RoleID: uint(1),
 		}
 
@@ -238,18 +249,41 @@ func TestEmployee(t *testing.T){
 		g.Expect(err).NotTo(BeNil())
 		g.Expect(err.Error()).To(Equal("BankAccountNumber is required"))
 	})
- 
-	t.Run(`role_id is required`, func(t *testing.T) {
+
+	t.Run(`bank_account_number is required`, func(t *testing.T) {
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
 			Password: "12345",
 			BankTypeID:	uint(1),
 			BankAccountNumber: "1234567890",
+			Line: "",//ผิดตรงนี้
+			RoleID: uint(1),
+		}
+
+		ok, err := govalidator.ValidateStruct(e)
+
+		g.Expect(ok).NotTo(BeTrue())
+		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("Line is required"))
+	})
+ 
+	t.Run(`role_id is required`, func(t *testing.T) {
+		e := entity.Employee{
+			FirstName: "Thanawit",
+			LastName: "Yangngam",
+			EMPCode: "MG001",
+			PhoneNumber: "0123456789",
+			Email: "Th@gmail.com",
+			Profile: "longtext",
+			Password: "12345",
+			BankTypeID:	uint(1),
+			BankAccountNumber: "1234567890",
+			Line: "ABC",
 			RoleID: uint(0),//ผิดตรงนี้
 		}
 
