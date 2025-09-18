@@ -6,9 +6,14 @@ import SignInPages from "../../pages/authentication/Login";
 import Employee from "../../pages/Employee/employee";
 
 import SiderOwner from "../SiderOwner";
+import ImportProduct from "../../pages/ImportProduct/importproduct";
+import CreateSupplyer from "../../pages/CreateSupplyer/CreateSupplyer";
+import CreateUnitQuantity from "../../pages/CreateUnitQuantity/CreateUnitQuantity";
+import CreateBankType from "../../pages/CreateBankType/CreateBanktype";
+import RestoreBill from "../../pages/RestoreBill/RestoreBill";
 
 
-const { Header, Content } = Layout;
+const { Content } = Layout;
 
 const FullLayout: React.FC = () => {
     const {
@@ -25,7 +30,9 @@ const FullLayout: React.FC = () => {
 
 
     const Role = localStorage.getItem("role") || "";
+    const ID = localStorage.getItem("employeeID") || "";
     console.log(Role);
+    console.log("EMP ID : ",ID);
 
     return (
         <>
@@ -33,10 +40,15 @@ const FullLayout: React.FC = () => {
                 {checkLogin && <SiderOwner />}
                 <Layout style={{ backgroundColor: "#adadadff", minHeight: "100vh", marginTop: 0 }}>
                     <Content style={{ marginTop: "0px" }}>
-                        <Breadcrumb style={{ marginTop: "0px" }} />
+                        <Breadcrumb />
                         <div>
                             <Routes>
                                 <Route path="/" element={<SignInPages />} />
+                                <Route path="/importproduct" element={<ImportProduct />}/>
+                                <Route path="/createsupplyer" element={<CreateSupplyer />}/>
+                                <Route path="/createunitquantity" element={<CreateUnitQuantity />}/>
+                                <Route path="/createbanktype" element={<CreateBankType />}/>
+                                <Route path="/restorebill" element={<RestoreBill />}/>
                                 <Route path="/manageemployee" element={<Employee />} />
                             </Routes>
                         </div>

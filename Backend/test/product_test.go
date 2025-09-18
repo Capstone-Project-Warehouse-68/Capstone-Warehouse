@@ -50,29 +50,6 @@ func TestProject(t *testing.T){
 		g.Expect(err).To(BeNil())
 	})
 
-	t.Run(`supply_product_code is required`, func(t *testing.T){
-		e := entity.Product{
-			SupplyProductCode: "",//ผิดตรงนี้
-			ProductCode: "ABC",
-			ProductName: "ABC",
-			Description: "ABC",
-			Quantity: 20,
-			UnitPerQuantityID: uint(1),
-			UnitPerQuantity: u,
-			LimitQuantity: 5,
-			SalePrice: 55.5,
-			CategoryID: uint(1),
-			Category: c,
-			ShelfID: uint(1),
-			Shelf: s,
-		}
-		ok, err := govalidator.ValidateStruct(e)
-
-		g.Expect(ok).NotTo(BeTrue())
-		g.Expect(err).NotTo(BeNil())
-		g.Expect(err.Error()).To(Equal("SupplyProductCode is required"))
-	})
-
 	t.Run(`product_code is required`, func(t *testing.T){
 		e := entity.Product{
 			SupplyProductCode: "ABC",

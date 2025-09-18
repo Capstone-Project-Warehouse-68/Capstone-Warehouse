@@ -7,11 +7,18 @@ import (
 	"github.com/project_capstone/WareHouse/config"
 	"github.com/project_capstone/WareHouse/controller"
 	"github.com/project_capstone/WareHouse/middlewares"
+	"github.com/joho/godotenv"
+	"log"
 )
 
 const PORT = "8000"
 
 func main() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Println("No .env file found or failed to load")
+	}
+
 	// open connection database
 	config.ConnectionDB()
 
@@ -24,6 +31,8 @@ func main() {
 	router := r.Group("/")
 	{
 		router.Use(middlewares.Authorizes())
+
+		r.GET("/download-template", controller.DownloadTemplate)
 
 		r.POST("/CreateEmployee", controller.CreateEmployee)
 		r.PATCH("/UpdateEmployee/:id", controller.UpdateEmployee)
@@ -40,7 +49,35 @@ func main() {
 		r.GET("/GetNumberRole", controller.GetNumberRole)
 		r.PATCH("/UpdateNumberRole/:id", controller.UpdateNumberRole)
 
+		r.GET("/getAllBill", controller.GetAllBill)
+		r.GET("/Getunitperquantity", controller.GetUnitPerQuantity)
+		r.GET("/GetCategory", controller.GetCategory)
+		r.GET("/Getshelf", controller.GetShelf)
+		r.GET("/GetshelfByzone/:id", controller.GetShelfByZoneID)
+		r.GET("/Getzone", controller.GetZone)
+		r.GET("/GetSupply", controller.GetSupply)
+
 		r.POST("/CreateProduct", controller.CreateProduct)
+		r.POST("/CreateProductWithBill", controller.CreateBillWithProducts)
+		r.PATCH("/Updatebillwithproduct/:id", controller.UpdateBillWithProducts)
+		r.DELETE("/deletebillwithproduct/:id", controller.DeleteBill)
+
+		r.POST("/createunitquantity", controller.CreateUnitPerQuantity)
+		r.PATCH("/updateUnitPerQuantity/:id", controller.UpdateUnitPerQuantity)
+		r.POST("/CreateCategory", controller.CreateCategory)
+		r.PATCH("/UpdateCategory/:id", controller.UpdateCategory)
+		r.POST("/createbanktype", controller.CreateBankType)
+		r.GET("/getBankType", controller.GetBankType)
+		r.PATCH("/updateBank/:id", controller.UpdateBankType)
+		r.POST("/CreateSupply", controller.CreateSupply)
+		r.PATCH("/UpdateSupply/:id", controller.UpdateSupply)
+		r.GET("/getbillalldata/:id", controller.GetBillAllDataByBillID)
+		r.GET("/getBillDeleted", controller.GetBillDeleted)
+
+		r.PATCH("/restoreBill", controller.RestoreBills)
+
+		controller.StartHardDeleteScheduler()
+
 		r.POST("/signin", controller.SignIn)
 		router.Use(middlewares.Authorizes())
 	}

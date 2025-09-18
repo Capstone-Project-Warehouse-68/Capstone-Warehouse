@@ -3,10 +3,10 @@ package config
 import (
 	"fmt"
 	"time"
-
 	"github.com/project_capstone/WareHouse/entity"
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"os"
 )
 
 var db *gorm.DB
@@ -16,10 +16,25 @@ func DB() *gorm.DB {
 }
 
 func ConnectionDB() {
-	database, err := gorm.Open(sqlite.Open("Project_Capstone.db?cache=shared"), &gorm.Config{})
+	// ดึงค่าจาก environment variables
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+	sslmode := os.Getenv("DB_SSLMODE") // usually "disable" for local
+
+	// สร้าง DSN สำหรับ Postgres
+	dsn := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		host, port, user, password, dbname, sslmode,
+	)
+
+	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		panic("failed to connect database")
+		panic("failed to connect database: " + err.Error())
 	}
+
 	fmt.Println("connected database")
 	db = database
 }
@@ -53,7 +68,8 @@ func SetupDatabase() {
 	ManagerRoleNumber := entity.Number{Numb : 1 , RoleID : 2 }
 	EmployeeRoleNumber := entity.Number{Numb : 1 , RoleID : 3 }
 
-	B1 := entity.BankType{BankTypeName: "จำลองธนาคาร1"}
+	B1 := entity.BankType{BankTypePicture: "data:image/png;base64,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",
+		BankTypeName: "พร้อมเพย์"}
 
 	db.FirstOrCreate(&OwnerRole, entity.Role{RoleName: "เจ้าของร้าน" , RoleNickName: "OW" })
 	db.FirstOrCreate(&ManagerRole, entity.Role{RoleName: "ผู้จัดการ" , RoleNickName: "MN" })
@@ -63,7 +79,7 @@ func SetupDatabase() {
 	db.Where("role_id = ?", ManagerRole.ID).FirstOrCreate(&ManagerRoleNumber, entity.Number{Numb : 1 , RoleID : ManagerRole.ID })
 	db.Where("role_id = ?", EmployeeRole.ID).FirstOrCreate(&EmployeeRoleNumber, entity.Number{Numb : 1 , RoleID : EmployeeRole.ID })
 
-	db.FirstOrCreate(&B1, entity.BankType{BankTypeName: "จำลองธนาคาร1"})
+	db.FirstOrCreate(&B1, entity.BankType{BankTypeName: "พร้อมเพย์"})
 
 	hashedPassword, _ := HashPassword("12345")
 
@@ -87,12 +103,29 @@ func SetupDatabase() {
 	// ===== Zone & Shelf =====
 	zone := entity.Zone{ZoneName: "โซน A"}
 	db.FirstOrCreate(&zone, entity.Zone{ZoneName: "โซน A"})
+	zone2 := entity.Zone{ZoneName: "โซน B"}
+	db.FirstOrCreate(&zone2, entity.Zone{ZoneName: "โซน B"})
 
 	shelf := entity.Shelf{
 		ShelfName: "ชั้น A1",
 		ZoneID:    zone.ID,
 	}
+	shelf2 := entity.Shelf{
+		ShelfName: "ชั้น A2",
+		ZoneID:    zone.ID,
+	}
+	shelf3 := entity.Shelf{
+		ShelfName: "ชั้น A3",
+		ZoneID:    zone.ID,
+	}
+	shelf4 := entity.Shelf{
+		ShelfName: "ชั้น B1",
+		ZoneID:    zone2.ID,
+	}
 	db.FirstOrCreate(&shelf, entity.Shelf{ShelfName: "ชั้น A1"})
+	db.FirstOrCreate(&shelf2, entity.Shelf{ShelfName: "ชั้น A2"})
+	db.FirstOrCreate(&shelf3, entity.Shelf{ShelfName: "ชั้น A3"})
+	db.FirstOrCreate(&shelf4, entity.Shelf{ShelfName: "ชั้น B1"})
 
 	// ===== Category =====
 	category := entity.Category{CategoryName: "เบรก"}
@@ -101,15 +134,30 @@ func SetupDatabase() {
 	// ===== Unit =====
 	unit := entity.UnitPerQuantity{NameOfUnit: "ชิ้น"}
 	db.FirstOrCreate(&unit, entity.UnitPerQuantity{NameOfUnit: "ชิ้น"})
+	unit2 := entity.UnitPerQuantity{NameOfUnit: "อัน"}
+	db.FirstOrCreate(&unit2, entity.UnitPerQuantity{NameOfUnit: "อัน"})
+	unit3 := entity.UnitPerQuantity{NameOfUnit: "ตัว"}
+	db.FirstOrCreate(&unit3, entity.UnitPerQuantity{NameOfUnit: "ตัว"})
+	unit4 := entity.UnitPerQuantity{NameOfUnit: "ลูก"}
+	db.FirstOrCreate(&unit4, entity.UnitPerQuantity{NameOfUnit: "ลูก"})
+	unit5 := entity.UnitPerQuantity{NameOfUnit: "เส้น"}
+	db.FirstOrCreate(&unit5, entity.UnitPerQuantity{NameOfUnit: "เส้น"})
+	unit6 := entity.UnitPerQuantity{NameOfUnit: "กระป๋อง"}
+	db.FirstOrCreate(&unit6, entity.UnitPerQuantity{NameOfUnit: "กระป๋อง"})
+	unit7 := entity.UnitPerQuantity{NameOfUnit: "ใบ"}
+	db.FirstOrCreate(&unit7, entity.UnitPerQuantity{NameOfUnit: "ใบ"})
+	unit8 := entity.UnitPerQuantity{NameOfUnit: "แผ่น"}
+	db.FirstOrCreate(&unit8, entity.UnitPerQuantity{NameOfUnit: "แผ่น"})
 
 	// ===== Supply =====
 	supply := entity.Supply{
 		SupplyName:        "บริษัทอะไหล่ไทย",
+		SupplyAbbrev:      "TST",
 		Address:           "123 ถนนพหลโยธิน",
 		PhoneNumberSale:   "0812345678",
 		SaleName:          "คุณสมชาย",
 		BankTypeID:        B1.ID,
-		BankAccountNumber: "123-4-56789-0",
+		BankAccountNumber: "0812345678",
 		LineIDSale:        "@supplythai",
 	}
 	db.FirstOrCreate(&supply, entity.Supply{SupplyName: "บริษัทอะไหล่ไทย"})
@@ -132,24 +180,23 @@ func SetupDatabase() {
 
 	// ===== Bill =====
 	bill := entity.Bill{
+		Title:        "Test Bill",
 		SupplyID:     supply.ID,
 		DateImport:   time.Now(),
 		SummaryPrice: 17000,
+		EmployeeID:   1,
 	}
-	db.Create(&bill)
+	db.FirstOrCreate(&bill)
 
 	// ===== ProductOfBill =====
 	productOfBill := entity.ProductOfBill{
-		SupplyProductCode: 1, // ต้องตรงกับ Product.ID หากใช้ foreignKey จาก ID
-		ProductID:         product.ID,
-		BillID:            bill.ID,
-		ManufacturerCode:  "MNFC-12345",
-		Quantity:          20,
-		PricePerPiece:     800,
-		Discount:          5,
-		UnitPerQuantityID: unit.ID,
+		ProductID:        product.ID,
+		BillID:           bill.ID,
+		ManufacturerCode: "MNFC-12345",
+		PricePerPiece:    800,
+		Discount:         5,
 	}
-	db.Create(&productOfBill)
+	db.FirstOrCreate(&productOfBill)
 
 	// ===== Coupon =====
 	coupon := entity.Coupon{
@@ -164,7 +211,7 @@ func SetupDatabase() {
 		EmployeeID:   employee.ID,
 		CouponID:     coupon.ID,
 	}
-	db.Create(&cart)
+	db.FirstOrCreate(&cart)
 
 	// ===== CartProduct =====
 	cartProduct := entity.CartProduct{
@@ -173,7 +220,7 @@ func SetupDatabase() {
 		Quantity:      3,
 		PricePerPiece: product.SalePrice,
 	}
-	db.Create(&cartProduct)
+	db.FirstOrCreate(&cartProduct)
 
 	// ===== OrderBill =====
 	orderBill := entity.OrderBill{
@@ -181,7 +228,7 @@ func SetupDatabase() {
 		SupplyID:    supply.ID,
 		EmployeeID:  employee.ID,
 	}
-	db.Create(&orderBill)
+	db.FirstOrCreate(&orderBill)
 
 	// ===== OrderProduct =====
 	orderProduct := entity.OrderProduct{
@@ -190,6 +237,6 @@ func SetupDatabase() {
 		Quantity:          10,
 		OrderBillID:       orderBill.ID,
 	}
-	db.Create(&orderProduct)
+	db.FirstOrCreate(&orderProduct)
 
 }

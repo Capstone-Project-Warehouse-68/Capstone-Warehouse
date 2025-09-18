@@ -1,4 +1,5 @@
 export interface BankTypeInterface {
-    ID?: number;
-    BankTypeName? : string;
+    ID: number,
+    BankTypePicture?: string,
+    BankTypeName: string
 }

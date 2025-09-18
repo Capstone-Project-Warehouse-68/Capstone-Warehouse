@@ -11,13 +11,17 @@ import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import HistoryIcon from '@mui/icons-material/History';
 import PostAddIcon from '@mui/icons-material/PostAdd';
+import AddBusinessIcon from '@mui/icons-material/AddBusiness';
+import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import NotificationImportantIcon from '@mui/icons-material/NotificationImportant';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Link } from "react-router-dom";
- 
-import type { EmployeeInterface } from "../interfaces/Employee";
 import { GetEmployeeById } from "../services/https";
+import type { EmployeeInterface } from "../interfaces/Employee";
+import './Sider.css'
 
 function SiderOwner() {
   const page = localStorage.getItem("page");
@@ -29,7 +33,7 @@ function SiderOwner() {
   const [positionName, setPositionName] = useState("");
   const [profile, setProfile] = useState("");
 
-  const employeeID = localStorage.getItem("employeeID");
+  const employeeID = Number(localStorage.getItem("employeeID"));
 
   const getEmployeeById = async (id: number) => {
   try {
@@ -73,7 +77,11 @@ function SiderOwner() {
   return (
     <>
       {contextHolder}
-      <Sider collapsed={collapsed} className="custom-sider" width={window.innerWidth * 0.16}>
+      <Sider collapsed={collapsed} className="custom-sider" width={window.innerWidth * 0.17}
+        style={{
+          height: "100vh",
+          overflowY: "auto",
+        }}>
         <div
           style={{
             display: "flex",
@@ -100,10 +108,10 @@ function SiderOwner() {
             </div>
 
             <div className="profile-info">
-              <span style={{ fontSize: "large", color: "black" }}>
+              <span style={{ fontSize: "large", color: "white" }}>
                 {firstName} {lastName}
               </span>
-              <span style={{ fontSize: "default", color: "black" }}>
+              <span style={{ fontSize: "default", color: "white" }}>
                 ({positionName})
               </span>
             </div>
@@ -176,6 +184,33 @@ function SiderOwner() {
                 </Menu.Item>
               </SubMenu>
 
+              <SubMenu
+                key="sub2"
+                icon={
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      height: "100%",
+                    }}
+                  >
+                    <CreateNewFolderIcon style={{ fontSize: 26 }} />
+                  </div>
+                }
+                title="สร้างข้อมูลสินค้า"
+              >
+                <Menu.Item key="s1" icon={<AccountBalanceIcon />}>
+                  <Link to="/createbanktype " style={{ fontSize: 14 }}>สร้างข้อมูลธนาคาร</Link>
+                </Menu.Item>
+                <Menu.Item key="s2" icon={<AddBusinessIcon />}>
+                  <Link to="/createsupplyer" style={{ fontSize: 14 }}>สร้างข้อมูลบริษัทสั่งซื้อ</Link>
+                </Menu.Item>
+                <Menu.Item key="s3" icon={<InventoryIcon />}>
+                  <Link to="/createunitquantity" style={{ fontSize: 14 }}>สร้างประเภทและหน่วยสินค้า</Link>
+                </Menu.Item>
+              </SubMenu>
+
               <Menu.Item
                 key="importproduct"
                 icon={
@@ -193,6 +228,25 @@ function SiderOwner() {
                 onClick={() => setCurrentPage("importproduct")}
               >
                 <Link to="/importproduct" style={{ fontSize: 16 }}>นำเข้าข้อมูลสินค้า</Link>
+              </Menu.Item>
+
+              <Menu.Item
+                key="restorebill"
+                icon={
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      height: "100%",
+                    }}
+                  >
+                    <PostAddIcon style={{ fontSize: 26 }} />
+                  </div>
+                }
+                onClick={() => setCurrentPage("restorebill")}
+              >
+                <Link to="/restorebill" style={{ fontSize: 16 }}>ประวัติการลบใบสั่งซื้อ</Link>
               </Menu.Item>
 
               <Menu.Item
@@ -238,17 +292,17 @@ function SiderOwner() {
 
           <Menu style={{ backgroundColor: "#8c8c8c" }} mode="inline" inlineCollapsed={collapsed}>
             <Menu.Item key="logout" icon={
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      height: "100%",
-                    }}
-                  >
-                    <LogoutIcon style={{ fontSize: 26 }} />
-                  </div>
-                } onClick={Logout}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "100%",
+                }}
+              >
+                <LogoutIcon style={{ fontSize: 26 }} />
+              </div>
+            } onClick={Logout}>
               <span style={{ fontSize: 16 }}>ออกจากระบบ </span>
             </Menu.Item>
           </Menu>

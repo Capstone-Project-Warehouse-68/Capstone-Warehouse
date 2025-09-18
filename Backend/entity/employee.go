@@ -9,7 +9,7 @@ type Employee struct {
 	EMPCode        	  string `gorm:"uniqueIndex;not null" valid:"required~EMPCode is required"`
 	PhoneNumber		  string `valid:"required~PhoneNumber is required"`
 	Email             string `valid:"required~Email is required, email~Email is invalid"`
-	Profile			  string `gorm:"type:longtext" valid:"required~Profile is required"`
+	Profile			  string `gorm:"type:text" valid:"required~Profile is required"`
 	Password          string `valid:"required~Password is required"`
 	BankAccountNumber string `valid:"required~BankAccountNumber is required"`
 	Line              string `valid:"required~Line is required"`
@@ -22,4 +22,5 @@ type Employee struct {
 
 	Cart      []Cart      `gorm:"foreignKey:EmployeeID"`
 	OrderBill []OrderBill `gorm:"foreignKey:EmployeeID"`
+	Bill      []Bill      `gorm:"foreignKey:EmployeeID"`
 }

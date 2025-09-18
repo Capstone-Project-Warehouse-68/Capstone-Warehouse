@@ -128,6 +128,7 @@ func CreateEmployee(c *gin.Context) {
 	db.First(&banktype, employee.BankType)
 	if banktype.ID == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบประเภทธนาคาร"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบประเภทธนาคาร"})
 		return
 	}
 
