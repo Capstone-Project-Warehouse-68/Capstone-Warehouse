@@ -251,6 +251,25 @@ function SiderOwner() {
               </Menu.Item>
 
               <Menu.Item
+                key="restorebill"
+                icon={
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      height: "100%",
+                    }}
+                  >
+                    <PostAddIcon style={{ fontSize: 26 }} />
+                  </div>
+                }
+                onClick={() => setCurrentPage("restorebill")}
+              >
+                <Link to="/restorebill" style={{ fontSize: 16 }}>ประวัติการลบใบสั่งซื้อ</Link>
+              </Menu.Item>
+
+              <Menu.Item
                 key="notificationproduct"
                 icon={
                   <div

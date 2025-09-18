@@ -5,16 +5,17 @@ import type { UnitPerQuantityInterface } from "../../interfaces/UnitPerQuantity"
 import type { BankTypeInterface } from "../../interfaces/BankType";
 import type { SupplyInterface } from "../../interfaces/Supply";
 import type { CategoryInterface } from "../../interfaces/Category";
+import type { BillInterface } from "../../interfaces/Bill";
 
 const apiUrl = "http://localhost:8000";
 const Authorization = localStorage.getItem("token");
 const Bearer = localStorage.getItem("token_type");
 
 const requestOptions = {
-    headers: {
-        "Content-Type": "application/json",
-        Authorization: `${Bearer} ${Authorization}`,
-    },
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `${Bearer} ${Authorization}`,
+  },
 
 };
 
@@ -193,30 +194,84 @@ async function UpdateUnitPerQuantity(id: number, data: UnitPerQuantityInterface)
     .catch((e) => e.response);
 }
 
+async function GetBillAllDataById(id: number) {
+  return await axios
+    .get(`${apiUrl}/getbillalldata/${id}`, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function UpdateBillWithProduct(id: number, data: BillInterface) {
+  return await axios
+    .patch(`${apiUrl}/Updatebillwithproduct/${id}`, data, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function GetBillDeleted() {
+  return await axios
+    .get(`${apiUrl}/getBillDeleted`, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function RestoreBills(ids: number[]) {
+  return await axios
+    .patch(`${apiUrl}/restoreBill`, { bill_ids: ids }, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function DownloadTemplateFile() {
+  try {
+    const response = await axios.get(`${apiUrl}/download-template`, {
+      ...requestOptions,
+      responseType: "blob",
+    });
+
+    // สร้าง blob URL
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "Format_file_DataImport.xlsx"); // ชื่อไฟล์ที่จะบันทึก
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err: any) {
+    console.error("Download failed:", err);
+  }
+}
+
 export {
-    SignIn,
-    CreateEmployee,
-    UpdateEmployee,
-    DeleteEmployeeByID,
-    GetAllEmployees,
-    GetEmployeeById,
-    GetAllBills,
-    GetUnitPerQuantity,
-    GetCategory,
-    GetZone,
-    GetShelf,
-    GetShelfByZoneID,
-    CreateBillwithProduct,
-    GetSupply,
-    DeleteBill,
-    CreateUnitOfQuantity,
-    CreateBank,
-    GetBankTypes,
-    UpdateBankType,
-    CreateSupplys,
-    UpdateSupply,
-    DeleteSupply,
-    UpdateCategory,
-    CreateCategory,
-    UpdateUnitPerQuantity,
+  SignIn,
+  CreateEmployee,
+  UpdateEmployee,
+  DeleteEmployeeByID,
+  GetAllEmployees,
+  GetEmployeeById,
+  GetAllBills,
+  GetUnitPerQuantity,
+  GetCategory,
+  GetZone,
+  GetShelf,
+  GetShelfByZoneID,
+  CreateBillwithProduct,
+  GetSupply,
+  DeleteBill,
+  CreateUnitOfQuantity,
+  CreateBank,
+  GetBankTypes,
+  UpdateBankType,
+  CreateSupplys,
+  UpdateSupply,
+  DeleteSupply,
+  UpdateCategory,
+  CreateCategory,
+  UpdateUnitPerQuantity,
+  GetBillAllDataById,
+  UpdateBillWithProduct,
+  GetBillDeleted,
+  RestoreBills,
+  DownloadTemplateFile
 };

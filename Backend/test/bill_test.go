@@ -21,6 +21,7 @@ func TestBill(t *testing.T) {
 
 	s := entity.Supply{
 		SupplyName:        "ABC",
+		SupplyAbbrev: "ADN",
 		Address:           "XXX",
 		PhoneNumberSale:   "01234567890",
 		SaleName:          "ABC",
@@ -48,13 +49,14 @@ func TestBill(t *testing.T) {
 	t.Run(`Bill is valid`, func(t *testing.T) {
 		e := entity.Bill{
 			Title:        "Test",
-			SupplyName:   "ABC",
+			SupplyID:     uint(1),
 			Supply:       s,
 			DateImport:   time.Now(),
 			SummaryPrice: 123,
 			EmployeeID:   uint(1),
 			Employee:     u,
 		}
+
 		ok, err := govalidator.ValidateStruct(e)
 
 		g.Expect(ok).To(BeTrue())
@@ -64,7 +66,7 @@ func TestBill(t *testing.T) {
 	t.Run(`Title is required`, func(t *testing.T) {
 		e := entity.Bill{
 			Title:        "", //ผิดตรงนี้
-			SupplyName:   "ABC",
+			SupplyID:     uint(1),
 			Supply:       s,
 			DateImport:   time.Now(),
 			SummaryPrice: 123,
@@ -81,7 +83,7 @@ func TestBill(t *testing.T) {
 	t.Run(`supply_id is required`, func(t *testing.T) {
 		e := entity.Bill{
 			Title:        "Test",
-			SupplyName:   "", //ผิดตรงนี้
+			SupplyID:     uint(0), //ผิดตรงนี้
 			Supply:       s,
 			DateImport:   time.Now(),
 			SummaryPrice: 123,
@@ -98,7 +100,7 @@ func TestBill(t *testing.T) {
 	t.Run(`date_import is required`, func(t *testing.T) {
 		e := entity.Bill{
 			Title:        "Test",
-			SupplyName:   "ABC",
+			SupplyID:     uint(1),
 			Supply:       s,
 			DateImport:   time.Time{}, //ผิดตรงนี้
 			SummaryPrice: 123,
@@ -115,7 +117,7 @@ func TestBill(t *testing.T) {
 	t.Run(`summary_price is required`, func(t *testing.T) {
 		e := entity.Bill{
 			Title:        "Test",
-			SupplyName:   "ABC",
+			SupplyID:     uint(1),
 			Supply:       s,
 			DateImport:   time.Now(),
 			SummaryPrice: 0, //ผิดตรงนี้
@@ -132,7 +134,7 @@ func TestBill(t *testing.T) {
 	t.Run(`employee_id is required`, func(t *testing.T) {
 		e := entity.Bill{
 			Title:        "Test",
-			SupplyName:   "ABC",
+			SupplyID:     uint(1),
 			Supply:       s,
 			DateImport:   time.Now(),
 			SummaryPrice: 123,

@@ -5,7 +5,7 @@ import "gorm.io/gorm"
 type Supply struct {
 	gorm.Model
 	SupplyName        string   `valid:"required~SupplyName is required"`
-	SupplyAbbrev      string   `gorm:"size:3" valid:"required~SupplyAbbrev is required,length(2|3)~SupplyAbbrev must be 2-3 characters"`
+	SupplyAbbrev      string   `gorm:"size:3" valid:"required~SupplyAbbrev is required,length(3|3)~SupplyAbbrev must be 3 characters"`
 	Address           string   `valid:"required~Address is required"`
 	PhoneNumberSale   string   `valid:"required~PhoneNumberSale is required"`
 	SaleName          string   `valid:"required~SaleName is required"`
@@ -15,5 +15,5 @@ type Supply struct {
 	LineIDSale        string   `valid:"required~LineIDSale is required"`
 
 	OrderBill []OrderBill `gorm:"foreignKey:SupplyID"`
-	Bill      []Bill      `gorm:"foreignKey:SupplyName"`
+	Bill      []Bill      `gorm:"foreignKey:SupplyID"`
 }

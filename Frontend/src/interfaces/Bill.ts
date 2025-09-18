@@ -1,4 +1,5 @@
 export interface ProductInterface {
+    ID: number;
     ProductName: string;
     ProductCode: string;
     SupplyProductCode: string;
@@ -6,18 +7,23 @@ export interface ProductInterface {
     Description: string;
     Quantity: number;
     UnitPerQuantityID: number;
-    PricePerPiece?: number;
+    NameOfUnit: string;
+    PricePerPiece: number;
     Discount?: number;
     SumPriceProduct: number;
     SalePrice: number;
     CategoryID: number;
+    CategoryName: string;
     Zone: number;
+    ZoneName: string;  
     ShelfID: number;
+    ShelfName: string;
 }
 
 export interface BillInterface {
     ID: number,
     Title?: string,
+    SupplyName?: string,
     SupplyID?: number,
     Supply?: {
         SupplyName?: string

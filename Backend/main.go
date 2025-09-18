@@ -7,11 +7,18 @@ import (
 	"github.com/project_capstone/WareHouse/config"
 	"github.com/project_capstone/WareHouse/controller"
 	"github.com/project_capstone/WareHouse/middlewares"
+	"github.com/joho/godotenv"
+	"log"
 )
 
 const PORT = "8000"
 
 func main() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Println("No .env file found or failed to load")
+	}
+
 	// open connection database
 	config.ConnectionDB()
 
@@ -24,13 +31,15 @@ func main() {
 	router := r.Group("/")
 	{
 		router.Use(middlewares.Authorizes())
-		
+
+		r.GET("/download-template", controller.DownloadTemplate)
+
 		r.POST("/CreateEmployee", controller.CreateEmployee)
 		r.PATCH("/UpdateEmployee/:id", controller.UpdateEmployee)
 		r.DELETE("/DeleteEmployee/:id", controller.DeleteEmployee)
 		r.GET("/GetAllEmployees", controller.GetAllEmployees)
-		r.GET("/GetEmployeeById/:id",controller.GetEmployeeByID)
-		
+		r.GET("/GetEmployeeById/:id", controller.GetEmployeeByID)
+
 		r.GET("/getAllBill", controller.GetAllBill)
 		r.GET("/Getunitperquantity", controller.GetUnitPerQuantity)
 		r.GET("/GetCategory", controller.GetCategory)
@@ -41,7 +50,7 @@ func main() {
 
 		r.POST("/CreateProduct", controller.CreateProduct)
 		r.POST("/CreateProductWithBill", controller.CreateBillWithProducts)
-		r.PATCH("/Updatebillwithproduct", controller.UpdateBillWithProducts)
+		r.PATCH("/Updatebillwithproduct/:id", controller.UpdateBillWithProducts)
 		r.DELETE("/deletebillwithproduct/:id", controller.DeleteBill)
 
 		r.POST("/createunitquantity", controller.CreateUnitPerQuantity)
@@ -53,17 +62,23 @@ func main() {
 		r.PATCH("/updateBank/:id", controller.UpdateBankType)
 		r.POST("/CreateSupply", controller.CreateSupply)
 		r.PATCH("/UpdateSupply/:id", controller.UpdateSupply)
+		r.GET("/getbillalldata/:id", controller.GetBillAllDataByBillID)
+		r.GET("/getBillDeleted", controller.GetBillDeleted)
+
+		r.PATCH("/restoreBill", controller.RestoreBills)
+
+		controller.StartHardDeleteScheduler()
 
 		r.POST("/signin", controller.SignIn)
 		router.Use(middlewares.Authorizes())
 	}
 
 	r.GET("/", func(c *gin.Context) {
-        c.String(http.StatusOK, "API RUNNING... PORT: %s", PORT)
-    })
+		c.String(http.StatusOK, "API RUNNING... PORT: %s", PORT)
+	})
 
-    // Run the server
-    r.Run("localhost:" + PORT)
+	// Run the server
+	r.Run("localhost:" + PORT)
 }
 
 func CORSMiddleware() gin.HandlerFunc {
@@ -80,4 +95,3 @@ func CORSMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
- 

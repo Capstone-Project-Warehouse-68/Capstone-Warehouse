@@ -9,9 +9,10 @@ import ImportProduct from "../../pages/ImportProduct/importproduct";
 import CreateSupplyer from "../../pages/CreateSupplyer/CreateSupplyer";
 import CreateUnitQuantity from "../../pages/CreateUnitQuantity/CreateUnitQuantity";
 import CreateBankType from "../../pages/CreateBankType/CreateBanktype";
+import RestoreBill from "../../pages/RestoreBill/RestoreBill";
 
 
-const { Header, Content } = Layout;
+const { Content } = Layout;
 
 const FullLayout: React.FC = () => {
     const {
@@ -44,6 +45,7 @@ const FullLayout: React.FC = () => {
                                 <Route path="/createsupplyer" element={<CreateSupplyer />}/>
                                 <Route path="/createunitquantity" element={<CreateUnitQuantity />}/>
                                 <Route path="/createbanktype" element={<CreateBankType />}/>
+                                <Route path="/restorebill" element={<RestoreBill />}/>
                             </Routes>
                         </div>
                     </Content>
