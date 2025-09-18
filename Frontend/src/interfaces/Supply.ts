@@ -13,3 +13,8 @@ export interface SupplyInterface {
     BankAccountNumber?: string,
     LineIDSale?: string,
 }
+
+export interface SupplySelect {
+  ID: number;  
+    SupplyName: string;
+}

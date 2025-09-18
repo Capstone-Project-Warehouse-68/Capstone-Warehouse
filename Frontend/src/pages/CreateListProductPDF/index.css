@@ -1,0 +1,17 @@
+/* index.css หรือไฟล์ CSS ของคุณ */
+.custom-table .ant-table-container {
+  background: none !important;  /* ลบพื้นหลัง */
+}
+
+/* เส้น header เข้มขึ้น */
+.custom-table .ant-table-thead > tr > th {
+  border-bottom: 2px solid #333; /* เส้น header เข้ม */
+  background: #f5f5f5;           /* ถ้าอยาก header มีสีอ่อน */
+  font-weight: bold;
+}
+
+/* เส้นแนวนอน row */
+.custom-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #e0e0e0; /* เส้น row สีอ่อน */
+  background: none;                  /* ลบพื้นหลัง cell */
+}

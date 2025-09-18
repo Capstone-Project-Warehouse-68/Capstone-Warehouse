@@ -79,4 +79,3 @@ func UpdateSupply(c *gin.Context) {
 
 	c.Status(http.StatusOK)
 }
-

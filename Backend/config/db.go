@@ -130,6 +130,8 @@ func SetupDatabase() {
 	// ===== Category =====
 	category := entity.Category{CategoryName: "เบรก"}
 	db.FirstOrCreate(&category, entity.Category{CategoryName: "เบรก"})
+	category2 := entity.Category{CategoryName: "ล้อแม็ก"}
+	db.FirstOrCreate(&category2, entity.Category{CategoryName: "ล้อแม็ก"})
 
 	// ===== Unit =====
 	unit := entity.UnitPerQuantity{NameOfUnit: "ชิ้น"}
@@ -161,6 +163,16 @@ func SetupDatabase() {
 		LineIDSale:        "@supplythai",
 	}
 	db.FirstOrCreate(&supply, entity.Supply{SupplyName: "บริษัทอะไหล่ไทย"})
+	supply2 := entity.Supply{
+		SupplyName:        "บริษัทอะไหล่ญี่ปุ่น",
+		Address:           "123 พระราม 9",
+		PhoneNumberSale:   "0812345699",
+		SaleName:          "คุณสมหญิง",
+		BankTypeID:        B1.ID,
+		BankAccountNumber: "123-4-56789-0",
+		LineIDSale:        "@supplyjapan",
+	}
+	db.FirstOrCreate(&supply2, entity.Supply{SupplyName: "บริษัทอะไหล่ญี่ปุ่น"})
 
 	// ===== Product =====
 	product := entity.Product{
@@ -169,7 +181,7 @@ func SetupDatabase() {
 		ProductName:       "ผ้าเบรกหน้า",
 		Description:       "ผ้าเบรกหน้ารถยนต์ญี่ปุ่น",
 		Picture:           "https://example.com/brake.jpg",
-		Quantity:          50,
+		Quantity:          5,
 		UnitPerQuantityID: unit.ID,
 		LimitQuantity:     5,
 		SalePrice:         850.00,
@@ -177,6 +189,21 @@ func SetupDatabase() {
 		ShelfID:           shelf.ID,
 	}
 	db.FirstOrCreate(&product, entity.Product{SupplyProductCode: "SUP-A001"})
+
+	product2 := entity.Product{
+		SupplyProductCode: "SUP-A002",
+		ProductCode:       "PRD-002",
+		ProductName:       "ลูกปืนล้อ",
+		Description:       "ลูกปืนล้อรถยนต์ญี่ปุ่น",
+		Picture:           "https://example.com/brake.jpg",
+		Quantity:          5,
+		UnitPerQuantityID: unit2.ID,
+		LimitQuantity:     5,
+		SalePrice:         850.00,
+		CategoryID:        category2.ID,
+		ShelfID:           shelf.ID,
+	}
+	db.FirstOrCreate(&product2, entity.Product{SupplyProductCode: "SUP-A002"})
 
 	// ===== Bill =====
 	bill := entity.Bill{
@@ -186,7 +213,15 @@ func SetupDatabase() {
 		SummaryPrice: 17000,
 		EmployeeID:   1,
 	}
-	db.FirstOrCreate(&bill)
+	db.FirstOrCreate(&bill, entity.Bill{Title: "Test Bill"})
+	bill2 := entity.Bill{
+		Title: "Test Bill 2",
+		SupplyID:     supply2.ID,
+		DateImport:   time.Now(),
+		SummaryPrice: 17000,
+		EmployeeID: 1,
+	}
+	db.FirstOrCreate(&bill2,entity.Bill{Title: "Test Bill 2"})
 
 	// ===== ProductOfBill =====
 	productOfBill := entity.ProductOfBill{
@@ -196,7 +231,17 @@ func SetupDatabase() {
 		PricePerPiece:    800,
 		Discount:         5,
 	}
-	db.FirstOrCreate(&productOfBill)
+	db.FirstOrCreate(&productOfBill , entity.ProductOfBill{ManufacturerCode:  "MNFC-12345"})
+	productOfBill2 := entity.ProductOfBill{
+		// SupplyProductCode: 2, // ต้องตรงกับ Product.ID หากใช้ foreignKey จาก ID
+		ProductID:         product2.ID,
+		BillID:            bill2.ID,
+		ManufacturerCode:  "MNFC-12346",
+		PricePerPiece:     1000,
+		Discount:          5,
+		// UnitPerQuantityID: unit2.ID,
+	}
+	db.FirstOrCreate(&productOfBill2, entity.ProductOfBill{ManufacturerCode:  "MNFC-12346"})
 
 	// ===== Coupon =====
 	coupon := entity.Coupon{
