@@ -10,5 +10,5 @@ type OrderProductDraft struct {
     Quantity         int
     CategoryName     string
 
-    OrderProduct []OrderProduct `gorm:"foreignKey:OrderBillID"`
+    OrderProduct []OrderProduct `gorm:"foreignKey:OrderProductDraftID"`
 }

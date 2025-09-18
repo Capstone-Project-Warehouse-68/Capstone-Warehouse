@@ -191,8 +191,8 @@ const OrderTable = () => {
       // ดึง Supply
       try {
         const supRes = await GetSupplySelect();
-        setSupplySelect(supRes.data || []);
-        console.log("Supply fetched:", supRes.data);
+        setSupplySelect(supRes || []);
+        console.log("Supply fetched:", supRes);
       } catch (error: any) {
         console.error("fetch Supply failed:", error);
         message.error("โหลดบริษัทขายส่งไม่สำเร็จ");

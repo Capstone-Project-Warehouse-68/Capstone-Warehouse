@@ -88,10 +88,10 @@ func main() {
 		r.POST("/AddOrderBillWithProducts", controller.AddOrderBillWithProducts)
 		r.GET("/GetAllOrderBills", controller.GetAllOrderBills)
 		r.DELETE("/DeleteOrderBill/:id",controller.DeleteOrderBill)
-		// r.PATCH("/UpdateOrderBill:id",controller.UpdateOrderBill)
 		r.GET("/GetDashboardSummary", controller.GetDashboardSummary)
 		r.GET("/GetDashboardSupplier", controller.GetDashboardSupplier)
 		r.GET("/GetDashboardTrend", controller.GetDashboardTrend)
+		r.GET("/GetCategoryApi",controller.GetCategoryApi)
 		router.Use(middlewares.Authorizes())
 	}
 

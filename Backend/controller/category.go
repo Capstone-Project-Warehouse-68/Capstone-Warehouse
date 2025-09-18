@@ -78,3 +78,26 @@ func UpdateCategory(c *gin.Context) {
 
 	c.Status(http.StatusOK)
 }
+
+func GetCategoryApi(c *gin.Context) {
+	type getCategoryResponse struct {
+		ID          uint      `json:"id"`
+		CategoryName string `json:"category_name"`
+	}
+	db := config.DB()
+	var categories []getCategoryResponse
+	query := `
+			SELECT id, category_name FROM categories	
+	`
+	if err := db.Raw(query).Scan(&categories).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "ดึงข้อมูลล้มเหลว: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+    "data": categories,
+	})
+
+}

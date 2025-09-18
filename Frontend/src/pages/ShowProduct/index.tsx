@@ -182,8 +182,8 @@ const ProductList = () => {
       }
 
       // set supply
-      if (supplyRes?.data && Array.isArray(supplyRes.data)) {
-        setSupplySelect(supplyRes.data);
+      if (supplyRes && Array.isArray(supplyRes)) { 
+        setSupplySelect(supplyRes);
       } else {
         message.error("ไม่สามารถดึงข้อมูลบริษัทได้");
       }
