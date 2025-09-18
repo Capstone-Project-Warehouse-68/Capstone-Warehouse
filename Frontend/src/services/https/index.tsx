@@ -1,8 +1,8 @@
 import axios from "axios";
 import type { LoginInterface } from "../../interfaces/Login";
 import type { EmployeeInterface } from "../../interfaces/Employee";
-import type { ChangePasswordInterface } from "../../interfaces/ChangePassword";
 import type { ResetPasswordInterface } from "../../interfaces/ResetPassword";
+import type { NumberRoleInterface } from "../../interfaces/Number";
 
 const apiUrl = "http://localhost:8000";
 const Authorization = localStorage.getItem("token");
@@ -86,37 +86,30 @@ async function CheckPhone(phoneNumber: string) {
     .catch((e) => e.response);
 }
 
-async function CheckNationalID(nationalID: string) {
-  return await axios
-    .post(`${apiUrl}/CheckNationalID/${nationalID}`, requestOptions)
-    .then((res) => res)
-    .catch((e) => e.response);
-}
-
-async function ChangePassword(
-  employeeID: string,
-  payload: ChangePasswordInterface
-) {
-  return await axios
-    .patch(
-      `${apiUrl}/employee/${employeeID}/changePasswordEmployee`,
-      payload,
-      requestOptions
-    )
-    .then((res) => res)
-    .catch((e) => e.response);
-}
-
 async function ResetPassword(
   employeeID: string,
   payload: ResetPasswordInterface
 ) {
   return await axios
     .patch(
-      `${apiUrl}/employee/${employeeID}/resetPasswordEmployee`,
+      `${apiUrl}/Employee/${employeeID}/EmergencyResetPassword`,
       payload,
       requestOptions
     )
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function GetNumberRole() {
+  return await axios
+    .get(`${apiUrl}/GetNumberRole`, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function UpdateNumberRole(id: number, data: NumberRoleInterface) {
+  return await axios
+    .patch(`${apiUrl}/UpdateNumberRole/${id}`, data , requestOptions)
     .then((res) => res)
     .catch((e) => e.response);
 }
@@ -132,7 +125,7 @@ export {
     GetRoles,
     CheckEmail,
     CheckPhone,
-    CheckNationalID,
-    ChangePassword,
     ResetPassword,
+    GetNumberRole,
+    UpdateNumberRole,
 };

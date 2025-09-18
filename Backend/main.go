@@ -27,17 +27,18 @@ func main() {
 
 		r.POST("/CreateEmployee", controller.CreateEmployee)
 		r.PATCH("/UpdateEmployee/:id", controller.UpdateEmployee)
-		r.PATCH("/Employee/:id/ChangePassword/:id", controller.ChangePassword)
 		r.PATCH("/Employee/:id/EmergencyResetPassword", controller.EmergencyResetPassword)
 		r.DELETE("/DeleteEmployee/:id", controller.DeleteEmployee)
 		r.GET("/GetAllEmployees", controller.GetAllEmployees)
 		r.GET("/GetEmployeeById/:id", controller.GetEmployeeByID)
 		r.POST("/CheckEmail/:email", controller.CheckEmail)
 		r.POST("/CheckPhone/:phoneNumber", controller.CheckPhone)
-		r.POST("/CheckNationalID/:nationalID", controller.CheckNationalID)
 
 		r.GET("/GetRoles", controller.GetRole)
 		r.GET("/GetBankTypes", controller.GetBankType)
+
+		r.GET("/GetNumberRole", controller.GetNumberRole)
+		r.PATCH("/UpdateNumberRole/:id", controller.UpdateNumberRole)
 
 		r.POST("/CreateProduct", controller.CreateProduct)
 		r.POST("/signin", controller.SignIn)

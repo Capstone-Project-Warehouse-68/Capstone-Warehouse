@@ -14,7 +14,7 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
@@ -34,7 +34,7 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "", //ผิดตรงนี้
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
@@ -56,7 +56,7 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "", //ผิดตรงนี้
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
@@ -78,7 +78,7 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "", //ผิดตรงนี้
+			EMPCode: "", //ผิดตรงนี้
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
@@ -93,14 +93,14 @@ func TestEmployee(t *testing.T){
 
 		g.Expect(ok).NotTo(BeTrue())
 		g.Expect(err).NotTo(BeNil())
-		g.Expect(err.Error()).To(Equal("NationalID is required"))
+		g.Expect(err.Error()).To(Equal("EMPCode is required"))
 	})
 
 	t.Run(`phone_number is required`, func(t *testing.T) {
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "",//ผิดตรงนี้
 			Email: "Th@gmail.com",
 			Profile: "longtext",
@@ -122,7 +122,7 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "", //ผิดตรงนี้
 			Profile: "longtext",
@@ -144,7 +144,7 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@.com", //ผิดตรงนี้
 			Profile: "longtext",
@@ -166,7 +166,7 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "",//ผิดตรงนี้
@@ -188,7 +188,7 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
@@ -210,7 +210,7 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
@@ -232,7 +232,7 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
@@ -254,7 +254,7 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",
@@ -276,7 +276,7 @@ func TestEmployee(t *testing.T){
 		e := entity.Employee{
 			FirstName: "Thanawit",
 			LastName: "Yangngam",
-			NationalID: "1223344556678",
+			EMPCode: "MG001",
 			PhoneNumber: "0123456789",
 			Email: "Th@gmail.com",
 			Profile: "longtext",

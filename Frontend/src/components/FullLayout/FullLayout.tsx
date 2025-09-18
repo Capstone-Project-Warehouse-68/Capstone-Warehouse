@@ -31,7 +31,7 @@ const FullLayout: React.FC = () => {
         <>
             <Layout style={{ minHeight: "100vh", backgroundColor: "#ffffffff", marginTop: 0 }}>
                 {checkLogin && <SiderOwner />}
-                <Layout style={{ backgroundColor: "#ffffffff", minHeight: "100vh", marginTop: 0 }}>
+                <Layout style={{ backgroundColor: "#adadadff", minHeight: "100vh", marginTop: 0 }}>
                     <Content style={{ marginTop: "0px" }}>
                         <Breadcrumb style={{ marginTop: "0px" }} />
                         <div>

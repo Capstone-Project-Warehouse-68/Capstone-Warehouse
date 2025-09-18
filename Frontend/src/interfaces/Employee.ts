@@ -3,7 +3,7 @@ export interface EmployeeInterface {
     FirstName?: string;
     LastName?: string;
     PhoneNumber?: string;
-    NationalId? : string;
+    EMPCode? : string;
     Email?: string;
     Password?: string;
     Profile?: string;

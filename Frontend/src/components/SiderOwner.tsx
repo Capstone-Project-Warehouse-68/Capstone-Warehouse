@@ -32,25 +32,24 @@ function SiderOwner() {
   const employeeID = localStorage.getItem("employeeID");
 
   const getEmployeeById = async (id: number) => {
-  // try {
-  //   const res = await GetEmployeeById(id);
+  try {
+    const res = await GetEmployeeById(id);
 
-  //   if (res.status === 200) {
-  //     const employee: EmployeeInterface = res.data;
-  //     setFirstName(employee.FirstName || "");
-  //     setLastName(employee.LastName || "");
-  //     setProfile(employee.Profile || "");
-  //     setPositionName(employee.Role?.RoleName || "")
-  //   } else {
-  //     messageApi.error(res.data?.error || "ไม่สามารถดึงข้อมูลได้ ");
-  //     setPositionName("Unknown Position");
-  //   }
-  // } catch (error) {
-  //   messageApi.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
-  //   setPositionName("Unknown Position");
-  // }
+    if (res.status === 200) {
+      const employee: EmployeeInterface = res.data;
+      setFirstName(employee.FirstName || "");
+      setLastName(employee.LastName || "");
+      setProfile(employee.Profile || "");
+      setPositionName(employee.Role?.RoleName || "")
+    } else {
+      messageApi.error(res.data?.error || "ไม่สามารถดึงข้อมูลได้ ");
+      setPositionName("Unknown Position");
+    }
+  } catch (error) {
+    messageApi.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
+    setPositionName("Unknown Position");
+  }
 };
-
     useEffect(() => {
       getEmployeeById(Number(employeeID));
     }, []);

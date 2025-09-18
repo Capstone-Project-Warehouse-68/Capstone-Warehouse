@@ -1,21 +1,23 @@
 import { useState, useEffect } from "react";
-import { Select , Button, Col, Row, Divider, message, Dropdown, Modal , Pagination , Card , Form , Input , Upload} from "antd";
+import { Select , Button, Col, Row, Divider, message, Dropdown, Modal , Pagination , Card , Form , Input , Upload } from "antd";
 import type { UploadFile, UploadProps } from "antd";
 import ImgCrop from "antd-img-crop";
-import { SettingOutlined , InboxOutlined , IdcardOutlined , PhoneOutlined , DollarCircleOutlined , QuestionCircleOutlined , PlusOutlined , DeleteOutlined , EditOutlined , KeyOutlined } from "@ant-design/icons";
+import { SettingOutlined , InboxOutlined , IdcardOutlined , PhoneOutlined , DollarCircleOutlined , PlusSquareOutlined , MailOutlined , PlusOutlined , DeleteOutlined , EditOutlined , KeyOutlined } from "@ant-design/icons";
 import { Typography } from 'antd';
 const { Text } = Typography;
 import type { EmployeeInterface } from "../../interfaces/Employee";
 import type { RoleInterface } from "../../interfaces/Role";
 import type { BankTypeInterface } from "../../interfaces/BankType";
 import type { UploadFileStatus } from 'antd/es/upload/interface';
-import { CreateEmployee , UpdateEmployee , DeleteEmployeeByID , GetAllEmployees , GetRoles , GetBankTypes , CheckEmail , CheckPhone , CheckNationalID , ResetPassword, GetEmployeeById } from "../../services/https/index";
+import { CreateEmployee , UpdateEmployee , DeleteEmployeeByID , GetAllEmployees , GetRoles , GetBankTypes , CheckEmail , CheckPhone , ResetPassword, GetEmployeeById , GetNumberRole , UpdateNumberRole } from "../../services/https/index";
 import "../Employee/employee.css";
-import type { ResetPasswordInterface } from "../../interfaces/ResetPassword";
+import type { NumberRoleInterface } from "../../interfaces/Number";
+const { Title } = Typography;
 
 function Employee() {
     const ID = localStorage.getItem("employeeID");
     const [employees, setEmployees] = useState<EmployeeInterface[]>([])
+    const [_numbers, setNumbers] = useState<NumberRoleInterface[]>([])
     const [roles, setRoles] = useState<RoleInterface[]>([])
     const [banktypes, setBankTypes] = useState<BankTypeInterface[]>([])
     const [selectedEmployee, setSelectedEmployee] = useState<number | null>(Number(ID));
@@ -25,6 +27,14 @@ function Employee() {
     const [previewVisible, setPreviewVisible] = useState(false);
     const [previewImage, setPreviewImage] = useState("");
     const [previewTitle, setPreviewTitle] = useState("");
+
+    const [ownerNumber, setownerNumber] = useState<number>(0);
+    const [managerNumber, setManagerNumber] = useState<number>(0);
+    const [employeeNumber, setemployeeNumber] = useState<number>(0);
+    const [idNumber, setIDNumber] = useState<number>(0);
+    const [code,setCode] = useState<string>("");
+    const [logic, setLogic] = useState<boolean>(false);
+
 
     const onChange: UploadProps["onChange"] = ({ fileList: newFileList }) => {
         setFileList(newFileList.slice(-1));
@@ -47,7 +57,7 @@ function Employee() {
     const selectedEmpData = employees.find(emp => emp.ID === selectedEmployee);
 
     const [currentPage, setCurrentPage] = useState(1);
-    const pageSize = 4;
+    const pageSize = 6;
 
     const paginatedEmployee = employees.slice(
         (currentPage - 1) * pageSize,
@@ -67,6 +77,110 @@ function Employee() {
         } catch (error) {
             setEmployees([]);
             messageApi.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
+        }
+    };
+
+    const pickNumbersByRole = (rows: NumberRoleInterface[]) => {
+        const result = { OW: 0, MN: 0, EMP: 0 };
+
+        for (const r of rows) {
+            const n = typeof r.Numb === "number" ? r.Numb : 0; // กัน undefined → 0
+
+            // ใช้ RoleNickName ก่อน (นิ่งและชัด)
+            if (r.Role?.RoleNickName === "OW") result.OW = n;
+            else if (r.Role?.RoleNickName === "MN") result.MN = n;
+            else if (r.Role?.RoleNickName === "EMP") result.EMP = n;
+            else {
+            // fallback: ถ้าไม่มี RoleNickName ให้ map ตาม RoleID 1/2/3
+            if (r.RoleID === 1) result.OW = n;
+            else if (r.RoleID === 2) result.MN = n;
+            else if (r.RoleID === 3) result.EMP = n;
+            }
+        }
+
+        return result;
+        };
+
+    const getNumberRoles = async () => {
+        try {
+            const res = await GetNumberRole();
+
+            if (res.status === 200) {
+            const rows: NumberRoleInterface[] = res.data;
+            setNumbers(rows);
+
+            const { OW, MN, EMP } = pickNumbersByRole(rows);
+            setownerNumber(OW);
+            setManagerNumber(MN);
+            setemployeeNumber(EMP);
+            } else {
+            setNumbers([]);
+            setownerNumber(0);
+            setManagerNumber(0);
+            setemployeeNumber(0);
+            messageApi.error(res.data?.error || "ไม่สามารถดึงข้อมูลได้");
+            }
+        } catch (error) {
+            setNumbers([]);
+            setownerNumber(0);
+            setManagerNumber(0);
+            setemployeeNumber(0);
+            messageApi.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
+        }
+    };
+
+    const generateEmployeeCode = (roleID : number ) => {
+        setIDNumber(roleID);
+        let prefix = "";
+        let number = 0;
+        if ( roleID === 1 ) {
+            prefix = "OW";
+            number = ownerNumber;
+        } else if ( roleID === 2 ) {
+            prefix = "MN";
+            number = managerNumber;
+        } else {
+            prefix = "EMP";
+            number = employeeNumber;
+        }
+        const formatted = number.toString().padStart(3, "0");
+        setCode(`${prefix}-${formatted}`);
+    };
+
+    const UpdateNumber = async () => {
+        try {
+            let nextNumb: number;
+            switch (idNumber) {
+                case 1:
+                    nextNumb = ownerNumber + 1;
+                    break;
+                case 2:
+                    nextNumb = managerNumber + 1;
+                    break;
+                default:
+                    nextNumb = employeeNumber + 1;
+                    break;
+            }
+
+            const values: NumberRoleInterface = {
+                Numb: nextNumb
+            };
+
+            const res = await UpdateNumberRole(Number(idNumber), values);
+            if (res.status === 200) {
+                messageApi.open({
+                    type: "success",
+                    content: res.data.message,
+                });
+            } else {
+                messageApi.open({
+                    type: "error",
+                    content: res.data.error,
+                });
+            }
+        } finally {
+            getNumberRoles();
+            setIDNumber(0);
         }
     };
 
@@ -105,7 +219,8 @@ function Employee() {
     };
 
     useEffect(() => {
-        fetchData(); 
+        fetchData();
+        getNumberRoles();
     }, []);
 
     // State สำหรับควบคุม Modal
@@ -122,7 +237,7 @@ function Employee() {
     const [isSubmittingResetPassword, setIsSubmittingResetPassword] = useState(false);
 
     const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
-    const [currentNationalID, setCurrentNationalID] = useState<string>("");
+    // const [currentNationalID, setCurrentNationalID] = useState<string>("");
 
     const [formCreate] = Form.useForm();
     const [formUpdate] = Form.useForm();
@@ -159,7 +274,7 @@ function Employee() {
 
         // เพิ่มรูปลงใน values
         values.Profile = base64;
-
+        values.EMPCode = code;
         setIsSubmitting(true); 
         try {
             const res = await CreateEmployee(values);
@@ -178,6 +293,9 @@ function Employee() {
             setIsSubmitting(false);
             setIsModalOpenCreate(false);
             getEmployees();
+            setFileList([]);
+            UpdateNumber();
+            setCode("");
         }
     };
 
@@ -227,7 +345,7 @@ function Employee() {
 
         });
         setCurrentPhoneNumber(phoneNumber);
-        setCurrentNationalID(nationalID);
+        // setCurrentNationalID(nationalID);
 
         if (res.data.Profile) {
             const defaultFile: UploadFile[] = [
@@ -268,6 +386,9 @@ function Employee() {
 
             if (isSubmitting) return;
             setIsSubmittingUpdate(true);
+            if (logic){
+                values.EMPCode = code ; 
+            }
             values.Profile = fileList.length > 0 ? fileList[0].thumbUrl : "";
             const res = await UpdateEmployee(Number(empIDUpdate), values);
             if (res.status === 200) {
@@ -283,6 +404,12 @@ function Employee() {
             }
         } finally {
             formUpdate.resetFields();
+            setFileList([]);
+            if (logic) {
+                setCode("");
+                UpdateNumber();
+            }
+            setLogic(false);
             setIsSubmittingUpdate(false);
             setIsModalOpenUpdate(false);
             getEmployees();
@@ -302,11 +429,15 @@ function Employee() {
         setIsModalOpenResetPassword(false);
     };
 
-    const onFinishResetPassword = async (values : ResetPasswordInterface ) => {
+    const onFinishResetPassword = async (values: { NewPassword: string }) => {
         setIsSubmitting(true)
 
+        const payload = {
+            NewPassword: values.NewPassword,
+        };
+
         try {
-            const res = await ResetPassword( empIDResetPassword || "", values ); 
+            const res = await ResetPassword( empIDResetPassword || "", payload ); 
         if (res.status === 200) {
             messageApi.open({
                 type: "success",
@@ -334,169 +465,182 @@ function Employee() {
         }
     };
 
+    const formatPhone = (phone : string) => {
+        if (!phone) return "ไม่มีข้อมูลเบอร์โทรในระบบ";
+        const digits = phone.replace(/\D/g, "");
+        return digits.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
+        };
+
     return (
         <>
             {contextHolder}
-            <Card>
-                <Row gutter={[8,8]}>
-                    <Col xl={24}>
-                        <Card>
-                            <Row>
-                                <Col xl={12}>
-                                        Test
-                                </Col>
-                                <Col xl={11}>
-                                        <Button type="default" 
-                                            icon={<QuestionCircleOutlined />} 
-                                            size={"middle"}
-                                            onClick={showModalCreate}
-                                        > 
-                                            สมัครข้อมูลพนักงาน
-                                        </Button>
-                                </Col>
-                                <Col xl={1}>
-                                    <Button type="default" icon={<QuestionCircleOutlined />} size={"middle"} className="help-btn" />
-                                </Col>
-                            </Row>
-                        </Card>
-                    </Col>
-                    <Col xl={14}>
-                        <Card>
-                            <Row gutter={[0,8]}>
-                                <Col xl={1}>
+            <Card style={{
+                backgroundColor: "transparent",
+                minHeight: "100vh",        // สูงเต็มหน้าจอ
+                width: "100%",             // กว้างเต็มจอ
+                border: "none"             // เอาเส้นขอบการ์ดออกถ้าไม่อยากได้
+            }}>
+                < Card style={{
+                    margin: "-1%" ,
+                    minHeight: "96vh",        // สูงเต็มหน้าจอ     
+                 }}>
+                    <Row gutter={[8,8]}>
+                        <Col xl={24}>
+                                <Row justify="space-between" align="middle" style={{ marginBottom: 12 }}>
+                                    <Col>
+                                        <Title level={3} style={{ margin: 0 }}>จัดการข้อมูลพนักงาน</Title>
                                     </Col>
-                                <Col xl={8}>
-                                    <Text strong>ชื่อจริง นามสกุล</Text>
-                                </Col>
-                                <Col xl={7}>
-                                    <Text strong>ตำแหน่งงาน</Text>
-                                </Col>
-                                <Col xl={8}>
-                                    <Text strong>อีเมลล์</Text>
-                                </Col>
-                            </Row>
-                        </Card>
-                        <Row>
-                            <Col xl={24}>
-                                {paginatedEmployee.length > 0 ? (
-                                paginatedEmployee.map((emp) => (
-                                    <Card 
-                                        key={emp.ID}
-                                        style={{ 
-                                            marginTop: 8,
-                                            backgroundColor: selectedEmployee === emp.ID ? '#e6f7ff' : undefined,
-                                            border: selectedEmployee === emp.ID ? '2px solid #1890ff' : undefined
-                                        }}
-                                        onClick={() => setSelectedEmployee(Number(emp.ID))}
-                                        className="cursor-pointer hover:shadow-md transition-all"
+                                    <Col>
+                                    <Button
+                                        className="custom-btn"
+                                        icon={<PlusSquareOutlined />}
+                                        size="middle"
+                                        onClick={showModalCreate}
                                     >
-                                        <Row gutter={[0,8]}>
-                                            <Col xl={8}>
-                                                <Text strong>{emp.FirstName} {emp.LastName}</Text>
-                                            </Col>
-                                            <Col xl={6}>
-                                                <Text strong>{emp.Role?.RoleName}</Text>
-                                            </Col>
-                                            <Col xl={9}>
-                                                <Text strong>{emp.Email }</Text>
-                                            </Col>
-                                            <Col xl={1}>
-                                                <Dropdown
-                                                    menu={{
-                                                        items: [
-                                                            {
-                                                                label: "แก้ไขข้อมูล",
-                                                                key: "1",
-                                                                icon: <EditOutlined />,
-                                                                onClick: () => showModalUpdate( emp.ID || 0),
-                                                            },
-                                                            {
-                                                                label: "รีเซ็ตรหัสผ่าน",
-                                                                key: "2",
-                                                                icon: <KeyOutlined />,
-                                                                onClick: () => showModalResetPassword(emp.ID?.toString() || ""),
-                                                            },
-                                                            {
-                                                                label: "ลบข้อมูล",
-                                                                key: "3",
-                                                                icon: <DeleteOutlined />,
-                                                                onClick: () => showDeleteConfirmModal( emp.ID || 0),
-                                                                danger: true,
-                                                            },
-                                                        ],
-                                                    }}
-                                                >
-                                                    <Button type="primary" icon={<SettingOutlined />} size={"small"} className="config-btn" />
-                                                </Dropdown>
-                                            </Col>
-                                        </Row>
-                                    </Card>
-                                ))
-                            ) : (
-                                <Col span={24}>
-                                    <div 
-                                        style={{ 
-                                            display: "flex", 
-                                            flexDirection: "column", 
-                                            justifyContent: "flex-end", 
-                                            alignItems: "center", 
-                                            minHeight: "40vh",
-                                            padding: "20px", 
-                                            color: "#999" 
-                                        }}
-                                    >
-                                        <InboxOutlined  style={{ fontSize: "48px", marginBottom: "16px" }} />
-                                        <p style={{ fontSize: "16px", color: "#999" }}>ไม่มีข้อมูลพนักงาน</p>
+                                        เพิ่มข้อมูลพนักงาน
+                                    </Button>
+                                    </Col>
+                                </Row>
+                        </Col>
+                        <Col xl={14}>
+                            <Card>
+                                <Row gutter={[0,8]}>
+                                    <Col xl={2}>
+                                    </Col>
+                                    <Col xl={7}>
+                                        <Text strong>ชื่อจริง นามสกุล</Text>
+                                    </Col>
+                                    <Col xl={7}>
+                                        <Text strong>ตำแหน่งงาน</Text>
+                                    </Col>
+                                    <Col xl={8}>
+                                        <Text strong>อีเมลล์</Text>
+                                    </Col>
+                                </Row>
+                            </Card>
+                            <Row>
+                                <Col xl={24}>
+                                    <div style={{ minHeight: "63.8vh"}}>
+                                        {paginatedEmployee.length > 0 ? (
+                                        paginatedEmployee.map((emp) => (
+                                            <Card 
+                                                key={emp.ID}
+                                                style={{ marginTop: 6}}
+                                                onClick={() => setSelectedEmployee(Number(emp.ID))}
+                                                className={`cursor-pointer ${selectedEmployee === emp.ID ? "card-selected" : ""}`}
+                                            >
+                                                <Row gutter={[0,8]}>
+                                                    <Col xl={8}>
+                                                        <Text strong>{emp.FirstName} {emp.LastName}</Text>
+                                                    </Col>
+                                                    <Col xl={6}>
+                                                        <Text strong>{emp.Role?.RoleName}</Text>
+                                                    </Col>
+                                                    <Col xl={9}>
+                                                        <Text strong>{emp.Email }</Text>
+                                                    </Col>
+                                                    <Col xl={1}>
+                                                        <Dropdown
+                                                            menu={{
+                                                                items: [
+                                                                    {
+                                                                        label: "แก้ไขข้อมูล",
+                                                                        key: "1",
+                                                                        icon: <EditOutlined />,
+                                                                        onClick: () => showModalUpdate( emp.ID || 0 ),
+                                                                    },
+                                                                    {
+                                                                        label: "รีเซ็ตรหัสผ่าน",
+                                                                        key: "2",
+                                                                        icon: <KeyOutlined />,
+                                                                        onClick: () => showModalResetPassword( emp.ID?.toString() || ""),
+                                                                    },
+                                                                    {
+                                                                        label: "ลบข้อมูล",
+                                                                        key: "3",
+                                                                        icon: <DeleteOutlined />,
+                                                                        onClick: () => showDeleteConfirmModal( emp.ID || 0),
+                                                                        danger: true,
+                                                                    },
+                                                                ],
+                                                            }}
+                                                        >
+                                                            <Button type="primary" icon={<SettingOutlined />} size={"small"} className="config-btn" />
+                                                        </Dropdown>
+                                                    </Col>
+                                                </Row>
+                                            </Card>
+                                        ))
+                                    ) : (
+                                        <Col span={24}>
+                                            <div 
+                                                style={{ 
+                                                    display: "flex", 
+                                                    flexDirection: "column", 
+                                                    justifyContent: "flex-end", 
+                                                    alignItems: "center", 
+                                                    minHeight: "40vh",
+                                                    padding: "20px", 
+                                                    color: "#999" 
+                                                }}
+                                            >
+                                                <InboxOutlined  style={{ fontSize: "48px", marginBottom: "16px" }} />
+                                                <p style={{ fontSize: "16px", color: "#999" }}>ไม่มีข้อมูลพนักงาน</p>
+                                            </div>
+                                        </Col>
+                                        )}
                                     </div>
                                 </Col>
-                                )}
-                            </Col>
-                            <Col xl={24} style={{display: "flex", justifyContent: "flex-end", }}>
-                                <Pagination
-                                    current={currentPage}
-                                    pageSize={pageSize}
-                                    total={employees.length}
-                                    onChange={(page) => setCurrentPage(page)}
-                                    style={{ marginTop: 16 }}
-                                />
-                            </Col>
-                        </Row>
-                    </Col>
-                    <Col xl={10}>
-                        {selectedEmpData && (
-                        <Card title="ข้อมูลพนักงานที่เลือก" >
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <img src={selectedEmpData.Profile} className="profile" />
-                                <Text strong style={{ fontSize: 18 }}>
-                                {selectedEmpData.FirstName} {selectedEmpData.LastName}
-                                </Text>
-                            </div>
-                            <div style={{ marginTop: 24 }}>
-                        <p>
-                            <IdcardOutlined style={{ marginRight: 8 }} />
-                            บัตรประชาชน<br />
-                            {<Text type="secondary">{selectedEmpData.NationalID || "ไม่มีข้อมูลบัตรประชาชนในระบบ"}</Text>}
-                        </p>
-                        <p>
-                            <PhoneOutlined style={{ marginRight: 8 }} />
-                            เบอร์โทรติดต่อ<br />
-                            <Text type="secondary">{selectedEmpData.PhoneNumber || "ไม้มีข้อมูลเบอร์โทรในระบบ"}</Text>
-                        </p>
-                        <p>
-                        {/* <SiLine style={{ color: "#06C755", marginRight: 8 }} /> */}
-                        ไอดี-ไลน์<br />
-                        <Text type="secondary">{selectedEmpData.Line || "ไม้มีข้อมูลไลน์ในระบบ"}</Text>
-                        </p>
-                        <p>
-                        <DollarCircleOutlined style={{ color: "#52c41a", marginRight: 8 }} />
-                        ธนาคาร<br />
-                        <Text type="secondary">{selectedEmpData.BankType?.BankTypeName} {selectedEmpData.BankAccountNumber}</Text>
-                        </p>
-                    </div>
-                        </Card>
-                        )}
-                    </Col>
-                </Row>
+                                <Col xl={24} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                    <Pagination
+                                        current={currentPage}
+                                        pageSize={pageSize}
+                                        total={employees.length}
+                                        onChange={(page) => setCurrentPage(page)}
+                                        style={{ marginTop: 16 }}
+                                    />
+                                </Col>
+                            </Row>
+                        </Col>
+                        <Col xl={10}>
+                            {selectedEmpData && (
+                            <Card title={<span style={{ fontSize: 20, fontWeight: 'bold' }}>ข้อมูลพนักงานที่เลือก</span>} style={{ minHeight: "81vh"}}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <img src={selectedEmpData.Profile} className="profile" />
+                                    <Text strong style={{ fontSize: 20 }}>
+                                    {selectedEmpData.FirstName} {selectedEmpData.LastName}
+                                    </Text>
+                                </div>
+                                <div style={{ marginTop: 24 }}>
+                                    <p style={{ marginTop: 24 }}>
+                                        <IdcardOutlined style={{ marginRight: 8 }} />
+                                        <Text style={{ fontSize: 16 }} >รหัสพนักงาน<br /></Text>
+                                        <Text style={{ fontSize: 16 , marginLeft: 30}} >{selectedEmpData.EMPCode || "ไม่มีข้อมูลบัตรประชาชนในระบบ"}</Text>
+                                    </p>
+                                    <p style={{ marginTop: 24 }}>
+                                        <PhoneOutlined style={{ marginRight: 8 }} />
+                                        <Text style={{ fontSize: 16 }} >เบอร์โทรติดต่อ<br /></Text>
+                                        <Text style={{ fontSize: 16 , marginLeft: 30}} >{formatPhone(selectedEmpData.PhoneNumber || "") || "ไม้มีข้อมูลเบอร์โทรในระบบ"}</Text>
+                                    </p>
+                                    <p style={{ marginTop: 24 }}>
+                                        <MailOutlined style={{ marginRight: 8 }} />
+                                        <Text style={{ fontSize: 16 }} >ไอดี-ไลน์<br /></Text>
+                                        <Text style={{ fontSize: 16 , marginLeft: 30}} >{selectedEmpData.Line || "ไม้มีข้อมูลไลน์ในระบบ"}</Text>
+                                    </p>
+                                    <p style={{ marginTop: 24 }}>
+                                        <DollarCircleOutlined style={{ color: "#52c41a", marginRight: 8 }} />
+                                        <Text style={{ fontSize: 16 }} >ธนาคาร<br /></Text>
+                                        <Text style={{ fontSize: 16 , marginLeft: 30}} >{selectedEmpData.BankType?.BankTypeName}</Text>
+                                    </p>
+                                    <p style={{ marginTop: -15  }}>
+                                        <Text style={{ fontSize: 16 , marginLeft: 30}} >{"เลขบัญชี"} <span style={{ marginLeft: 8 }}></span>{selectedEmpData.BankAccountNumber}</Text>
+                                    </p>
+                                </div>
+                            </Card>
+                            )}
+                        </Col>
+                    </Row>
+                </Card>
             </Card>
 
             <Modal
@@ -759,6 +903,9 @@ function Employee() {
                                     value: roles.ID,
                                     label: roles.RoleName,
                                 }))}
+                                onChange={(value) => {
+                                    generateEmployeeCode(value); 
+                                }}
                                 />
                             </Form.Item>
                         </Col>
@@ -770,12 +917,12 @@ function Employee() {
                                 rules={[
                                     {
                                         required: true,
-                                        message: "กรุณาเลือกตำแหน่งงาน!",
+                                        message: "กรุณาเลือกประเภทการเงิน!",
                                     },
                                 ]}
                                 >
                                 <Select
-                                placeholder="เลือกตำแหน่งงาน"
+                                placeholder="เลือกประเภทการเงิน"
                                 style={{ width: "100%" }}
                                 options={banktypes.map((banktypes) => ({
                                     value: banktypes.ID,
@@ -805,7 +952,7 @@ function Employee() {
                                 />
                             </Form.Item>
                         </Col>
-                        <Col xl={12}>
+                        {/* <Col xl={12}>
                             <Form.Item
                                 name="NationalID"
                                 label="บัตรประชาชน"
@@ -846,16 +993,16 @@ function Employee() {
                                     onPaste={(e) => e.preventDefault()} // Prevent paste
                                 />
                             </Form.Item>
-                        </Col>
+                        </Col> */}
                     </Row>
                     <Row>
                         <Col span={24} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                             <Button 
                                 type="primary"
                                 htmlType="submit"
-                                className="green-button"
+                                className="confirm-button"
                                 loading={isSubmitting}
-                                disabled={isSubmitting }
+                                disabled={isSubmitting}
                                 >
                                 ยืนยัน
                             </Button>
@@ -1100,6 +1247,10 @@ function Employee() {
                                     value: roles.ID,
                                     label: roles.RoleName,
                                 }))}
+                                onChange={(value) => {
+                                    generateEmployeeCode(value);
+                                    setLogic(true);
+                                }}
                                 />
                             </Form.Item>
                         </Col>
@@ -1111,12 +1262,12 @@ function Employee() {
                                 rules={[
                                     {
                                         required: true,
-                                        message: "กรุณาเลือกตำแหน่งงาน!",
+                                        message: "กรุณาเลือกประเภทการเงิน!",
                                     },
                                 ]}
                                 >
                                 <Select
-                                placeholder="เลือกตำแหน่งงาน"
+                                placeholder="เลือกประเภทการเงิน"
                                 style={{ width: "100%" }}
                                 options={banktypes.map((banktypes) => ({
                                     value: banktypes.ID,
@@ -1146,7 +1297,7 @@ function Employee() {
                                 />
                             </Form.Item>
                         </Col>
-                        <Col xl={12}>
+                        {/* <Col xl={12}>
                             <Form.Item
                                 name="NationalID"
                                 label="บัตรประชาชน"
@@ -1188,7 +1339,7 @@ function Employee() {
                                     onPaste={(e) => e.preventDefault()} // Prevent paste
                                 />
                             </Form.Item>
-                        </Col>
+                        </Col> */}
                     </Row>
                     <Row>
                         <Col span={24} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -1275,8 +1426,8 @@ function Employee() {
                                 type="primary"
                                 htmlType="submit"
                                 className="green-button"
-                                loading={isSubmittingUpdate}
-                                disabled={isSubmittingUpdate }
+                                loading={isSubmittingResetPassword}
+                                disabled={isSubmittingResetPassword }
                                 >
                                 ยืนยัน
                             </Button>

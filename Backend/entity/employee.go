@@ -6,7 +6,7 @@ type Employee struct {
 	gorm.Model
 	FirstName         string `valid:"required~FirstName is required"`
 	LastName          string `valid:"required~LastName is required"`
-	NationalID        string `valid:"required~NationalID is required"`
+	EMPCode        	  string `gorm:"uniqueIndex;not null" valid:"required~EMPCode is required"`
 	PhoneNumber		  string `valid:"required~PhoneNumber is required"`
 	Email             string `valid:"required~Email is required, email~Email is invalid"`
 	Profile			  string `gorm:"type:longtext" valid:"required~Profile is required"`
