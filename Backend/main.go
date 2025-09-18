@@ -79,6 +79,19 @@ func main() {
 		controller.StartHardDeleteScheduler()
 
 		r.POST("/signin", controller.SignIn)
+		r.GET("/GetLimitQuantity",controller.GetLimitQuantity)
+		r.PATCH("/UpdateLimitQuantity", controller.UpdateLimitQuantity)
+		r.GET("/notifications", controller.GetLowStockProducts)
+		r.GET("/GetShowProduct", controller.GetShowProduct)
+		r.GET("/GetProductsforShowlist", controller.GetProductsforShowlist)
+		r.GET("/GetProductPDF", controller.GetProductPDF)
+		r.POST("/AddOrderBillWithProducts", controller.AddOrderBillWithProducts)
+		r.GET("/GetAllOrderBills", controller.GetAllOrderBills)
+		r.DELETE("/DeleteOrderBill/:id",controller.DeleteOrderBill)
+		r.GET("/GetDashboardSummary", controller.GetDashboardSummary)
+		r.GET("/GetDashboardSupplier", controller.GetDashboardSupplier)
+		r.GET("/GetDashboardTrend", controller.GetDashboardTrend)
+		r.GET("/GetCategoryApi",controller.GetCategoryApi)
 		router.Use(middlewares.Authorizes())
 	}
 

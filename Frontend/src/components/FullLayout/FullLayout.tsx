@@ -11,7 +11,11 @@ import CreateSupplyer from "../../pages/CreateSupplyer/CreateSupplyer";
 import CreateUnitQuantity from "../../pages/CreateUnitQuantity/CreateUnitQuantity";
 import CreateBankType from "../../pages/CreateBankType/CreateBanktype";
 import RestoreBill from "../../pages/RestoreBill/RestoreBill";
-
+import NotificationProduct from "../../pages/NotificationProduct/notificationproduct";
+import ProductList from "../../pages/ShowProduct";
+import OrderCreate from "../../pages/CreateListProductPDF/index";
+import HistoryPdf from "../../pages/CreateListProductPDF/History/HistoryPdf";
+import Dashboard from "../../pages/Dashboard";
 
 const { Content } = Layout;
 
@@ -50,6 +54,11 @@ const FullLayout: React.FC = () => {
                                 <Route path="/createbanktype" element={<CreateBankType />}/>
                                 <Route path="/restorebill" element={<RestoreBill />}/>
                                 <Route path="/manageemployee" element={<Employee />} />
+                                <Route path="/notificationproduct" element={<NotificationProduct />} />
+                                <Route path="/productList" element={<ProductList />} />
+                                <Route path="/createlistproduct" element={<OrderCreate />} />
+                                <Route path="/historylistproduct" element={<HistoryPdf />} />
+                                <Route path="/dashboard" element={<Dashboard/>}/>
                             </Routes>
                         </div>
                     </Content>
