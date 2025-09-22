@@ -17,6 +17,7 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import NotificationImportantIcon from '@mui/icons-material/NotificationImportant';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import ShelvesIcon from '@mui/icons-material/Shelves';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Link } from "react-router-dom";
 import { GetEmployeeById } from "../services/https";
@@ -208,6 +209,9 @@ function SiderOwner() {
                 </Menu.Item>
                 <Menu.Item key="s3" icon={<InventoryIcon />}>
                   <Link to="/createunitquantity" style={{ fontSize: 14 }}>สร้างประเภทและหน่วยสินค้า</Link>
+                </Menu.Item>
+                <Menu.Item key="s4" icon={<ShelvesIcon />}>
+                  <Link to="/createzoneshelf" style={{ fontSize: 14 }}>สร้างชั้นและชั้นสินค้า</Link>
                 </Menu.Item>
               </SubMenu>
 

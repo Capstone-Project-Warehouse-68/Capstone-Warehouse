@@ -29,6 +29,7 @@ import {
   GetDashboardSupplier,
   GetDashboardTrend,
 } from "../../services/https/Dashborad";
+import DashboardIcon from "@mui/icons-material/Dashboard";
 
 interface DashboardSummary {
   month_total: number;
@@ -182,10 +183,44 @@ export default function Dashboard() {
   return (
     <ConfigProvider locale={thTH}>
       <div
-        style={{ padding: 24, backgroundColor: "#d9d9d9", minHeight: "100vh" }}
+        style={{
+          padding: 24,
+          backgroundColor: "#d9d9d9",
+          overflowY: "auto",
+          height: "100vh",
+          minWidth: "1200px",
+        }}
       >
+        <div
+          className="sub-header"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: 10,
+          }}
+        >
+          <div
+            className="Title"
+            style={{
+              background: "#2980B9",
+              color: "white",
+              borderRadius: 50,
+              display: "flex", // ใช้ flex
+              alignItems: "center", // จัดกลางในแนวตั้ง
+              justifyContent: "center", // จัดกลางในแนวนอน
+              height: 40,
+              padding: "0 20px", // ใช้ padding แทน width คงท
+              textAlign: "center",
+              flexShrink: 0, // ป้องกัน title ย่อเกินไป
+            }}
+          >
+            <DashboardIcon style={{ marginRight: 8 ,width:26, height:26}} />
+            <h1 style={{ margin: 0, fontSize: 26, lineHeight: "40px" }}>แดชบอร์ด</h1>
+          </div>
+        </div>
         {/* Filter */}
         <Row gutter={16} style={{ marginBottom: 16 }}>
+          <Col></Col>
           <Col>
             <DatePicker
               picker="year"
@@ -256,9 +291,12 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
-                      data={supplierData}
-                      dataKey="total"
-                      nameKey="supply_name"
+                      data={supplierData.map((item) => ({
+                        name: item.supply_name,
+                        value: item.total,
+                      }))}
+                      dataKey="value"
+                      nameKey="name"
                       cx="50%"
                       cy="50%"
                       outerRadius={80}

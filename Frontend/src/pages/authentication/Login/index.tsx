@@ -4,12 +4,15 @@ import "./index.css";
 import type { LoginInterface } from "../../../interfaces/Login";
 import { SignIn } from "../../../services/https";
 
+import truckLogo from "../../../assets/icons8-delivery-truck-96.png";
+import warehouseIllustration from "../../../assets/warehouseAi.png";
+
 function SignInPages() {
   const [messageApi, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
   const isSubmitting = useRef(false);
 
-  const delay = (ms: number) => new Promise(res => setTimeout(res, ms)); // helper
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms)); // helper
 
   const onFinish = async (values: { email: string; password: string }) => {
     if (isSubmitting.current) return;
@@ -41,7 +44,6 @@ function SignInPages() {
       } else {
         messageApi.error(res.data.error);
       }
-
     } catch {
       messageApi.error("Sign-in failed. Please try again.");
     } finally {
@@ -53,20 +55,22 @@ function SignInPages() {
   return (
     <>
       {contextHolder}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          backgroundColor: "#1b41d8ff",
-        }}
-      >
-        <Card>
-          <h2 style={{ marginBottom: "1rem" }}>Welcome To Warehouse</h2>
-          <h4 style={{ marginBottom: "2rem", color: "#777" }}>
-            Log in to your account using email and password
-          </h4>
+      <div className="login-container">
+        <Card className="login-card">
+          {/* โลโก้ + Illustration */}
+          <div className="login-header">
+            {/* <img src={warehouseLogo} alt="Warehouse Logo" className="login-logo" /> */}
+            <img
+              src={warehouseIllustration}
+              alt="Warehouse Illustration"
+              className="login-illustration"
+            />
+          </div>
+
+          <h2 className="login-title"><img src={truckLogo} width={49} height={49}/> ระบบคลังอะไหล่สินค้า</h2>
+          <p className="login-subtitle">
+            ล็อกอินเพื่อเข้าใช้งานระบบ
+          </p>
 
           <Form
             name="basic"
@@ -82,7 +86,7 @@ function SignInPages() {
                 { type: "email", message: "Please enter a valid email!" },
               ]}
             >
-              <Input />
+              <Input size="large" placeholder="กรอก email" />
             </Form.Item>
 
             <Form.Item
@@ -90,7 +94,7 @@ function SignInPages() {
               name="password"
               rules={[{ required: true, message: "Please input your password!" }]}
             >
-              <Input.Password />
+              <Input.Password size="large" placeholder="กรอกรหัสผ่าน" />
             </Form.Item>
 
             <Form.Item>
@@ -98,8 +102,10 @@ function SignInPages() {
                 className="button-login"
                 htmlType="submit"
                 loading={loading}
+                block
+                size="large"
               >
-                <span>LOG IN</span>
+                LOG IN
               </Button>
             </Form.Item>
           </Form>

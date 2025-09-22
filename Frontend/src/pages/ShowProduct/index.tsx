@@ -12,6 +12,7 @@ import { GetSupplySelect } from "../../services/https/ShowProduct/index";
 import type { ProductItem } from "../../interfaces/Product";
 import { GetProductsforShowlist } from "../../services/https/ShowProduct/index";
 import NotificationBell from "../../components/NotificationBell";
+import FeaturedPlayListIcon from '@mui/icons-material/FeaturedPlayList';
 import "./index.css";
 
 import dayjs from "dayjs";
@@ -283,7 +284,7 @@ const ProductList = () => {
         padding: 24,
         background: "#d3d3d3",
         minHeight: "100vh",
-        minWidth: "1000px",
+        minWidth: "1200px",
       }}
     >
       <div className="Header" style={{ display: "block", height: 130 }}>
@@ -306,7 +307,8 @@ const ProductList = () => {
               flexShrink: 0, // ป้องกัน title ย่อเกินไป
             }}
           >
-            <h1 style={{ margin: 0, fontSize: "36px" }}>📋 แสดงรายการสินค้า</h1>
+            <FeaturedPlayListIcon style={{ fontSize: "36px",marginRight:10}}/>
+            <h1 style={{ margin: 0, fontSize: "36px" }}>แสดงรายการสินค้า</h1>
           </div>
           <div
             style={{

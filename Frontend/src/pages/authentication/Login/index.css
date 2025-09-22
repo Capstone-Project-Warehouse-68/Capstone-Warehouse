@@ -1,14 +1,74 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: radial-gradient(circle at 20% 20%, #1b41d8, transparent 40%),
+              radial-gradient(circle at 80% 80%, #3c8ce7, transparent 40%),
+              radial-gradient(circle at 60% 30%, #6dd5ed, transparent 40%),
+              #1b41d8;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-card {
+  width: 500px;
+  padding: 2.5rem;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.login-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  margin-bottom: 1rem;
+}
+
+.login-illustration {
+  width: 100%;
+  max-width: 200px;
+  margin-bottom: 1rem;
+}
+
+.login-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #1b41d8;
+   display: flex;
+  align-items: center; /* ทำให้รูปกับข้อความตรงกลางแนวดิ่ง */
+  gap: 0.5rem; /* ระยะห่างระหว่างรูปกับข้อความ */
+}
+
+.login-subtitle {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 2rem;
+}
+
 .button-login {
-  background-color: #1677ff;
-  color: white;
+  background: linear-gradient(90deg, #1677ff, #0056d6);
+  color: white !important;
   border: none;
-  padding: 10px 24px;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
+  border-radius: 10px;
+  font-weight: 600;
   transition: all 0.3s ease;
 }
 
 .button-login:hover {
-  background-color: #0958d9;
+  background: linear-gradient(90deg, #0056d6, #003c99);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 87, 255, 0.35);
 }

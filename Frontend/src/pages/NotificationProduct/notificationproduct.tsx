@@ -295,6 +295,7 @@ const StockAlertSetting: React.FC = () => {
         padding: 24,
         backgroundColor: "#d9d9d9",
         minHeight: "100vh",
+        minWidth: "1200px",
         display: "block",
       }}
     >
