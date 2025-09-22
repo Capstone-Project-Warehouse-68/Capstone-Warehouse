@@ -92,6 +92,11 @@ func main() {
 		r.GET("/GetDashboardSupplier", controller.GetDashboardSupplier)
 		r.GET("/GetDashboardTrend", controller.GetDashboardTrend)
 		r.GET("/GetCategoryApi",controller.GetCategoryApi)
+
+		r.POST("/CreateZone", controller.CreateZone)
+		r.PATCH("/UpdateZone/:id", controller.UpdateZone)
+		r.POST("/CreateShelf", controller.CreateShelf)
+		r.PATCH("/UpdateShelf/:id", controller.UpdateShelf)
 		router.Use(middlewares.Authorizes())
 	}
 

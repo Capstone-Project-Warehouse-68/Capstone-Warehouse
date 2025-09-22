@@ -16,6 +16,7 @@ import ProductList from "../../pages/ShowProduct";
 import OrderCreate from "../../pages/CreateListProductPDF/index";
 import HistoryPdf from "../../pages/CreateListProductPDF/History/HistoryPdf";
 import Dashboard from "../../pages/Dashboard";
+import CreateZoneShelf from "../../pages/ZoneShelf/CreateZoneShelf";
 
 const { Content } = Layout;
 
@@ -59,6 +60,7 @@ const FullLayout: React.FC = () => {
                                 <Route path="/createlistproduct" element={<OrderCreate />} />
                                 <Route path="/historylistproduct" element={<HistoryPdf />} />
                                 <Route path="/dashboard" element={<Dashboard/>}/>
+                                <Route path="/createzoneshelf" element={<CreateZoneShelf />} />
                             </Routes>
                         </div>
                     </Content>

@@ -8,6 +8,8 @@ import type { BankTypeInterface } from "../../interfaces/BankType";
 import type { SupplyInterface } from "../../interfaces/Supply";
 import type { CategoryInterface } from "../../interfaces/Category";
 import type { BillInterface } from "../../interfaces/Bill";
+import type { ZoneInterface } from "../../interfaces/Zone";
+import type { ShelfInterface } from "../../interfaces/Shelf";
 
 const apiUrl = "http://localhost:8000";
 const Authorization = localStorage.getItem("token");
@@ -18,7 +20,6 @@ const requestOptions = {
     "Content-Type": "application/json",
     Authorization: `${Bearer} ${Authorization}`,
   },
-
 };
 
 async function SignIn(data: LoginInterface) {
@@ -107,7 +108,7 @@ async function GetNumberRole() {
 
 async function UpdateNumberRole(id: number, data: NumberRoleInterface) {
   return await axios
-    .patch(`${apiUrl}/UpdateNumberRole/${id}`, data , requestOptions)
+    .patch(`${apiUrl}/UpdateNumberRole/${id}`, data, requestOptions)
     .then((res) => res)
     .catch((e) => e.response);
 }
@@ -238,7 +239,10 @@ async function UpdateCategory(id: number, data: CategoryInterface) {
     .catch((e) => e.response);
 }
 
-async function UpdateUnitPerQuantity(id: number, data: UnitPerQuantityInterface) {
+async function UpdateUnitPerQuantity(
+  id: number,
+  data: UnitPerQuantityInterface
+) {
   return await axios
     .patch(`${apiUrl}/updateUnitPerQuantity/${id}`, data, requestOptions)
     .then((res) => res)
@@ -269,6 +273,32 @@ async function GetBillDeleted() {
 async function RestoreBills(ids: number[]) {
   return await axios
     .patch(`${apiUrl}/restoreBill`, { bill_ids: ids }, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function CreateZone(data: ZoneInterface) {
+  return await axios
+    .post(`${apiUrl}/CreateZone`, data, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+async function UpdateZone(id: number, data: ZoneInterface) {
+  return await axios
+    .patch(`${apiUrl}/UpdateZone/${id}`, data, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function CreateShelf(data: ShelfInterface) {
+  return await axios
+    .post(`${apiUrl}/CreateShelf`, data, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+async function UpdateShelf(id: number, data: ShelfInterface) {
+  return await axios
+    .patch(`${apiUrl}/UpdateShelf/${id}`, data, requestOptions)
     .then((res) => res)
     .catch((e) => e.response);
 }
@@ -330,5 +360,9 @@ export {
   UpdateBillWithProduct,
   GetBillDeleted,
   RestoreBills,
-  DownloadTemplateFile
+  DownloadTemplateFile,
+  CreateZone,
+  UpdateZone,
+  CreateShelf,
+  UpdateShelf,
 };
