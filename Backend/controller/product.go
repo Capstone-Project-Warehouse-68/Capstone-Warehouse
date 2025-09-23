@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/asaskevich/govalidator"
+	// "github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 	"github.com/project_capstone/WareHouse/config"
 	"github.com/project_capstone/WareHouse/entity"
@@ -15,96 +15,95 @@ type Limituantity struct {
 	LimitQuantity uint `json:"limit_quantity"`
 }
 
-func CreateProduct(c *gin.Context) {
-	var Productdata ProductResponse
+// func CreateProduct(c *gin.Context) {
+// 	var Productdata ProductResponse
 
-	if err := c.ShouldBindJSON(&Productdata); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "เกิดข้อผิดพลาดในการส่งข้อมูลสินค้า",
-		})
-		return
-	}
+// 	if err := c.ShouldBindJSON(&Productdata); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{
+// 			"error": "เกิดข้อผิดพลาดในการส่งข้อมูลสินค้า",
+// 		})
+// 		return
+// 	}
 
-	db := config.DB()
+// 	db := config.DB()
 
-	if Productdata.UnitPerQuantityID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ไม่พบข้อมูลหน่วย",
-		})
-		return
-	}
+// 	if Productdata.UnitPerQuantityID == 0 {
+// 		c.JSON(http.StatusBadRequest, gin.H{
+// 			"error": "ไม่พบข้อมูลหน่วย",
+// 		})
+// 		return
+// 	}
 
-	if Productdata.CategoryID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ไม่พบข้อมูลประเภทสินค้า",
-		})
-		return
-	}
+// 	if Productdata.CategoryID == 0 {
+// 		c.JSON(http.StatusBadRequest, gin.H{
+// 			"error": "ไม่พบข้อมูลประเภทสินค้า",
+// 		})
+// 		return
+// 	}
 
-	if Productdata.ShelfID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ไม่พบข้อมูลตำแหน่งของสินค้า",
-		})
-		return
-	}
+// 	if Productdata.ShelfID == 0 {
+// 		c.JSON(http.StatusBadRequest, gin.H{
+// 			"error": "ไม่พบข้อมูลตำแหน่งของสินค้า",
+// 		})
+// 		return
+// 	}
 
-	Product := entity.Product{
-		SupplyProductCode: Productdata.SupplyProductCode,
-		ProductCode:       Productdata.ProductCode,
-		ProductName:       Productdata.ProductName,
-		Description:       Productdata.Description,
-		Picture:           Productdata.Picture,
-		Quantity:          Productdata.Quantity,
-		UnitPerQuantityID: Productdata.UnitPerQuantityID,
-		LimitQuantity:     Productdata.LimitQuantity,
-		SalePrice:         Productdata.SalePrice,
-		CategoryID:        Productdata.CategoryID,
-		ShelfID:           Productdata.ShelfID,
-	}
+// 	Product := entity.Product{
+// 		SupplyProductCode: Productdata.SupplyProductCode,
+// 		ProductName:       Productdata.ProductName,
+// 		Description:       Productdata.Description,
+// 		Picture:           Productdata.Picture,
+// 		Quantity:          Productdata.Quantity,
+// 		UnitPerQuantityID: Productdata.UnitPerQuantityID,
+// 		LimitQuantity:     Productdata.LimitQuantity,
+// 		SalePrice:         Productdata.SalePrice,
+// 		CategoryID:        Productdata.CategoryID,
+// 		ShelfID:           Productdata.ShelfID,
+// 	}
 
-	if ok, err := govalidator.ValidateStruct(Product); !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+// 	if ok, err := govalidator.ValidateStruct(Product); !ok {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
 
-	if err := db.Create(&Product).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status": http.StatusInternalServerError,
-			"error":  "ไม่สามารถเพิ่มข้อมูลสินค้าได้",
-		})
-		return
-	}
+// 	if err := db.Create(&Product).Error; err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{
+// 			"status": http.StatusInternalServerError,
+// 			"error":  "ไม่สามารถเพิ่มข้อมูลสินค้าได้",
+// 		})
+// 		return
+// 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"data": Product,
-	})
+// 	c.JSON(http.StatusCreated, gin.H{
+// 		"data": Product,
+// 	})
 
-}
+// }
 
-func UpdateProduct(c *gin.Context) {
-	var Productdata ProductResponse
-	ProductID := c.Param("id")
+// func UpdateProduct(c *gin.Context) {
+// 	var Productdata ProductResponse
+// 	ProductID := c.Param("id")
 
-	db := config.DB()
-	result := db.First(&Productdata, ProductID)
-	if result.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบข้อมูลสินค้า"})
-		return
-	}
+// 	db := config.DB()
+// 	result := db.First(&Productdata, ProductID)
+// 	if result.Error != nil {
+// 		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบข้อมูลสินค้า"})
+// 		return
+// 	}
 
-	if err := c.ShouldBindJSON(&Productdata); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "เกิดข้อผิดพลาดในการดึงข้อมูล"})
-		return
-	}
+// 	if err := c.ShouldBindJSON(&Productdata); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "เกิดข้อผิดพลาดในการดึงข้อมูล"})
+// 		return
+// 	}
 
-	result = db.Save(&Productdata)
-	if result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "แก้ไขข้อมูลไม่สำเร็จ"})
-		return
-	}
+// 	result = db.Save(&Productdata)
+// 	if result.Error != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "แก้ไขข้อมูลไม่สำเร็จ"})
+// 		return
+// 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "แก้ไขข้อมูลสินค้าสำเร็จ"})
-}
+// 	c.JSON(http.StatusOK, gin.H{"message": "แก้ไขข้อมูลสินค้าสำเร็จ"})
+// }
 
 // func Delete(c *gin.Context) {
 // 	ProductID := c.Param("id")
@@ -181,13 +180,12 @@ func UpdateLimitQuantity(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"status": 200,
+		"status":         200,
 		"message":        "อัปเดต LimitQuantity สำเร็จ",
 		"product_id":     product.ID,
 		"limit_quantity": product.LimitQuantity,
 	})
 }
-
 
 func GetLimitQuantity(c *gin.Context) {
 	type LimitQuantity struct {
@@ -198,17 +196,16 @@ func GetLimitQuantity(c *gin.Context) {
 		SupplierName     string    `json:"supplier_name"`
 		UnitPerQuantity  string    `json:"unit_per_quantity"`
 		ProductUpdatedAt time.Time `json:"product_updated_at"`
-		Quantity          uint		`json:"quantity"`
+		Quantity         uint      `json:"quantity"`
 		CategoryName     string    `json:"category_name"`
-
 	}
 	db := config.DB()
 	var limitQuantities []LimitQuantity
-	
+
 	query := `
 			SELECT 
 				p.id AS product_id,
-				p.product_code AS product_code,
+				pob.product_code AS product_code,
 				p.product_name AS product_name,
 				s.supply_name AS supplier_name,
 				p.limit_quantity AS limit_quantity,
@@ -218,18 +215,18 @@ func GetLimitQuantity(c *gin.Context) {
 				c.category_name AS category_name
 			FROM 
 				products p
-			JOIN 
+			LEFT JOIN  
 				product_of_bills pob ON pob.product_id = p.id
-			JOIN 
+			LEFT JOIN  
 				bills b ON pob.bill_id = b.id
-			JOIN 
+			LEFT JOIN  
 				supplies s ON b.supply_id = s.id
-			JOIN 
+			LEFT JOIN  
 				unit_per_quantities upq ON p.unit_per_quantity_id = upq.id
-			INNER JOIN
+			LEFT JOIN  
 				categories c ON p.category_id = c.id
 			GROUP BY
-				p.id, p.product_code, p.product_name, s.supply_name, p.limit_quantity, upq.name_of_unit, p.created_at, p.quantity ,c.category_name
+				p.id, pob.product_code, p.product_name, s.supply_name, p.limit_quantity, upq.name_of_unit, p.created_at, p.quantity ,c.category_name
 	`
 
 	if err := db.Raw(query).Scan(&limitQuantities).Error; err != nil {
@@ -240,10 +237,9 @@ func GetLimitQuantity(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-    "data": limitQuantities,
+		"data": limitQuantities,
 	})
 }
-
 
 func GetLowStockProducts(c *gin.Context) {
 	db := config.DB()
@@ -268,20 +264,19 @@ func GetLowStockProducts(c *gin.Context) {
 	c.JSON(http.StatusOK, notifications)
 }
 
-
 func GetShowProduct(c *gin.Context) {
 	type ShowProductResponse struct {
-		ID                uint    `json:"ID"`
-		ProductCode       string  `json:"ProductCode"`
-		ProductName       string  `json:"ProductName"`
-		Quantity          int     `json:"Quantity"`
-		NameOfUnit	   string  `json:"NameOfUnit"`
-		SupplyProductCode string  `json:"SupplyProductCode"`
-		SupplyName	   string  `json:"SupplyName"`
-		Shelf        string  `json:"Shelf"`
-		Zone 	  string  `json:"Zone"`
-		UpdatedAt        time.Time `json:"UpdatedAt"`
-		Description       string  `json:"Description"`
+		ID                uint      `json:"ID"`
+		ProductCode       string    `json:"ProductCode"`
+		ProductName       string    `json:"ProductName"`
+		Quantity          int       `json:"Quantity"`
+		NameOfUnit        string    `json:"NameOfUnit"`
+		SupplyProductCode string    `json:"SupplyProductCode"`
+		SupplyName        string    `json:"SupplyName"`
+		Shelf             string    `json:"Shelf"`
+		Zone              string    `json:"Zone"`
+		UpdatedAt         time.Time `json:"UpdatedAt"`
+		Description       string    `json:"Description"`
 	}
 	db := config.DB()
 
@@ -290,11 +285,11 @@ func GetShowProduct(c *gin.Context) {
 	query := `
 	SELECT 
 		p.id,
-		p.product_code,
+		pob.product_code,
 		p.product_name,
 		p.quantity,
 		u.name_of_unit,
-		p.supply_product_code,
+		pob.supply_product_code,
 		su.supply_name,
 		sh.shelf_name AS shelf,
 		z.zone_name AS zone,
@@ -307,6 +302,7 @@ func GetShowProduct(c *gin.Context) {
 	LEFT JOIN product_of_bills pob ON pob.supply_product_code = p.supply_product_code
 	LEFT JOIN bills b ON pob.bill_id = b.id
 	LEFT JOIN supplies su ON b.supply_id = su.id
+	LEFT JOIN product_of_bills pob ON pob.product_id = p.id
 	GROUP BY p.id, u.name_of_unit, su.supply_name, sh.shelf_name, z.zone_name
 	ORDER BY p.id DESC
 	`
@@ -320,79 +316,75 @@ func GetShowProduct(c *gin.Context) {
 }
 
 func GetProductsforShowlist(c *gin.Context) {
-    db := config.DB()
+	db := config.DB()
 
-    type ProductResponse struct {
-        ID                uint      `json:"ID"`
-        ProductCode       string    `json:"ProductCode"`
-        ProductName       string    `json:"ProductName"`
-        Quantity          int       `json:"Quantity"`
-        NameOfUnit        string    `json:"NameOfUnit"`
-        SupplyProductCode string    `json:"SupplyProductCode"`
-        SupplyName        string    `json:"SupplyName"`
-        Shelf             string    `json:"Shelf"`
-        Zone              string    `json:"Zone"`
-        UpdatedAt         time.Time `json:"UpdatedAt"`
-        Description       string    `json:"Description"`
-        CategoryName      string    `json:"CategoryName"`
-    }
+	type ProductResponse struct {
+		ID                uint      `json:"ID"`
+		ProductCode       string    `json:"ProductCode"`
+		ProductName       string    `json:"ProductName"`
+		Quantity          int       `json:"Quantity"`
+		NameOfUnit        string    `json:"NameOfUnit"`
+		SupplyProductCode string    `json:"SupplyProductCode"`
+		SupplyName        string    `json:"SupplyName"`
+		Shelf             string    `json:"Shelf"`
+		Zone              string    `json:"Zone"`
+		UpdatedAt         time.Time `json:"UpdatedAt"`
+		Description       string    `json:"Description"`
+		CategoryName      string    `json:"CategoryName"`
+	}
 
-    var result []ProductResponse
+	var result []ProductResponse
 
-    // Subquery: เลือก supply ล่าสุดต่อ product
-    latestSupplySubquery := db.
-        Table("product_of_bills pob").
-        Select("pob.product_id, sup.supply_name").
-        Joins("JOIN bills b ON b.id = pob.bill_id").
-        Joins("JOIN supplies sup ON sup.id = b.supply_id").
-        Where("pob.id IN (SELECT MAX(id) FROM product_of_bills GROUP BY product_id)")
+	// Subquery: เลือก product_id + supply_id ล่าสุดต่อ product
+	latestSupplySubquery := db.
+		Table("product_of_bills pob").
+		Select("pob.product_id, b.supply_id, sup.supply_name").
+		Joins("JOIN bills b ON b.id = pob.bill_id").
+		Joins("JOIN supplies sup ON sup.id = b.supply_id").
+		Where("pob.id IN (SELECT MAX(id) FROM product_of_bills GROUP BY product_id)")
 
-    // Main query
-    err := db.Table("products p").
-        Select(`
-            p.id,
-            p.product_code,
-            p.product_name,
-            p.quantity,
-            COALESCE(u.name_of_unit, '') AS name_of_unit,
-            p.supply_product_code,
-            COALESCE(ls.supply_name, '') AS supply_name,
-            COALESCE(s.shelf_name, '') AS shelf,
-            COALESCE(z.zone_name, '') AS zone,
-            p.updated_at,
-            COALESCE(p.description, '') AS description,
-            COALESCE(c.category_name, '') AS category_name
-        `).
-        Joins("LEFT JOIN unit_per_quantities u ON u.id = p.unit_per_quantity_id").
-        Joins("LEFT JOIN shelves s ON s.id = p.shelf_id").
-        Joins("LEFT JOIN zones z ON z.id = s.zone_id").
-        Joins("LEFT JOIN categories c ON c.id = p.category_id").
-        Joins("LEFT JOIN (?) AS ls ON ls.product_id = p.id", latestSupplySubquery).
-        Scan(&result).Error
+	// Main query
+	err := db.Table("products p").
+		Select(`
+		p.id,
+		p.product_name,
+		p.quantity,
+		p.supply_product_code,
+		COALESCE(u.name_of_unit, '') AS name_of_unit,
+		COALESCE(s.shelf_name, '') AS shelf,
+		COALESCE(z.zone_name, '') AS zone,
+		p.updated_at,
+		COALESCE(p.description, '') AS description,
+		COALESCE(c.category_name, '') AS category_name,
+		COALESCE(ls.supply_name, '') AS latest_supply_name
+	`).
+		Joins("LEFT JOIN unit_per_quantities u ON u.id = p.unit_per_quantity_id").
+		Joins("LEFT JOIN shelves s ON s.id = p.shelf_id").
+		Joins("LEFT JOIN zones z ON z.id = s.zone_id").
+		Joins("LEFT JOIN categories c ON c.id = p.category_id").
+		Joins("LEFT JOIN (?) AS ls ON ls.product_id = p.id", latestSupplySubquery).
+		Scan(&result).Error
 
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{
-            "error": "ดึงข้อมูลล้มเหลว: " + err.Error(),
-        })
-        return
-    }
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "ดึงข้อมูลล้มเหลว: " + err.Error(),
+		})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{"data": result})
+	c.JSON(http.StatusOK, gin.H{"data": result})
 }
-
-
-
 
 func GetProductPDF(c *gin.Context) {
 	type ProductReport struct {
-		Number  uint `json:"number"`
-		ProductID           int       `json:"product_id"`
-		SupplyProductCode  string    `json:"supply_product_code"`
-		ProductName  string    `json:"product_name"`
-		Quantity     int       `json:"quantity"`
-		NameOfUnit  string    `json:"name_of_unit"`
-		SupplyName   string    `json:"supply_name"`
-		DateImport   time.Time `json:"date_import"`
+		Number            uint      `json:"number"`
+		ProductID         int       `json:"product_id"`
+		SupplyProductCode string    `json:"supply_product_code"`
+		ProductName       string    `json:"product_name"`
+		Quantity          int       `json:"quantity"`
+		NameOfUnit        string    `json:"name_of_unit"`
+		SupplyName        string    `json:"supply_name"`
+		DateImport        time.Time `json:"date_import"`
 		CategoryName      string    `json:"category_name"`
 	}
 
@@ -427,8 +419,8 @@ func GetProductPDF(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": results})
 }
 
-//สำหรับแดชบอร์ด
-type ( 
+// สำหรับแดชบอร์ด
+type (
 	SummaryReport struct {
 		MonthTotal float64 `json:"month_total"`
 		YearTotal  float64 `json:"year_total"`
@@ -442,6 +434,7 @@ type (
 		Total float64 `json:"total"`
 	}
 )
+
 // Summary
 func GetDashboardSummary(c *gin.Context) {
 	db := config.DB()
@@ -482,8 +475,6 @@ func GetDashboardSummary(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-
-
 // Supplier
 func GetDashboardSupplier(c *gin.Context) {
 	db := config.DB()
@@ -512,7 +503,6 @@ func GetDashboardSupplier(c *gin.Context) {
 
 	c.JSON(http.StatusOK, results)
 }
-
 
 // Trend
 func GetDashboardTrend(c *gin.Context) {

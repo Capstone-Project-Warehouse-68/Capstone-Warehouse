@@ -293,13 +293,14 @@ function ImportProduct() {
                 const billData = {
                     Bill: {
                         Title: bill.Title,
-                        SummaryPrice: bill.SummaryPrice,
+                        SummaryPrice: Number(bill.SummaryPrice || 0),
                         EmployeeID: Number(localStorage.getItem("id")),
-                        SupplyID: bill.SupplyID,
-                        DateImport: bill.DateImport ? bill.DateImport.toDate() : null,
+                        SupplyID: Number(bill.SupplyID),
+                        DateImport: bill.DateImport ? new Date(bill.DateImport) : null, // ✅ แก้ให้เป็น Date object
                     },
                     Products: bill.products,
                     ProductsOfBill: bill.products.map((p: ProductInterface) => ({
+                        ProductID: p.ID || null, // ✅ ต้องส่ง ProductID ด้วย (backend เอาไปผูก)
                         ManufacturerCode: p.ManufacturerCode,
                         Quantity: p.Quantity,
                         PricePerPiece: p.PricePerPiece,
@@ -307,7 +308,8 @@ function ImportProduct() {
                         SumPriceProduct: p.SumPriceProduct,
                     }))
                 };
-                console.log(billData);
+                console.log("ส่งไป backend:", billData);
+
                 try {
                     const res = await CreateBillwithProduct(billData);
                     if (res?.status === 201) {
@@ -319,7 +321,6 @@ function ImportProduct() {
                 } catch (apiErr) {
                     messageApi.error(`เกิดข้อผิดพลาด: ${(apiErr as any).message || "เกิดข้อผิดพลาดในการสร้างบิล"}`);
                 }
-
             }
 
             // Reset form และ state
@@ -338,15 +339,17 @@ function ImportProduct() {
 
     const onFinishUpdate = async () => {
         try {
+            // ดึงค่าจาก form ทั้งหมด
             const values = await form.validateFields();
+
             const billid = Number(localStorage.getItem("BillID"));
             if (!billid) {
                 message.error("ไม่พบ ID บิลที่จะอัปเดต");
                 return;
             }
 
-            // ✅ แปลงค่า products ให้เป็น number
-            const parsedProducts = (products || []).map((p: ProductInterface) => ({
+            // ดึง products จาก Form.List ให้ตรงกับ currentStep
+            const formProducts: ProductInterface[] = (values.bills?.[currentStep]?.products || []).map((p: any) => ({
                 ...p,
                 Quantity: Number(p.Quantity),
                 PricePerPiece: Number(p.PricePerPiece),
@@ -364,15 +367,18 @@ function ImportProduct() {
                     SummaryPrice: values.SummaryPrice,
                     EmployeeID: Number(localStorage.getItem("id")),
                 },
-                Products: parsedProducts,
-                ProductsOfBill: parsedProducts.map(p => ({
+                Products: formProducts,
+                ProductsOfBill: formProducts.map(p => ({
                     ProductID: p.ID,
                     ManufacturerCode: p.ManufacturerCode,
                     PricePerPiece: p.PricePerPiece,
+                    Quantity: p.Quantity,
                     Discount: p.Discount,
                     SumPriceProduct: p.SumPriceProduct,
                 })),
             };
+
+            console.log("update data: ", payload);
 
             const res = await UpdateBillWithProduct(billid, payload as any);
             if (res.status === 200) {
@@ -385,7 +391,6 @@ function ImportProduct() {
             }
 
             form.resetFields();
-            setIsCreateModalOpen(false);
             setCurrentStep(0);
             setTempBills([]);
             localStorage.removeItem("tempBills");
@@ -1245,6 +1250,47 @@ function ImportProduct() {
                             }
                         ]
                     }}
+                    onValuesChange={(_, allValues) => {
+                        const bills = allValues.bills || [];
+                        if (bills.length === 0) return;
+
+                        const products = bills[currentStep]?.products || [];
+                        let summaryTotal = 0;
+
+                        const newProducts = products.map((p: any) => {
+                            const quantity = Number(p.Quantity) || 0;
+                            const pricePerPiece = Number(p.PricePerPiece) || 0;
+                            const discount = Number(p.Discount) || 0;
+
+                            // คำนวณราคารวมก่อนหักส่วนลด
+                            const subtotal = quantity * pricePerPiece;
+
+                            // คำนวณส่วนลดเป็นเปอร์เซ็นต์
+                            const discountAmount = (subtotal * discount) / 100;
+
+                            // ราคารวมหลังหักส่วนลด
+                            const sumPrice = subtotal - discountAmount;
+
+                            summaryTotal += sumPrice;
+
+                            return {
+                                ...p,
+                                SumPriceProduct: Math.round(sumPrice * 100) / 100, // ปัดทศนิยม 2 ตำแหน่ง
+                            };
+                        });
+
+                        // อัปเดตเฉพาะ step ปัจจุบัน
+                        const updatedBills = [...bills];
+                        updatedBills[currentStep] = {
+                            ...updatedBills[currentStep],
+                            products: newProducts,
+                        };
+
+                        form.setFieldsValue({
+                            bills: updatedBills,
+                            SummaryPrice: Math.round(summaryTotal * 100) / 100, // ปัดทศนิยม 2 ตำแหน่ง
+                        });
+                    }}
                 >
                     <Row gutter={[8, 8]}>
                         <Col xl={12}>
@@ -1301,8 +1347,8 @@ function ImportProduct() {
                     <Form.List name={['bills', currentStep, 'products']}>
                         {(fields, { add, remove }) => (
                             <SimpleBar style={{ maxHeight: 500, maxWidth: "100%" }} autoHide={false}>
-                                <TableContainer component={Paper} sx={{ borderRadius: 2, minWidth: 1800 }}>
-                                    <Table sx={{ minWidth: 1800 }}>
+                                <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 500 }}>
+                                    <Table stickyHeader>
                                         <TableHead>
                                             <TableRow sx={{ bgcolor: "#f5f5f5" }}>
                                                 <TableCell>ลำดับ</TableCell>
@@ -1408,7 +1454,7 @@ function ImportProduct() {
                                                             name={[field.name, 'SumPriceProduct']}
                                                             rules={[{ required: true, message: 'กรุณากรอกราคารวม' }]}
                                                         >
-                                                            <TextField label="ราคารวม" variant="standard" type="number" fullWidth />
+                                                            <TextField label="ราคารวม" variant="standard" type="number" fullWidth inputProps={{ min: 0, step: 0.01 }} />
                                                         </Form.Item>
                                                     </TableCell>
 

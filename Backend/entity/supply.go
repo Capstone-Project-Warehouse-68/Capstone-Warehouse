@@ -16,4 +16,5 @@ type Supply struct {
 
 	OrderBill []OrderBill `gorm:"foreignKey:SupplyID"`
 	Bill      []Bill      `gorm:"foreignKey:SupplyID"`
+	Product   []Product   `gorm:"foreignKey:SupplyID"`
 }

@@ -57,7 +57,6 @@ func main() {
 		r.GET("/Getzone", controller.GetZone)
 		r.GET("/GetSupply", controller.GetSupply)
 
-		r.POST("/CreateProduct", controller.CreateProduct)
 		r.POST("/CreateProductWithBill", controller.CreateBillWithProducts)
 		r.PATCH("/Updatebillwithproduct/:id", controller.UpdateBillWithProducts)
 		r.DELETE("/deletebillwithproduct/:id", controller.DeleteBill)
