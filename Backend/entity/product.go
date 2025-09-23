@@ -7,11 +7,10 @@ import (
 type Product struct {
 	gorm.Model
 	SupplyProductCode string
-	ProductCode       string	`valid:"required~ProductCode is required"`
 	ProductName       string	`valid:"required~ProductName is required"`
 	Description       string	`valid:"required~Description is required"`
 	Picture           string	
-	Quantity          int		`valid:"required~Quantity is required"`
+	Quantity          int		`valid:"required~Quantity is required"`    // Quantity รวมที่มีอยู่
 	UnitPerQuantityID uint		`valid:"required~UnitPerQuantityID is required"`
 	UnitPerQuantity   UnitPerQuantity `gorm:"foreignKey:UnitPerQuantityID"`
 	LimitQuantity     int		`valid:"required~LimitQuantity is required"`

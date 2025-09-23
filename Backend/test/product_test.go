@@ -31,7 +31,6 @@ func TestProject(t *testing.T){
 	t.Run(`product is valid`, func(t *testing.T){
 		e := entity.Product{
 			SupplyProductCode: "ABC",
-			ProductCode: "ABC",
 			ProductName: "ABC",
 			Description: "ABC",
 			Quantity: 20,
@@ -50,33 +49,9 @@ func TestProject(t *testing.T){
 		g.Expect(err).To(BeNil())
 	})
 
-	t.Run(`product_code is required`, func(t *testing.T){
-		e := entity.Product{
-			SupplyProductCode: "ABC",
-			ProductCode: "",//ผิดตรงนี้
-			ProductName: "ABC",
-			Description: "ABC",
-			Quantity: 20,
-			UnitPerQuantityID: uint(1),
-			UnitPerQuantity: u,
-			LimitQuantity: 5,
-			SalePrice: 55.5,
-			CategoryID: uint(1),
-			Category: c,
-			ShelfID: uint(1),
-			Shelf: s,
-		}
-		ok, err := govalidator.ValidateStruct(e)
-
-		g.Expect(ok).NotTo(BeTrue())
-		g.Expect(err).NotTo(BeNil())
-		g.Expect(err.Error()).To(Equal("ProductCode is required"))
-	})
-
 	t.Run(`product_name is required`, func(t *testing.T){
 		e := entity.Product{
 			SupplyProductCode: "ABC",
-			ProductCode: "ABC",
 			ProductName: "",//ผิดตรงนี้
 			Description: "ABC",
 			Quantity: 20,
@@ -99,7 +74,6 @@ func TestProject(t *testing.T){
 	t.Run(`description is required`, func(t *testing.T){
 		e := entity.Product{
 			SupplyProductCode: "ABC",
-			ProductCode: "ABC",
 			ProductName: "ABC",
 			Description: "",//ผิดตรงนี้
 			Quantity: 20,
@@ -122,7 +96,6 @@ func TestProject(t *testing.T){
 	t.Run(`quantity is required`, func(t *testing.T){
 		e := entity.Product{
 			SupplyProductCode: "ABC",
-			ProductCode: "ABC",
 			ProductName: "ABC",
 			Description: "ABC",
 			Quantity: 0,//ผิดตรงนี้
@@ -145,7 +118,6 @@ func TestProject(t *testing.T){
 	t.Run(`unit_per_quantity_id is required`, func(t *testing.T){
 		e := entity.Product{
 			SupplyProductCode: "ABC",
-			ProductCode: "ABC",
 			ProductName: "ABC",
 			Description: "ABC",
 			Quantity: 20,
@@ -168,7 +140,6 @@ func TestProject(t *testing.T){
 	t.Run(`limit_quantity is required`, func(t *testing.T){
 		e := entity.Product{
 			SupplyProductCode: "ABC",
-			ProductCode: "ABC",
 			ProductName: "ABC",
 			Description: "ABC",
 			Quantity: 20,
@@ -191,7 +162,6 @@ func TestProject(t *testing.T){
 	t.Run(`sale_price is required`, func(t *testing.T){
 		e := entity.Product{
 			SupplyProductCode: "ABC",
-			ProductCode: "ABC",
 			ProductName: "ABC",
 			Description: "ABC",
 			Quantity: 20,
@@ -214,7 +184,6 @@ func TestProject(t *testing.T){
 	t.Run(`category_id is required`, func(t *testing.T){
 		e := entity.Product{
 			SupplyProductCode: "ABC",
-			ProductCode: "ABC",
 			ProductName: "ABC",
 			Description: "ABC",
 			Quantity: 20,
@@ -237,7 +206,6 @@ func TestProject(t *testing.T){
 	t.Run(`shelf_id is required`, func(t *testing.T){
 		e := entity.Product{
 			SupplyProductCode: "ABC",
-			ProductCode: "ABC",
 			ProductName: "ABC",
 			Description: "ABC",
 			Quantity: 20,
