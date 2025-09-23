@@ -177,31 +177,29 @@ func SetupDatabase() {
 	// ===== Product =====
 	product := entity.Product{
 		SupplyProductCode: "SUP-A001",
-		ProductCode:       "PRD-001",
 		ProductName:       "ผ้าเบรกหน้า",
 		Description:       "ผ้าเบรกหน้ารถยนต์ญี่ปุ่น",
 		Picture:           "https://example.com/brake.jpg",
 		Quantity:          5,
-		UnitPerQuantityID: unit.ID,
+		UnitPerQuantityID: &unit.ID,
 		LimitQuantity:     5,
 		SalePrice:         850.00,
-		CategoryID:        category.ID,
-		ShelfID:           shelf.ID,
+		CategoryID:        &category.ID,
+		ShelfID:           &shelf.ID,
 	}
 	db.FirstOrCreate(&product, entity.Product{SupplyProductCode: "SUP-A001"})
 
 	product2 := entity.Product{
 		SupplyProductCode: "SUP-A002",
-		ProductCode:       "PRD-002",
 		ProductName:       "ลูกปืนล้อ",
 		Description:       "ลูกปืนล้อรถยนต์ญี่ปุ่น",
 		Picture:           "https://example.com/brake.jpg",
 		Quantity:          5,
-		UnitPerQuantityID: unit2.ID,
+		UnitPerQuantityID: &unit2.ID,
 		LimitQuantity:     5,
 		SalePrice:         850.00,
-		CategoryID:        category2.ID,
-		ShelfID:           shelf.ID,
+		CategoryID:        &category2.ID,
+		ShelfID:           &shelf.ID,
 	}
 	db.FirstOrCreate(&product2, entity.Product{SupplyProductCode: "SUP-A002"})
 
@@ -227,6 +225,7 @@ func SetupDatabase() {
 	productOfBill := entity.ProductOfBill{
 		ProductID:        product.ID,
 		BillID:           bill.ID,
+		ProductCode:       "PRD-001",
 		ManufacturerCode: "MNFC-12345",
 		PricePerPiece:    800,
 		Discount:         5,
@@ -236,6 +235,7 @@ func SetupDatabase() {
 		// SupplyProductCode: 2, // ต้องตรงกับ Product.ID หากใช้ foreignKey จาก ID
 		ProductID:         product2.ID,
 		BillID:            bill2.ID,
+		ProductCode:       "PRD-002",
 		ManufacturerCode:  "MNFC-12346",
 		PricePerPiece:     1000,
 		Discount:          5,
