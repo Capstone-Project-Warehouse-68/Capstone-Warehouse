@@ -4,6 +4,7 @@ const { SubMenu } = Menu;
 import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
 import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard';
 import FeaturedPlayListIcon from '@mui/icons-material/FeaturedPlayList';
@@ -11,6 +12,7 @@ import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import HistoryIcon from '@mui/icons-material/History';
 import PostAddIcon from '@mui/icons-material/PostAdd';
+import RestorePageIcon from '@mui/icons-material/RestorePage';
 import AddBusinessIcon from '@mui/icons-material/AddBusiness';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import InventoryIcon from '@mui/icons-material/Inventory';
@@ -33,42 +35,51 @@ function SiderOwner() {
   const [lastName, setLastName] = useState("");
   const [positionName, setPositionName] = useState("");
   const [profile, setProfile] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const employeeID = Number(localStorage.getItem("employeeID"));
 
   const getEmployeeById = async (id: number) => {
-  try {
-    const res = await GetEmployeeById(id);
+    try {
+      const res = await GetEmployeeById(id);
 
-    if (res.status === 200) {
-      const employee: EmployeeInterface = res.data;
-      setFirstName(employee.FirstName || "");
-      setLastName(employee.LastName || "");
-      setProfile(employee.Profile || "");
-      setPositionName(employee.Role?.RoleName || "")
-    } else {
-      messageApi.error(res.data?.error || "ไม่สามารถดึงข้อมูลได้ ");
+      if (res.status === 200) {
+        const employee: EmployeeInterface = res.data;
+        setFirstName(employee.FirstName || "");
+        setLastName(employee.LastName || "");
+        setProfile(employee.Profile || "");
+        setPositionName(employee.Role?.RoleName || "")
+      } else {
+        messageApi.error(res.data?.error || "ไม่สามารถดึงข้อมูลได้ ");
+        setPositionName("Unknown Position");
+      }
+    } catch (error) {
+      messageApi.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
       setPositionName("Unknown Position");
     }
-  } catch (error) {
-    messageApi.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
-    setPositionName("Unknown Position");
-  }
-};
-    useEffect(() => {
-      getEmployeeById(Number(employeeID));
-    }, []);
+  };
+  useEffect(() => {
+    getEmployeeById(Number(employeeID));
+  }, []);
 
   const setCurrentPage = (val: string) => {
     localStorage.setItem("page", val);
   };
 
-  const Logout = () => {
-    localStorage.clear();
-    messageApi.success("Logout successful");
-    setTimeout(() => {
-      location.href = "/";
-    }, 2000);
+  const Logout = async () => {
+    if (loading) return;
+    setLoading(true);
+
+    try {
+      messageApi.success("Logout successful");
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      localStorage.clear();
+      window.location.href = "/";
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleCollapsed = () => {
@@ -245,7 +256,7 @@ function SiderOwner() {
                       height: "100%",
                     }}
                   >
-                    <PostAddIcon style={{ fontSize: 26 }} />
+                    <RestorePageIcon style={{ fontSize: 26 }} />
                   </div>
                 }
                 onClick={() => setCurrentPage("restorebill")}
@@ -304,9 +315,9 @@ function SiderOwner() {
                   height: "100%",
                 }}
               >
-                <LogoutIcon style={{ fontSize: 26 }} />
+                {loading ? <LoadingOutlined spin /> : <LogoutIcon style={{ fontSize: 26 }} />}
               </div>
-            } onClick={Logout}>
+            } onClick={Logout} disabled={loading}>
               <span style={{ fontSize: 16 }}>ออกจากระบบ </span>
             </Menu.Item>
           </Menu>

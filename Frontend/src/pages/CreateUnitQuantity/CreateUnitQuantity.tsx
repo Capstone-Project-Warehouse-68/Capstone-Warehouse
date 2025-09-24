@@ -1,5 +1,5 @@
 import { Button, Card, Col, Form, Input, message, Modal, Row } from "antd";
-import AddBusinessIcon from "@mui/icons-material/AddBusiness";
+import InventoryIcon from '@mui/icons-material/Inventory';
 import {
   GetUnitPerQuantity,
   CreateUnitOfQuantity,
@@ -209,7 +209,7 @@ function CreateUnitQuantity() {
         }}
       >
         <span style={{ fontSize: 20, color: "white" }}>
-          <AddBusinessIcon style={{ marginRight: 8, color: "white" }} />
+          <InventoryIcon style={{ marginRight: 8, color: "white" }} />
           สร้างประเภทและหน่วยสินค้า
         </span>
       </div>

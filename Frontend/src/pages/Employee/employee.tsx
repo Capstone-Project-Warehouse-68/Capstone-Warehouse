@@ -514,7 +514,7 @@ function Employee() {
                                         <Text strong>ตำแหน่งงาน</Text>
                                     </Col>
                                     <Col xl={8}>
-                                        <Text strong>อีเมลล์</Text>
+                                        <Text strong>อีเมล</Text>
                                     </Col>
                                 </Row>
                             </Card>

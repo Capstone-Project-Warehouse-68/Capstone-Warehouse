@@ -294,13 +294,13 @@ function ImportProduct() {
                     Bill: {
                         Title: bill.Title,
                         SummaryPrice: Number(bill.SummaryPrice || 0),
-                        EmployeeID: Number(localStorage.getItem("id")),
+                        EmployeeID: Number(localStorage.getItem("employeeID")),
                         SupplyID: Number(bill.SupplyID),
-                        DateImport: bill.DateImport ? new Date(bill.DateImport) : null, // ✅ แก้ให้เป็น Date object
+                        DateImport: bill.DateImport ? new Date(bill.DateImport) : null,
                     },
                     Products: bill.products,
                     ProductsOfBill: bill.products.map((p: ProductInterface) => ({
-                        ProductID: p.ID || null, // ✅ ต้องส่ง ProductID ด้วย (backend เอาไปผูก)
+                        ProductID: p.ID || null,
                         ManufacturerCode: p.ManufacturerCode,
                         Quantity: p.Quantity,
                         PricePerPiece: p.PricePerPiece,
