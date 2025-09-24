@@ -17,11 +17,11 @@ import {
   DashOutlined,
   EditOutlined,
 } from "@ant-design/icons";
-import AddBusinessIcon from "@mui/icons-material/AddBusiness";
 import ImgCrop from "antd-img-crop";
 import type { UploadFile, UploadProps } from "antd";
 import { CreateBank, GetBankTypes, UpdateBankType } from "../../services/https";
 import type { BankTypeInterface } from "../../interfaces/BankType";
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 
 type FileType = Parameters<NonNullable<UploadProps["beforeUpload"]>>[0];
 
@@ -249,7 +249,7 @@ function CreateBankType() {
         }}
       >
         <span style={{ fontSize: 20, color: "white" }}>
-          <AddBusinessIcon style={{ marginRight: 8, color: "white" }} />
+          <AccountBalanceIcon style={{ marginRight: 8, color: "white" }} />
           สร้างข้อมูลธนาคาร
         </span>
       </div>

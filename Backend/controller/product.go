@@ -356,7 +356,7 @@ func GetProductsforShowlist(c *gin.Context) {
 		p.updated_at,
 		COALESCE(p.description, '') AS description,
 		COALESCE(c.category_name, '') AS category_name,
-		COALESCE(ls.supply_name, '') AS latest_supply_name
+		COALESCE(ls.supply_name, '') AS supply_name
 	`).
 		Joins("LEFT JOIN unit_per_quantities u ON u.id = p.unit_per_quantity_id").
 		Joins("LEFT JOIN shelves s ON s.id = p.shelf_id").
