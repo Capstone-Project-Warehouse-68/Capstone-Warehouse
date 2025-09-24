@@ -214,16 +214,21 @@ function CreateZoneShelf() {
                 ]}
                 style={{ flex: 1, marginBottom: 16 }}
               >
-                <Input placeholder="กรอกชื่อโซน" />
+                <Input 
+                id="input-zone-name"
+                placeholder="กรอกชื่อโซน" />
               </Form.Item>
               <Form.Item>
-                <Button type="primary" htmlType="submit">
+                <Button 
+                id="button-create-zone"
+                type="primary" htmlType="submit">
                   สร้างโซน
                 </Button>
               </Form.Item>
             </Form>
 
             <Input
+              id="input-search-zone"
               placeholder="ค้นหาโซน"
               value={zoneSearch}
               onChange={(e) => setZoneSearch(e.target.value)}
@@ -248,7 +253,9 @@ function CreateZoneShelf() {
                 rules={[{ required: true, message: "กรุณากรอกชื่อชั้น" }]}
                 style={{ flex: 1, marginBottom: 16 }}
               >
-                <Input placeholder="กรอกชื่อชั้น" />
+                <Input 
+                id="input-shelf-name"
+                placeholder="กรอกชื่อชั้น" />
               </Form.Item>
 
               <Form.Item
@@ -257,6 +264,7 @@ function CreateZoneShelf() {
                 style={{ flex: 1, marginBottom: 16 }}
               >
                 <Select
+                  id="select-zone-for-shelf"
                   placeholder="-- เลือกโซน --"
                   onChange={(value:number) => formShelf.setFieldValue("ZoneID", value)}
                 >
@@ -269,13 +277,16 @@ function CreateZoneShelf() {
               </Form.Item>
 
               <Form.Item>
-                <Button type="primary" htmlType="submit">
+                <Button 
+                id="button-create-shelf"
+                type="primary" htmlType="submit">
                   สร้างชั้น
                 </Button>
               </Form.Item>
             </Form>
 
             <Input
+              id="input-search-shelf"
               placeholder="ค้นหาชั้น"
               value={shelfSearch}
               onChange={(e) => setShelfSearch(e.target.value)}
@@ -314,6 +325,7 @@ function CreateZoneShelf() {
                     <TableCell>{zone.ZoneName}</TableCell>
                     <TableCell>
                       <IconButton
+                          id={`edit-zone-button-${zone.ID}`}
                         size="small"
                         onClick={() => {
                           setCurrentZone(zone);
@@ -356,6 +368,7 @@ function CreateZoneShelf() {
                     </TableCell>
                     <TableCell>
                       <IconButton
+                        id={`edit-shelf-button-${shelf.ID}`}
                         size="small"
                         onClick={() => {
                           setCurrentShelf(shelf);
@@ -396,10 +409,14 @@ function CreateZoneShelf() {
               },
             ]}
           >
-            <Input placeholder="แก้ไขชื่อโซน" />
+            <Input 
+            id="input-edit-zone"
+            placeholder="แก้ไขชื่อโซน" />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit">
+            <Button 
+            id="button-edit-zone"
+            type="primary" htmlType="submit">
               บันทึก
             </Button>
           </Form.Item>
@@ -425,7 +442,9 @@ function CreateZoneShelf() {
             name="ShelfName"
             rules={[{ required: true, message: "กรุณากรอกชื่อชั้น" }]}
           >
-            <Input placeholder="แก้ไขชื่อชั้น" />
+            <Input
+            id="input-edit-shelf"
+            placeholder="แก้ไขชื่อชั้น" />
           </Form.Item>
 
           <Form.Item
@@ -434,6 +453,7 @@ function CreateZoneShelf() {
             rules={[{ required: true, message: "กรุณาเลือกโซน" }]}
           >
             <Select
+            id="select-edit-zone-for-shelf"
               placeholder="-- เลือกโซน --"
               onChange={(value:number) => formShelf.setFieldValue("ZoneID", value)}
             >
@@ -446,7 +466,9 @@ function CreateZoneShelf() {
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit">
+            <Button
+            id="button-edit-shelf" 
+            type="primary" htmlType="submit">
               บันทึก
             </Button>
           </Form.Item>

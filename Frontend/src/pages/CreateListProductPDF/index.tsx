@@ -257,6 +257,7 @@ const OrderTable = () => {
         dataIndex: "supply_product_code",
         key: "supply_product_code",
         width: 130,
+        render: (text: string | null | undefined) => text || "-",
       },
       {
         title: "ชื่อสินค้า",
@@ -317,6 +318,7 @@ const OrderTable = () => {
               }}
             >
               <Input
+                id={`input-quantity-order-${record.number}`} 
                 type="number"
                 placeholder="จำนวน"
                 style={{ width: 80 }}
@@ -332,6 +334,7 @@ const OrderTable = () => {
                 }
               />
               <Select
+                id={`select-unit-order-${record.number}`}
                 style={{
                   width: 100,
                 }}
@@ -357,6 +360,7 @@ const OrderTable = () => {
               />
               {/* ปุ่มลบ สำหรับยกเลิก row */}
               <Button
+                id={`button-delete-order-${record.number}`}
                 danger
                 icon={<CloseCircleOutlined />}
                 onClick={() =>
@@ -370,6 +374,7 @@ const OrderTable = () => {
             </div>
           ) : (
             <Button
+              id={`button-ok-order-product-${record.number}`}
               onClick={() =>
                 setSelectedOrders((prev) => [
                   ...prev,
@@ -571,6 +576,7 @@ const OrderTable = () => {
           }}
         >
           <Input
+            id="search-input"
             placeholder="ค้นหาโค้ดสินค้า หรือ ชื่อสินค้า"
             allowClear
             style={{ width: 833, height: 50, borderRadius: 50 }}
@@ -581,6 +587,7 @@ const OrderTable = () => {
             }
           />
           <Select
+            id="category-select"
             placeholder={
               <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <FilterOutlined style={{ color: "#1890ff" }} />
@@ -599,6 +606,7 @@ const OrderTable = () => {
             ))}
           </Select>
           <Select
+            id="supply-select"
             placeholder={
               <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <FilterOutlined style={{ color: "#1890ff" }} />
@@ -625,8 +633,8 @@ const OrderTable = () => {
           dataSource={[...filteredData, ...draftProducts]}
           rowKey="number"
           columns={columns}
-          pagination={false}
-          scroll={{ y: window.innerHeight * 0.6 }} // 60% ของความสูงหน้าจอ
+          pagination={{ pageSize: 7 }}
+          // scroll={{ y: window.innerHeight * 0.5 }} // 60% ของความสูงหน้าจอ
           bordered={false}
           className="custom-table"
           loading={loading}
@@ -643,6 +651,7 @@ const OrderTable = () => {
         }}
       >
         <Button
+          id="add-product-button"
           style={{
             marginRight: 8,
             borderRadius: 50,
@@ -722,10 +731,11 @@ const OrderTable = () => {
           <Button
             onClick={() => setIsModalOpen(false)}
             style={{ marginRight: 8 }}
+            id="cancel-button"
           >
             ยกเลิก
           </Button>
-          <Button type="primary" onClick={handleConfirm}>
+          <Button id="ok-button" type="primary" onClick={handleConfirm}>
             ยืนยัน
           </Button>
         </div>
@@ -756,7 +766,7 @@ const OrderTable = () => {
             name="productDraftName"
             rules={[{ required: true, message: "กรุณากรอกชื่อสินค้า" }]}
           >
-            <Input placeholder="ชื่อสินค้า" />
+            <Input placeholder="ชื่อสินค้า" id="input-product-draft-name"/>
           </Form.Item>
 
           <Form.Item
@@ -765,6 +775,7 @@ const OrderTable = () => {
             rules={[{ required: true, message: "กรุณาเลือกบริษัทขายส่ง" }]}
           >
             <Select
+              id="select-supply-draft-name"
               placeholder={
                 <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <FilterOutlined style={{ color: "#1890ff" }} />
@@ -796,6 +807,7 @@ const OrderTable = () => {
             rules={[{ required: true, message: "กรุณาเลือกหน่วย" }]}
           >
             <Select
+              id="select-unit"
               placeholder="เลือกหน่วย"
               style={{ width: "100%" }}
               options={unitPerQuantity.map((u) => ({
@@ -807,6 +819,7 @@ const OrderTable = () => {
 
           <div style={{ textAlign: "right" }}>
             <Button
+             id="cancel-add-product-button"
               onClick={() => {
                 setIsAddProductModalOpen(false);
                 form.resetFields();
@@ -815,7 +828,11 @@ const OrderTable = () => {
             >
               ยกเลิก
             </Button>
-            <Button type="primary" htmlType="submit">
+            <Button 
+            id="save-add-product-button"
+            type="primary" 
+            htmlType="submit"
+            >
               บันทึก
             </Button>
           </div>
@@ -825,12 +842,14 @@ const OrderTable = () => {
       {/* ปุ่ม */}
       <div style={{ textAlign: "right", marginTop: 20 }}>
         <Button
+        id="clear-button-clear-orders"
           style={{ marginRight: 8, borderRadius: 50, color: "red", height: 40 }}
           onClick={() => setSelectedOrders([])}
         >
           ล้างข้อมูล
         </Button>
         <Button
+        id="create-order-button"
           type="primary"
           style={{ borderRadius: 50, height: 40 }}
           onClick={() => setIsModalOpen(true)}

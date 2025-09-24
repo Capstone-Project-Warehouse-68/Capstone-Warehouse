@@ -288,4 +288,77 @@ func SetupDatabase() {
 	}
 	db.FirstOrCreate(&orderProduct)
 
+	// ===== Product เพิ่มอีก 2 ตัว =====
+	product3 := entity.Product{
+		SupplyProductCode: "SUP-A003",
+		ProductName:       "น้ำมันเครื่อง",
+		Description:       "น้ำมันเครื่องสังเคราะห์แท้",
+		Picture:           "https://example.com/oil.jpg",
+		Quantity:          10,
+		UnitPerQuantityID: &unit6.ID, // กระป๋อง
+		LimitQuantity:     3,
+		SalePrice:         1200.00,
+		CategoryID:        &category.ID,
+		ShelfID:           &shelf2.ID,
+		SupplyID:          supply.ID,
+	}
+	db.FirstOrCreate(&product3, entity.Product{SupplyProductCode: "SUP-A003"})
+
+	product4 := entity.Product{
+		SupplyProductCode: "SUP-A004",
+		ProductName:       "ล้อแม็กขอบ 18",
+		Description:       "ล้อแม็กคุณภาพสูงจากญี่ปุ่น",
+		Picture:           "https://example.com/wheel.jpg",
+		Quantity:          4,
+		UnitPerQuantityID: &unit2.ID, // อัน
+		LimitQuantity:     2,
+		SalePrice:         7500.00,
+		CategoryID:        &category2.ID,
+		ShelfID:           &shelf4.ID,
+		SupplyID:          supply2.ID,
+	}
+	db.FirstOrCreate(&product4, entity.Product{SupplyProductCode: "SUP-A004"})
+	// ===== Bill เพิ่มอีก 2 ใบ =====
+	bill3 := entity.Bill{
+		Title:        "Test Bill 3 (เดือนก่อน)",
+		SupplyID:     supply.ID,
+		DateImport:   time.Now().AddDate(0, -1, 0), // เดือนก่อน
+		SummaryPrice: 25000,
+		EmployeeID:   1,
+	}
+	db.FirstOrCreate(&bill3, entity.Bill{Title: "Test Bill 3 (เดือนก่อน)"})
+
+	bill4 := entity.Bill{
+		Title:        "Test Bill 4 (2 เดือนก่อน)",
+		SupplyID:     supply2.ID,
+		DateImport:   time.Now().AddDate(0, -2, 0), // 2 เดือนก่อน
+		SummaryPrice: 30000,
+		EmployeeID:   1,
+	}
+	db.FirstOrCreate(&bill4, entity.Bill{Title: "Test Bill 4 (2 เดือนก่อน)"})
+
+	// ===== ProductOfBill สำหรับ Bill 3 =====
+	productOfBill3 := entity.ProductOfBill{
+		ProductID:        product3.ID,
+		BillID:           bill3.ID,
+		ProductCode:      "PRD-003",
+		ManufacturerCode: "MNFC-12347",
+		PricePerPiece:    1150, // กำหนดราคาซื้อต่อชิ้น
+		Quantity:         10,
+		Discount:         0,
+	}
+	db.FirstOrCreate(&productOfBill3, entity.ProductOfBill{ManufacturerCode: "MNFC-12347"})
+
+	// ===== ProductOfBill สำหรับ Bill 4 =====
+	productOfBill4 := entity.ProductOfBill{
+		ProductID:        product4.ID,
+		BillID:           bill4.ID,
+		ProductCode:      "PRD-004",
+		ManufacturerCode: "MNFC-12348",
+		PricePerPiece:    7000, // กำหนดราคาซื้อต่อชิ้น
+		Quantity:         4,
+		Discount:         0,
+	}
+	db.FirstOrCreate(&productOfBill4, entity.ProductOfBill{ManufacturerCode: "MNFC-12348"})
+
 }
