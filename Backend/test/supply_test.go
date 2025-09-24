@@ -70,7 +70,7 @@ func TestSupply(t *testing.T){
 		g.Expect(err.Error()).To(Equal("SupplyAbbrev is required"))
 	})
 
-	t.Run(`supply_abbrev must be 2-3 character`, func(t *testing.T){
+	t.Run(`supply_abbrev must be 3 character`, func(t *testing.T){
 		e := entity.Supply{
 			SupplyName: "ABC",
 			SupplyAbbrev: "a", //ผิดตรงนี้
@@ -86,7 +86,7 @@ func TestSupply(t *testing.T){
 
 		g.Expect(ok).NotTo(BeTrue())
 		g.Expect(err).NotTo(BeNil())
-		g.Expect(err.Error()).To(Equal("SupplyAbbrev must be 2-3 characters"))
+		g.Expect(err.Error()).To(Equal("SupplyAbbrev must be 3 characters"))
 	})
 
 	t.Run(`address is required`, func(t *testing.T){

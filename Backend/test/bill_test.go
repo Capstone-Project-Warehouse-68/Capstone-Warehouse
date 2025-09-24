@@ -44,6 +44,7 @@ func TestBill(t *testing.T) {
 		BankType:          b,
 		RoleID:            uint(1),
 		Role:              r,
+		Line:              "ABC",
 	}
 
 	t.Run(`Bill is valid`, func(t *testing.T) {
@@ -52,7 +53,7 @@ func TestBill(t *testing.T) {
 			SupplyID:     uint(1),
 			Supply:       s,
 			DateImport:   time.Now(),
-			SummaryPrice: 123,
+			SummaryPrice: 123.21,
 			EmployeeID:   uint(1),
 			Employee:     u,
 		}
