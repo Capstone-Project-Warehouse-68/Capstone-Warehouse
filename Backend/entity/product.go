@@ -11,15 +11,15 @@ type Product struct {
 	Description       string `valid:"required~Description is required"`
 	Picture           string
 	Quantity          int             `valid:"required~Quantity is required"` // Quantity รวมที่มีอยู่
-	UnitPerQuantityID *uint            `valid:"required~UnitPerQuantityID is required"`
+	UnitPerQuantityID *uint           `valid:"required~UnitPerQuantityID is required"`
 	UnitPerQuantity   UnitPerQuantity `gorm:"foreignKey:UnitPerQuantityID"`
 	LimitQuantity     int             `valid:"required~LimitQuantity is required"`
 	SalePrice         float32         `valid:"required~SalePrice is required"`
-	CategoryID        *uint            `valid:"required~CategoryID is required"`
+	CategoryID        *uint           `valid:"required~CategoryID is required"`
 	Category          Category        `gorm:"foreignKey:CategoryID"`
-	ShelfID           *uint            `valid:"required~ShelfID is required"`
+	ShelfID           *uint           `valid:"required~ShelfID is required"`
 	Shelf             Shelf           `gorm:"foreignKey:ShelfID"`
-	SupplyID          uint
+	SupplyID          uint            `valid:"required~SupplyID is required"`
 	Supply            Supply          `gorm:"foreignKey:SupplyID"`
 
 	OrderProduct      []OrderProduct  `gorm:"foreignKey:ProductID"`
