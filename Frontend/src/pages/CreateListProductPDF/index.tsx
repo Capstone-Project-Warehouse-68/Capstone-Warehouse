@@ -7,7 +7,7 @@ import {
   Select,
   message,
   Pagination,
-  Form,
+  Form,Tag
 } from "antd";
 import dayjs from "dayjs";
 import "dayjs/locale/th";
@@ -16,7 +16,7 @@ dayjs.locale("th");
 import { GetCategory } from "../../services/https/NotificaltionProduct/index";
 import { GetSupplySelect } from "../../services/https/ShowProduct/index";
 import { GetProductPDF } from "../../services/https/CreatePDF";
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
 import {
   FilterOutlined,
@@ -174,7 +174,6 @@ const OrderTable = () => {
   const grouped = Object.entries(groupOrdersBySupplier(selectedOrders));
   const [supplier, orders]: any = grouped[modalPage - 1] || [];
 
-
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
@@ -217,7 +216,7 @@ const OrderTable = () => {
         console.error("fetch UnitPerQuantity failed:", error);
         message.error("โหลดหน่วยสินค้าไม่สำเร็จ");
       }
-    setLoading(false);
+      setLoading(false);
     };
 
     fetchAll();
@@ -270,6 +269,24 @@ const OrderTable = () => {
         dataIndex: "quantity",
         key: "quantity",
         width: 130,
+        render: (val: number, record: ProductPDF) => (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100%", // ให้กลาง cell
+            }}
+          >
+            {val < (record.limit_quantity ?? 0) ? (
+              <Tag color="red" style={{ margin: 0 }}>
+                {val}
+              </Tag>
+            ) : (
+              <span style={{ lineHeight: "22px" }}>{val}</span>
+            )}
+          </div>
+        ),
       },
       {
         title: "หน่วย",
@@ -318,7 +335,7 @@ const OrderTable = () => {
               }}
             >
               <Input
-                id={`input-quantity-order-${record.number}`} 
+                id={`input-quantity-order-${record.number}`}
                 type="number"
                 placeholder="จำนวน"
                 style={{ width: 80 }}
@@ -559,9 +576,8 @@ const OrderTable = () => {
               fontSize: "30px", // ขนาดตัวอักษร
             }}
           >
-            <AddCircleOutlineIcon/>
-              สร้างใบสั่งซื้อสินค้า
-           
+            <AddCircleOutlineIcon />
+            สร้างใบสั่งซื้อสินค้า
           </div>
         </div>
 
@@ -766,7 +782,7 @@ const OrderTable = () => {
             name="productDraftName"
             rules={[{ required: true, message: "กรุณากรอกชื่อสินค้า" }]}
           >
-            <Input placeholder="ชื่อสินค้า" id="input-product-draft-name"/>
+            <Input placeholder="ชื่อสินค้า" id="input-product-draft-name" />
           </Form.Item>
 
           <Form.Item
@@ -819,7 +835,7 @@ const OrderTable = () => {
 
           <div style={{ textAlign: "right" }}>
             <Button
-             id="cancel-add-product-button"
+              id="cancel-add-product-button"
               onClick={() => {
                 setIsAddProductModalOpen(false);
                 form.resetFields();
@@ -828,10 +844,10 @@ const OrderTable = () => {
             >
               ยกเลิก
             </Button>
-            <Button 
-            id="save-add-product-button"
-            type="primary" 
-            htmlType="submit"
+            <Button
+              id="save-add-product-button"
+              type="primary"
+              htmlType="submit"
             >
               บันทึก
             </Button>
@@ -842,14 +858,14 @@ const OrderTable = () => {
       {/* ปุ่ม */}
       <div style={{ textAlign: "right", marginTop: 20 }}>
         <Button
-        id="clear-button-clear-orders"
+          id="clear-button-clear-orders"
           style={{ marginRight: 8, borderRadius: 50, color: "red", height: 40 }}
           onClick={() => setSelectedOrders([])}
         >
           ล้างข้อมูล
         </Button>
         <Button
-        id="create-order-button"
+          id="create-order-button"
           type="primary"
           style={{ borderRadius: 50, height: 40 }}
           onClick={() => setIsModalOpen(true)}

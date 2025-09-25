@@ -19,6 +19,7 @@ export interface ProductPDF {
   supply_product_code: string;
   product_name: string;
   quantity: number;
+  limit_quantity?: number;
   name_of_unit: string;
   supply_name: string;
   date_import: string; 

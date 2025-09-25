@@ -382,6 +382,7 @@ func GetProductPDF(c *gin.Context) {
 		SupplyProductCode string    `json:"supply_product_code"`
 		ProductName       string    `json:"product_name"`
 		Quantity          int       `json:"quantity"`
+		LimitQuantity    int       `json:"limit_quantity"`
 		NameOfUnit        string    `json:"name_of_unit"`
 		SupplyName        string    `json:"supply_name"`
 		DateImport        time.Time `json:"date_import"`
@@ -399,6 +400,7 @@ func GetProductPDF(c *gin.Context) {
 			p.supply_product_code,
 			p.product_name,
 			p.quantity,
+			p.limit_quantity,
 			u.name_of_unit,
 			s.supply_name,
 			b.date_import,
