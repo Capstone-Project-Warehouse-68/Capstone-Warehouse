@@ -149,12 +149,14 @@ const HistoryPdf = () => {
       title: "คำอธิบาย",
       dataIndex: "description",
       key: "description",
+      render: (text: string | null | undefined) => text || "-",
     },
     {
       title: "ดูรายละเอียด",
       key: "actionView",
       render: (_: any, record: OrderBill) => (
         <Button
+          id={`view-details-button-${record.order_bill_id}`} // 🔹 ใช้ id unique
           icon={<EyeOutlined />}
           onClick={() => {
             Modal.info({
@@ -227,7 +229,8 @@ const HistoryPdf = () => {
       title: "พิมพ์ใบสั่งซื้อ",
       key: "actionPrint",
       render: (_: any, record: OrderBill) => (
-        <Button icon={<FilePdfOutlined />} onClick={() => CreatePdf(record)}>
+        <Button id={`print-order-button-${record.order_bill_id}`} // 🔹 ใช้ id unique
+        icon={<FilePdfOutlined />} onClick={() => CreatePdf(record)}>
           PDF
         </Button>
       ),
@@ -237,6 +240,7 @@ const HistoryPdf = () => {
       key: "actionDelete",
       render: (_: any, record: OrderBill) => (
         <Button
+          id={`delete-order-button-${record.order_bill_id}`} // 🔹 ใช้ id unique
           danger
           icon={<DeleteOutlined />}
           onClick={() => {
@@ -329,6 +333,7 @@ const HistoryPdf = () => {
         >
           <ConfigProvider locale={thTH}>
             <DatePicker
+              id="date-picker-day"
               style={{ height: 50, width: 150, borderRadius: 50 }}
               value={selectedDay}
               onChange={handleDayChange}
@@ -336,6 +341,7 @@ const HistoryPdf = () => {
               placeholder="เลือกวันที่"
             />
             <DatePicker
+              id="date-picker-month"
               style={{ height: 50, width: 150, borderRadius: 50 }}
               value={selectedMonth}
               onChange={handleMonthChange}

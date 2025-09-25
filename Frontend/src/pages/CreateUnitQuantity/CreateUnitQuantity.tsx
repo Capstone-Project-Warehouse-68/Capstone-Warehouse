@@ -243,16 +243,21 @@ function CreateUnitQuantity() {
                   ]}
                   style={{ flex: 1 , marginBottom:16}}
                 >
-                  <Input placeholder="กรอกหน่วยสินค้า" />
+                  <Input 
+                  id="input-create-unit"
+                   placeholder="กรอกหน่วยสินค้า"
+                   />
                 </Form.Item>
                 <Form.Item>
-                  <Button type="primary" htmlType="submit">
+                  <Button id="button-create-unit"
+                  type="primary" htmlType="submit">
                     สร้างหน่วย
                   </Button>
                 </Form.Item>
               </Form>
 
               <Input
+              id="input-search-unit"
                 placeholder="ค้นหาหน่วยสินค้า"
                 value={unitSearch}
                 onChange={(e) => setUnitSearch(e.target.value)}
@@ -304,6 +309,7 @@ function CreateUnitQuantity() {
                       style={{ flex: 1 }}
                     >
                       <Input
+                        id="input-create-category"
                         placeholder="กรอกประเภทสินค้า"
                         style={{ width: "320px", marginRight: "16px" }}
                       />
@@ -312,7 +318,8 @@ function CreateUnitQuantity() {
 
                   <Col>
                     <Form.Item>
-                      <Button type="primary" htmlType="submit" block>
+                      <Button id="button-create-category"
+                      type="primary" htmlType="submit" block>
                         สร้างประเภทสินค้า
                       </Button>
                     </Form.Item>
@@ -320,6 +327,7 @@ function CreateUnitQuantity() {
 
                   <Col>
                     <Input
+                    id="input-search-category"
                       placeholder="ค้นหาประเภทสินค้า"
                       value={categorySearch}
                       onChange={(e) => setCategorySearch(e.target.value)}
@@ -351,7 +359,7 @@ function CreateUnitQuantity() {
                     <TableCell>จัดการ</TableCell>
                   </TableRow>
                 </TableHead>
-                <TableBody>
+                <TableBody >
                   {Units.filter((u) =>
                     u.NameOfUnit.toLowerCase().includes(
                       unitSearch.toLowerCase()
@@ -361,6 +369,7 @@ function CreateUnitQuantity() {
                       <TableCell>{unit.NameOfUnit}</TableCell>
                       <TableCell>
                         <IconButton
+                          id={`edit-unit-button-${unit.ID}`}
                           size="small"
                           onClick={() => {
                             setCurrentUnit(unit);
@@ -398,6 +407,7 @@ function CreateUnitQuantity() {
                       <TableCell>{cate.CategoryName}</TableCell>
                       <TableCell>
                         <IconButton
+                          id={`edit-category-button-${cate.ID}`}
                           size="small"
                           onClick={() => {
                             setCurrentCategory(cate);
@@ -442,10 +452,14 @@ function CreateUnitQuantity() {
               },
             ]}
           >
-            <Input placeholder="แก้ไขหน่วยสินค้า" />
+            <Input 
+            id="input-edit-unit"
+            placeholder="แก้ไขหน่วยสินค้า" />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit">
+            <Button 
+            id="button-edit-unit"
+            type="primary" htmlType="submit">
               บันทึก
             </Button>
           </Form.Item>
@@ -481,10 +495,14 @@ function CreateUnitQuantity() {
               },
             ]}
           >
-            <Input placeholder="แก้ไขประเภทสินค้า" />
+            <Input 
+            id="input-edit-category"
+            placeholder="แก้ไขประเภทสินค้า" />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit">
+            <Button 
+            id="button-edit-category"
+            type="primary" htmlType="submit">
               บันทึก
             </Button>
           </Form.Item>

@@ -122,7 +122,6 @@ const StockAlertSetting: React.FC = () => {
     fetchData();
   }, []);
 
-
   // ใช้ useCallback สำหรับ handler
   const handleCategoryChange = useCallback((value?: string) => {
     setSelectedCategory(value);
@@ -217,6 +216,7 @@ const StockAlertSetting: React.FC = () => {
         title: "โค้ดสินค้า",
         dataIndex: "product_code",
         key: "product_code",
+        render: (text: string | null | undefined) => text || "-",
       },
       {
         title: "บริษัทขายส่ง",
@@ -237,6 +237,7 @@ const StockAlertSetting: React.FC = () => {
         title: "ประเภทสินค้า",
         dataIndex: "category_name",
         key: "category_name",
+        render: (text: string | null | undefined) => text || "-",
       },
       {
         title: "จำนวนคงเหลือ",
@@ -278,6 +279,7 @@ const StockAlertSetting: React.FC = () => {
         key: "edit",
         render: (_: any, record: NotificationProduct) => (
           <Button
+            id={`edit-btn-${record.product_id}`}
             icon={<EditOutlined />}
             type="text"
             onClick={() => handleEditClick(record)}
@@ -349,6 +351,7 @@ const StockAlertSetting: React.FC = () => {
               }
             />
             <Select
+              id="category-select"
               placeholder={
                 <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <FilterOutlined style={{ color: "#1890ff" }} />
@@ -374,7 +377,11 @@ const StockAlertSetting: React.FC = () => {
           columns={columns}
           dataSource={filteredData}
           bordered={false} // ไม่ต้องใช้ bordered ของ antd
-          pagination={{ pageSize: 7, showSizeChanger: true, pageSizeOptions: ["7", "14", "21", "50"] }}
+          pagination={{
+            pageSize: 7,
+            showSizeChanger: true,
+            pageSizeOptions: ["7", "14", "21", "50"],
+          }}
           className="custom-table"
         />
       </div>
@@ -404,9 +411,19 @@ const StockAlertSetting: React.FC = () => {
             label="แจ้งเตือนเมื่อต่ำกว่า"
             name="limit_quantity"
             extra="ระบบจะแจ้งเตือนเมื่อจำนวนคงเหลือน้อยกว่าค่านี้"
-            rules={[{ required: true, message: "กรุณาระบุจำนวน" }]}
+            rules={[
+              { required: true, message: "กรุณาระบุจำนวน" },
+              {
+                type: "number",
+                min: 1,
+                message: "จำนวนต้องมากกว่า 0",
+                transform: (value) => Number(value),
+              },
+            ]}
           >
             <Input
+              id="limit-quantity-input"
+              placeholder="กรุณาระบุจำนวน"
               type="number"
               suffix="ชิ้น"
               min={1}

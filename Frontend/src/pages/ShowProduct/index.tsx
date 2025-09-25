@@ -26,6 +26,7 @@ const allColumns = [
     title: "รหัสสินค้า",
     dataIndex: "ProductCode",
     key: "ProductCode",
+    render: (text: string | null | undefined) => text || "-",
   },
   {
     title: "ชื่อสินค้า",
@@ -46,6 +47,7 @@ const allColumns = [
     title: "รหัสบริษัทขายส่ง",
     dataIndex: "SupplyProductCode",
     key: "SupplyProductCode",
+    render: (text: string | null | undefined) => text || "-",
   },
   {
     title: "บริษัทขายส่ง",
@@ -56,11 +58,13 @@ const allColumns = [
     title: "โซนจัดเก็บสินค้า",
     dataIndex: "Zone",
     key: "Zone",
+    render: (text: string | null | undefined) => text || "-",
   },
   {
     title: "ชั้นจัดเก็บสินค้า",
     dataIndex: "Shelf",
     key: "Shelf",
+    render: (text: string | null | undefined) => text || "-",
   },
   {
     title: "วันที่นำเข้าล่าสุด",
@@ -78,6 +82,7 @@ const allColumns = [
     title: "รายละเอียด",
     dataIndex: "Description",
     key: "Description",
+    render: (text: string | null | undefined) => text || "-",
   },
 ];
 

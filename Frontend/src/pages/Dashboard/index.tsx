@@ -138,6 +138,7 @@ export default function Dashboard() {
         }
 
         setSupplierData(Array.isArray(SupRes) ? SupRes : []);
+        setMonthlyTrend(Array.isArray(TreRes) ? TreRes : []);
         if (TreRes) setMonthlyTrend(Array.isArray(TreRes) ? TreRes : []);
       } catch (error) {
         message.error("เกิดข้อผิดพลาดในการโหลดข้อมูล");
