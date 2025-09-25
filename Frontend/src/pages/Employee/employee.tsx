@@ -480,10 +480,13 @@ function Employee() {
                 width: "100%",             // กว้างเต็มจอ
                 border: "none"             // เอาเส้นขอบการ์ดออกถ้าไม่อยากได้
             }}>
-                < Card style={{
-                    margin: "-1%" ,
-                    minHeight: "96vh",        // สูงเต็มหน้าจอ     
-                 }}>
+                < Card 
+                    className="emp-card"
+                    style={{
+                        margin: "-1%" ,
+                        minHeight: "96vh",        // สูงเต็มหน้าจอ     
+                    }}
+                >
                     <Row gutter={[8,8]}>
                         <Col xl={24}>
                                 <Row justify="space-between" align="middle" style={{ marginBottom: 12 }}>
@@ -503,7 +506,7 @@ function Employee() {
                                 </Row>
                         </Col>
                         <Col xl={14}>
-                            <Card>
+                            <Card className="emp-card">
                                 <Row gutter={[0,8]}>
                                     <Col xl={2}>
                                     </Col>
@@ -604,7 +607,7 @@ function Employee() {
                         </Col>
                         <Col xl={10}>
                             {selectedEmpData && (
-                            <Card title={<span style={{ fontSize: 20, fontWeight: 'bold' }}>ข้อมูลพนักงานที่เลือก</span>} style={{ minHeight: "81vh"}}>
+                            <Card className="emp-card" title={<span style={{ fontSize: 20, fontWeight: 'bold' }}>ข้อมูลพนักงานที่เลือก</span>} style={{ minHeight: "81vh"}}>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                     <img src={selectedEmpData.Profile} className="profile" />
                                     <Text strong style={{ fontSize: 20 }}>
