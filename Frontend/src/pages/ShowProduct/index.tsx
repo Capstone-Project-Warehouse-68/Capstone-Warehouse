@@ -394,7 +394,7 @@ const ProductList = () => {
           rowKey="ID"
           columns={enhancedColumns}
           dataSource={filteredData}
-          pagination={{ pageSize: 7 }}
+          pagination={{ pageSize: 5 }}
           bordered={false}
           // rowClassName={() => "custom-row"}
           className="custom-table"

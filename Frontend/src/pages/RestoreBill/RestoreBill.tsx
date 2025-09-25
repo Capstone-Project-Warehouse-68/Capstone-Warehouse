@@ -1,4 +1,4 @@
-import { message, Button, Modal, Spin, Checkbox, Row, Col } from "antd";
+import { message, Button, Modal, Spin, Checkbox, Row, Col, Pagination, Card, Typography } from "antd";
 import { useEffect, useState } from "react";
 import AddBusinessIcon from '@mui/icons-material/AddBusiness';
 import { GetBillAllDataById, GetBillDeleted, RestoreBills } from "../../services/https"; // เพิ่ม API restore
@@ -12,22 +12,22 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import TablePagination from '@mui/material/TablePagination';
 import { IconButton, Menu, MenuItem } from "@mui/material";
 import { Info, MoreVert } from "@mui/icons-material";
+import './RestoreBill.css';
+const { Title } = Typography;
 
 function RestoreBill() {
     const [messageApi, contextHolder] = message.useMessage();
     const [Bills, setBillData] = useState<BillInterface[]>([]);
     const [selectedBill, setSelectedBill] = useState<BillInterface | null>(null);
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [page, setPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedRow, setSelectedRow] = useState<BillInterface | null>(null);
     const [isModalDataOpen, setIsModalDataOpen] = useState(false);
 
-    // เพิ่ม state สำหรับเลือกบิลกู้คืน
     const [selectedBillIds, setSelectedBillIds] = useState<number[]>([]);
 
     const fetchBillData = async (id: number) => {
@@ -106,68 +106,100 @@ function RestoreBill() {
         }
     };
 
+    const handlePageChange = (newPage: number, newPageSize?: number) => {
+        setPage(newPage);
+        if (newPageSize) setRowsPerPage(newPageSize);
+    };
+
+    console.log(Bills);
+
     return (
         <>
             {contextHolder}
-            <div className="Card-Header" style={{ marginTop: "5vh", height: "10%", width: "20%", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                <span style={{ fontSize: 20, color: "white" }}>
-                    <AddBusinessIcon style={{ marginRight: 8, color: "white" }} />
+            <div
+                className="Card-Header" style={{
+                    marginTop: "5vh",
+                    height: "10%",
+                    width: "20%",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    borderRadius: "50px",
+                }}>
+                <span style={{ fontSize: 28, color: "white" }}>
+                    <AddBusinessIcon style={{ marginRight: 8, color: "white", fontSize: 28 }} />
                     กู้คืนข้อมูลบิล
                 </span>
             </div>
 
-            <TableContainer component={Paper} style={{ maxHeight: 500 }}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>เลือก</TableCell>
-                            <TableCell>ลำดับ</TableCell>
-                            <TableCell>ชื่อรายการ</TableCell>
-                            <TableCell>วันที่นำเข้าสินค้า</TableCell>
-                            <TableCell>บริษัทขายส่ง</TableCell>
-                            <TableCell>พนักงานที่นำเข้า</TableCell>
-                            <TableCell align="center">จัดการ</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {Bills.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
-                            <TableRow key={row.ID}>
-                                <TableCell>
-                                    <Checkbox
-                                        checked={selectedBillIds.includes(row.ID)}
-                                        onChange={(e) => handleCheckboxChange(row.ID, e.target.checked)}
-                                    />
-                                </TableCell>
-                                <TableCell>{row.ID}</TableCell>
-                                <TableCell>{row.Title}</TableCell>
-                                <TableCell>{row.DateImport ? dayjs(row.DateImport).format("YYYY-MM-DD") : "-"}</TableCell>
-                                <TableCell>{row.SupplyName}</TableCell>
-                                <TableCell>
-                                    {row.Employee
-                                        ? `${row.Employee.FirstName || ""} ${row.Employee.LastName || ""}`.trim()
-                                        : row.EmployeeID ?? "-"}
-                                </TableCell>
+            <div style={{ marginTop: 20, marginBottom: 20, display: "flex", justifyContent: "center" }}>
+                <Card style={{ width: "95%" }}>
+                    <Title level={3} style={{ marginTop: "0", marginBottom: "2%" }}>ประวัติการลบใบสั่งซื้อ</Title>
+                    <TableContainer component={Paper} style={{ maxHeight: 500, boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.15)" }}>
+                        <Table stickyHeader>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>เลือก</TableCell>
+                                    <TableCell>ลำดับ</TableCell>
+                                    <TableCell>ชื่อรายการ</TableCell>
+                                    <TableCell>วันที่นำเข้าสินค้า</TableCell>
+                                    <TableCell>บริษัทขายส่ง</TableCell>
+                                    <TableCell>พนักงานที่นำเข้า</TableCell>
+                                    <TableCell align="center">จัดการ</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {Bills.slice((page - 1) * rowsPerPage, page * rowsPerPage).map((row) => (
+                                    <TableRow key={row.ID}>
+                                        <TableCell>
+                                            <Checkbox
+                                                checked={selectedBillIds.includes(row.ID)}
+                                                onChange={(e) => handleCheckboxChange(row.ID, e.target.checked)}
+                                            />
+                                        </TableCell>
+                                        <TableCell>{row.ID}</TableCell>
+                                        <TableCell>{row.Title}</TableCell>
+                                        <TableCell>{row.DateImport ? dayjs(row.DateImport).format("YYYY-MM-DD") : "-"}</TableCell>
+                                        <TableCell>{row.SupplyName}</TableCell>
+                                        <TableCell>
+                                            {row.Employee
+                                                ? `${row.Employee}`
+                                                : row.EmployeeID ?? "-"}
+                                        </TableCell>
 
-                                <TableCell align="center">
-                                    <IconButton onClick={(e) => handleMenuClick(e, row)}>
-                                        <MoreVert />
-                                    </IconButton>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                                        <TableCell align="center">
+                                            <IconButton onClick={(e) => handleMenuClick(e, row)}>
+                                                <MoreVert />
+                                            </IconButton>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                                {Array.from({ length: rowsPerPage - Math.min(rowsPerPage, Bills.slice((page - 1) * rowsPerPage, page * rowsPerPage).length) }).map((_, index) => (
+                                    <TableRow key={`empty-${index}`} style={{ height: 72.92, visibility: "hidden" }}>
+                                        <TableCell colSpan={7}></TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
 
-            </TableContainer>
 
-            <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
-                <Button
-                    type="primary"
-                    onClick={handleRestore}
-                    disabled={selectedBillIds.length === 0} // disable ถ้าไม่เลือกบิล
-                >
-                    กู้คืนบิลที่เลือก
-                </Button>
+                    <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
+                        <Button className="restore_button" type="primary" onClick={handleRestore} disabled={selectedBillIds.length === 0}>
+                            กู้คืนบิลที่เลือก
+                        </Button>
+                    </div>
+
+                    <div style={{ display: "flex", justifyContent: "center" }}>
+                        <Pagination
+                            current={page}
+                            pageSize={rowsPerPage}
+                            total={Bills.length}
+                            onChange={handlePageChange}
+                            showSizeChanger={false} // ถ้าไม่อยากให้ user เปลี่ยน pageSize
+                        />
+                    </div>
+                </Card>
             </div>
 
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>

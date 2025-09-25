@@ -32,8 +32,9 @@ export interface BillInterface {
     SummaryPrice?: Float32Array,
     EmployeeID?: number,
     Employee?: {
-        FirstName?: string;
-        LastName?: string;
+        Employee: string;
+        FirstName: string;
+        LastName: string;
     }
     products: ProductInterface[];
 

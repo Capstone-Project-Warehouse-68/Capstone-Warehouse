@@ -363,6 +363,7 @@ func GetProductsforShowlist(c *gin.Context) {
 		Joins("LEFT JOIN zones z ON z.id = s.zone_id").
 		Joins("LEFT JOIN categories c ON c.id = p.category_id").
 		Joins("LEFT JOIN (?) AS ls ON ls.product_id = p.id", latestSupplySubquery).
+		Where("p.deleted_at IS NULL").
 		Scan(&result).Error
 
 	if err != nil {

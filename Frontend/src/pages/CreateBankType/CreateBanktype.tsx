@@ -233,6 +233,7 @@ function CreateBankType() {
         background: "#d3d3d3",
         height: "100vh",
         minWidth: "1200px",
+        overflowY: 'auto'
       }}
     >
       {contextHolder}

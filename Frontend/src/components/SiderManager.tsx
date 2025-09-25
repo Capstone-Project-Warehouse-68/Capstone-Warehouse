@@ -161,7 +161,7 @@ function SiderManager() {
                                         <CreateNewFolderIcon style={{ fontSize: 26 }} />
                                     </div>
                                 }
-                                title="สร้างข้อมูลสินค้า"
+                                title={<span style={{ fontSize: 16 }}>สร้างข้อมูลสินค้า</span>}
                             >
                                 <Menu.Item key="s1" icon={<AccountBalanceIcon />}>
                                     <Link to="/createbanktype " style={{ fontSize: 14 }}>สร้างข้อมูลธนาคาร</Link>
