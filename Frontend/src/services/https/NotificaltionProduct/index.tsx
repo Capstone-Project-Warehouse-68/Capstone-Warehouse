@@ -1,4 +1,3 @@
-import axios from "axios";
 // import type { NotificationProduct } from "../../../interfaces/NotificationProduct";
 import type {UpdateNotificationProduct } from "../../../interfaces/NotificationProduct";
 

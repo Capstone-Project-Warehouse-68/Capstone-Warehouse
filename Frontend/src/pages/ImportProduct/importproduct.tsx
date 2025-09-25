@@ -369,7 +369,7 @@ function ImportProduct() {
                     SupplyID: values.SupplyID,
                     DateImport: values.DateImport ? values.DateImport.toDate() : null,
                     SummaryPrice: values.SummaryPrice,
-                    EmployeeID: Number(localStorage.getItem("id")),
+                    EmployeeID: Number(localStorage.getItem("employeeID")),
                 },
                 Products: formProducts,
                 ProductsOfBill: formProducts.map(p => ({
@@ -1392,7 +1392,7 @@ function ImportProduct() {
                                                             name={[field.name, 'ProductName']}
                                                             rules={[{ required: true, message: 'กรุณากรอกชื่อสินค้า' }]}
                                                         >
-                                                            <TextField label="ชื่อสินค้า" variant="standard" fullWidth />
+                                                            <TextField label="ชื่อสินค้า" variant="standard" fullWidth disabled />
                                                         </Form.Item>
                                                     </TableCell>
 

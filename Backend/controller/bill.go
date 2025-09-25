@@ -94,7 +94,7 @@ func GetAllBill(c *gin.Context) {
 	var bills []entity.Bill
 
 	db := config.DB()
-	results := db.Preload("Supply").Preload("Employee").Find(&bills)
+	results := db.Preload("Supply").Preload("Employee").Order("id asc").Find(&bills)
 	if results.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
 		return
