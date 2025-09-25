@@ -549,7 +549,7 @@ const OrderTable = () => {
       style={{
         padding: 24,
         background: "#d3d3d3",
-        minHeight: "100vh",
+        height: "100vh",
         minWidth: "1200px",
       }}
     >
@@ -649,7 +649,7 @@ const OrderTable = () => {
           dataSource={[...filteredData, ...draftProducts]}
           rowKey="number"
           columns={columns}
-          pagination={{ pageSize: 7 }}
+          pagination={{ pageSize: 5 }}
           // scroll={{ y: window.innerHeight * 0.5 }} // 60% ของความสูงหน้าจอ
           bordered={false}
           className="custom-table"

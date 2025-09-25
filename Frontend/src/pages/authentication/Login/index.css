@@ -68,7 +68,13 @@
 }
 
 .button-login:hover {
-  background: linear-gradient(90deg, #0056d6, #003c99);
+  background: linear-gradient(90deg, #0056d6, #003c99) !important;
   transform: translateY(-2px);
   box-shadow: 0 6px 15px rgba(0, 87, 255, 0.35);
+}
+
+.button-login:focus,
+.button-login:active {
+  outline: none; /* เอาเส้นขอบเวลากด/โฟกัสออก */
+  box-shadow: none; /* เอาเงาเดิมออกถ้าไม่อยากให้เงาตอน active */
 }
