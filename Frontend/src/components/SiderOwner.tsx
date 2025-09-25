@@ -186,7 +186,7 @@ function SiderOwner() {
                     <AddShoppingCartIcon style={{ fontSize: 26 }} />
                   </div>
                 }
-                title="สร้างรายการสั่งซื้อสินค้า"
+                title={<span style={{ fontSize: 16 }}>สร้างรายการสั่งซื้อสินค้า</span>}
               >
                 <Menu.Item key="1" icon={<NoteAddIcon />}>
                   <Link to="/createlistproduct" style={{ fontSize: 14 }}>สร้างรายการสั่งซื้อสินค้า</Link>
@@ -210,7 +210,7 @@ function SiderOwner() {
                     <CreateNewFolderIcon style={{ fontSize: 26 }} />
                   </div>
                 }
-                title="สร้างข้อมูลสินค้า"
+                title={<span style={{ fontSize: 16 }}>สร้างข้อมูลสินค้า</span>}
               >
                 <Menu.Item key="s1" icon={<AccountBalanceIcon />}>
                   <Link to="/createbanktype " style={{ fontSize: 14 }}>สร้างข้อมูลธนาคาร</Link>

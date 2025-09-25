@@ -75,7 +75,7 @@ func main() {
 
 		r.PATCH("/restoreBill", controller.RestoreBills)
 
-		controller.StartHardDeleteScheduler()
+		// controller.StartHardDeleteScheduler()
 
 		r.POST("/signin", controller.SignIn)
 		r.GET("/GetLimitQuantity",controller.GetLimitQuantity)

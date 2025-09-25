@@ -25,13 +25,29 @@
 }
 
 .button-import {
-  background-color: #D35400;
-  border: 1px solid #D35400;          /* Edge */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);  /* Shadow */
-  border-radius: 20px;              /* Optional: rounded corners */
+  background-color: #11288F;
+  border: 1px solid #11288F;          
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
   padding: 16px;
   max-width: 400px;
-  transition: box-shadow 0.3s ease;
+  color: #fff;          /* ตัวหนังสือสีขาวปกติ */
+  font-size: 18px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.button-import:hover,
+.button-import:focus,
+.button-import:active {
+  background-color: #3b51b5 !important;
+  border-color: #3b51b5 !important;
+  color: #fff !important;        /* ตัวหนังสือและ icon */
+}
+
+/* ถ้ามี icon ข้างใน */
+.button-import .anticon {
+  color: #fff;  /* icon ขาวเหมือนเดิม */
 }
 
 .profile-image {
@@ -105,8 +121,5 @@ button:focus-visible {
   }
   a:hover {
     color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
   }
 }

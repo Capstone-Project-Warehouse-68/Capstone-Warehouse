@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import dayjs from "dayjs";
-import { Upload, Button, Col, Row, message, Form, Input, Modal, Card, InputNumber, DatePicker, Spin, Select as AntdSelect, FloatButton } from "antd";
+import { Upload, Button, Col, Row, message, Form, Input, Modal, Card, InputNumber, Typography, DatePicker, Spin, Select as AntdSelect, FloatButton, Pagination } from "antd";
 import {
     FileAddOutlined,
     FilePdfOutlined,
-    HistoryOutlined,
     DeleteOutlined,
     FileExcelOutlined,
     DownloadOutlined
@@ -18,7 +17,7 @@ import type { UnitPerQuantityInterface } from "../../interfaces/UnitPerQuantity"
 import {
     Table, TableHead, TableRow, TableCell, TableBody,
     IconButton, MenuItem, Select,
-    Menu, TablePagination, TableContainer, Paper,
+    Menu, TableContainer, Paper,
     TextField
 } from "@mui/material";
 import { Delete, Add, Info, Edit, MoreVert } from "@mui/icons-material";
@@ -26,6 +25,8 @@ import React from "react";
 import SimpleBar from 'simplebar-react';
 import 'simplebar-react/dist/simplebar.min.css';
 import type { SupplyInterface } from "../../interfaces/Supply";
+
+const { Title } = Typography;
 
 function ImportProduct() {
     const [messageApi, contextHolder] = message.useMessage();
@@ -44,8 +45,8 @@ function ImportProduct() {
     const [products, setProducts] = useState<any[]>([]);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const [selectedRow, setSelectedRow] = React.useState<any>(null);
-    const [page, setPage] = React.useState(0);
-    const [rowsPerPage, setRowsPerPage] = React.useState(4);
+    const [page, setPage] = React.useState(1);
+    const rowsPerPage = 3;
     const [selectedBill, setSelectedBill] = useState<BillInterface | null>(null);
     const [selectedBillId, setSelectedBillId] = useState<number | null>(null);
 
@@ -132,6 +133,9 @@ function ImportProduct() {
         reader.readAsArrayBuffer(file);
     };
 
+    const handlePageChange = (pageNumber: number) => {
+        setPage(pageNumber);
+    };
 
     const clearTempBills = () => {
         localStorage.removeItem("tempBills"); // ลบจาก localStorage
@@ -432,6 +436,7 @@ function ImportProduct() {
                     Employee: item.Employee?.FirstName || "-",
                 }));
                 setBillData(bills);
+                setPage(1);
             } else {
                 messageApi.error(res.data.error || "ไม่สามารถดึงข้อมูลรายการสินค้าได้");
             }
@@ -573,17 +578,19 @@ function ImportProduct() {
                 tooltip={<div>Download Template for Import Data</div>}
                 onClick={DownloadTemplateFile}
                 icon={<DownloadOutlined />}
+                style={{ marginBottom: "-1.5%" }}
             />
             <div
                 className="Card-Header" style={{
                     marginTop: "5vh",
                     height: "10%",
-                    width: "17%",
+                    width: "20%",
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
+                    borderRadius: "50px",
                 }}>
-                <span style={{ fontSize: 20, color: "white" }}>
+                <span style={{ fontSize: 28, color: "white" }}>
                     <FileAddOutlined style={{ marginRight: 8, color: "white" }} />
                     นำเข้าข้อมูลสินค้า
                 </span>
@@ -704,65 +711,76 @@ function ImportProduct() {
                 </Col>
             </Row>
 
-            <div
-                className="Card-Header" style={{
-                    marginTop: "0",
-                    height: "auto",
-                    width: "18vw",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                }}>
-                <span style={{ fontSize: 20, color: "white" }}>
-                    <HistoryOutlined style={{ marginRight: 8, color: "white", fontSize: 24 }} />
-                    ประวัติการนำเข้าสินค้า
-                </span>
+            <div style={{ width: "100%" }}>
+                <Card style={{ width: "95%", margin: "0 auto" }}>
+                    <Title level={3} style={{ marginTop: "0", marginBottom: "2%" }}>ประวัติการนำเข้าใบสั่งซื้อ</Title>
+
+                    <TableContainer
+                        component={Paper}
+                        style={{
+                            width: "100%",
+                            boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.15)",
+                        }}
+                    >
+                        <Table className="Table-historyimport-product">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>ลำดับ</TableCell>
+                                    <TableCell>ชื่อรายการ</TableCell>
+                                    <TableCell>วันที่นำเข้าสินค้า</TableCell>
+                                    <TableCell>บริษัทขายส่ง</TableCell>
+                                    <TableCell>พนักงานที่นำเข้า</TableCell>
+                                    <TableCell align="center">จัดการ</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {Bills.slice((page - 1) * rowsPerPage, page * rowsPerPage).map((row: any) => (
+                                    <TableRow key={row.ID} style={{ height: 53 }}>
+                                        <TableCell>{row.ID}</TableCell>
+                                        <TableCell>{row.Title}</TableCell>
+                                        <TableCell>{row.DateImport}</TableCell>
+                                        <TableCell>{row.Supply}</TableCell>
+                                        <TableCell>{row.Employee}</TableCell>
+                                        <TableCell align="center">
+                                            <IconButton onClick={(e) => handleMenuClick(e, row)}>
+                                                <MoreVert />
+                                            </IconButton>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                                {Bills.slice((page - 1) * rowsPerPage, page * rowsPerPage).length < 3 &&
+                                    Array.from({
+                                        length: 3 - Bills.slice((page - 1) * rowsPerPage, page * rowsPerPage).length,
+                                    }).map((_, idx) => (
+                                        <TableRow
+                                            key={`empty-${idx}`}
+                                            style={{
+                                                height: 72.92,
+                                                border: "none",          // ลบขอบ row
+                                                background: "transparent" // พื้นหลังโปร่งใส
+                                            }}
+                                        >
+                                            <TableCell
+                                                colSpan={7}               // เท่ากับจำนวน column
+                                                style={{ border: "none", padding: 0 }} // ลบขอบ cell
+                                            />
+                                        </TableRow>
+                                    ))}
+
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+
+                    <div style={{ display: "flex", justifyContent: "center", alignItems: 'center', marginTop: 16 }}>
+                        <Pagination
+                            current={page}
+                            pageSize={rowsPerPage}
+                            total={Bills.length}
+                            onChange={handlePageChange}
+                        />
+                    </div>
+                </Card>
             </div>
-
-            <TableContainer component={Paper}>
-                <Table className="Table-historyimport-product">
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>ลำดับ</TableCell>
-                            <TableCell>ชื่อรายการ</TableCell>
-                            <TableCell>วันที่นำเข้าสินค้า</TableCell>
-                            <TableCell>บริษัทขายส่ง</TableCell>
-                            <TableCell>พนักงานที่นำเข้า</TableCell>
-                            <TableCell align="center">จัดการ</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {Bills.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row: any) => (
-                            <TableRow key={row.ID}>
-                                <TableCell>{row.ID}</TableCell>
-                                <TableCell>{row.Title}</TableCell>
-                                <TableCell>{row.DateImport}</TableCell>
-                                <TableCell>{row.Supply}</TableCell>
-                                <TableCell>{row.Employee}</TableCell>
-                                <TableCell align="center">
-                                    <IconButton onClick={(e) => handleMenuClick(e, row)}>
-                                        <MoreVert />
-                                    </IconButton>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-
-                {/* Pagination */}
-                <TablePagination
-                    component="div"
-                    count={Bills.length}
-                    page={page}
-                    onPageChange={(_, newPage) => setPage(newPage)}
-                    rowsPerPage={rowsPerPage}
-                    onRowsPerPageChange={(e) => {
-                        setRowsPerPage(parseInt(e.target.value, 10));
-                        setPage(0);
-                    }}
-                    rowsPerPageOptions={[4, 10, 25]}
-                />
-            </TableContainer>
 
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                 <MenuItem
@@ -1210,7 +1228,6 @@ function ImportProduct() {
                                             <TableCell>{p.ProductCode}</TableCell>
                                             <TableCell>{p.SupplyProductCode}</TableCell>
                                             <TableCell>{p.ManufacturerCode}</TableCell>
-                                            <TableCell>{p.Description}</TableCell>
                                             <TableCell>{p.Quantity}</TableCell>
                                             <TableCell>{p.NameOfUnit}</TableCell>
                                             <TableCell>{p.PricePerPiece}</TableCell>
