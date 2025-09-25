@@ -47,7 +47,7 @@ const FullLayout: React.FC = () => {
             <Layout style={{ minHeight: "100vh", backgroundColor: colorBgContainer, marginTop: 0 }}>
                 {checkLogin &&
                     (Role === "1" ? <SiderOwner /> : Role === "2" ? <SiderManager /> : <Sider />)}
-                <Layout style={{ backgroundColor: "#adadadff", minHeight: "100vh", marginTop: 0 }}>
+                <Layout style={{ backgroundColor: "#d3d3d3", minHeight: "100vh", marginTop: 0 }}>
                     <Content style={{ marginTop: "0px" }}>
                         <Breadcrumb />
                         <div>

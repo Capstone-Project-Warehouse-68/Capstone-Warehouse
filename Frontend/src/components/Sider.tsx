@@ -1,17 +1,12 @@
 import { useState, useEffect } from "react";
-import { Layout, Menu, message, Button } from "antd";
+import { Layout, Menu, message } from "antd";
 import {
     MenuUnfoldOutlined,
     MenuFoldOutlined,
     LoadingOutlined,
 } from "@ant-design/icons";
-const { SubMenu } = Menu;
 import FeaturedPlayListIcon from '@mui/icons-material/FeaturedPlayList';
-import PostAddIcon from '@mui/icons-material/PostAdd';
 import LogoutIcon from '@mui/icons-material/Logout';
-import AddBusinessIcon from '@mui/icons-material/AddBusiness';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import { Link } from "react-router-dom";
 import { GetEmployeeById } from "../services/https";
 import type { EmployeeInterface } from "../interfaces/Employee";
@@ -80,7 +75,11 @@ function Sider() {
     return (
         <>
             {contextHolder}
-            <Sider collapsed={collapsed} className="custom-sider" width={window.innerWidth * 0.17}
+            <Sider 
+                collapsed={collapsed} 
+                className="custom-sider" 
+                width={Math.min(Math.max(window.innerWidth * 0.15, 200), 300)} 
+                collapsedWidth={120}
                 style={{
                     height: "100vh",
                     overflowY: "auto",
@@ -94,9 +93,36 @@ function Sider() {
                     }}
                 >
                     <div style={{ position: "relative" }}>
-                        <Button onClick={toggleCollapsed} className="toggle-button">
-                            {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                        </Button>
+                        <Menu style={{ backgroundColor: "#8c8c8c" }} mode="inline" inlineCollapsed={collapsed}>
+                            <Menu.Item
+                                key="toggleMenuBottom"
+                                icon={
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                            height: "100%",
+                                        }}
+                                    >
+                                        {collapsed ? <MenuUnfoldOutlined style={{ fontSize: 26, color: "black" }} /> : <MenuFoldOutlined style={{ fontSize: 26, color: "black" }} />}
+                                    </div>
+                                }
+                                onClick={toggleCollapsed}
+                                style={{
+                                    color: "black",
+                                    fontWeight: "bold",
+                                    border: "none",
+                                    borderRadius: "4px",
+                                    margin: "4px",
+                                }}
+                                className="custom-toggle-button"
+                            >
+                                <span style={{ fontSize: 16, color: "black", fontWeight: "bold" }}>
+                                    {collapsed ? "ขยายเมนู" : "ย่อเมนู"}
+                                </span>
+                            </Menu.Item>
+                        </Menu>
 
                         <div className="profile-container">
                             <img
@@ -104,8 +130,8 @@ function Sider() {
                                 alt="Profile"
                                 className={`profile-image ${collapsed ? "small" : "large"}`}
                                 style={{
-                                    width: collapsed ? "50px" : "100px",
-                                    height: collapsed ? "50px" : "100px",
+                                    width: collapsed ? "100px" : "100px",
+                                    height: collapsed ? "100px" : "100px",
                                 }}
                             />
                         </div>
@@ -125,7 +151,6 @@ function Sider() {
                             mode="inline"
                             inlineCollapsed={collapsed}
                         >
-
                             <Menu.Item
                                 key="listproduct"
                                 icon={
@@ -144,50 +169,6 @@ function Sider() {
                             >
                                 <Link to="/productList" style={{ fontSize: 16 }}>แสดงรายการสินค้า</Link>
                             </Menu.Item>
-
-                            <SubMenu
-                                key="sub2"
-                                icon={
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            justifyContent: "center",
-                                            alignItems: "center",
-                                            height: "100%",
-                                        }}
-                                    >
-                                        <CreateNewFolderIcon style={{ fontSize: 26 }} />
-                                    </div>
-                                }
-                                title={<span style={{ fontSize: 16 }}>สร้างข้อมูลสินค้า</span>}
-                            >
-                                <Menu.Item key="s2" icon={<AddBusinessIcon />}>
-                                    <Link to="/createsupplyer" style={{ fontSize: 14 }}>สร้างข้อมูลบริษัทสั่งซื้อ</Link>
-                                </Menu.Item>
-                                <Menu.Item key="s3" icon={<InventoryIcon />}>
-                                    <Link to="/createunitquantity" style={{ fontSize: 14 }}>สร้างประเภทและหน่วยสินค้า</Link>
-                                </Menu.Item>
-                            </SubMenu>
-
-                            <Menu.Item
-                                key="importproduct"
-                                icon={
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            justifyContent: "center",
-                                            alignItems: "center",
-                                            height: "100%",
-                                        }}
-                                    >
-                                        <PostAddIcon style={{ fontSize: 26 }} />
-                                    </div>
-                                }
-                                onClick={() => setCurrentPage("importproduct")}
-                            >
-                                <Link to="/importproduct" style={{ fontSize: 16 }}>นำเข้าข้อมูลสินค้า</Link>
-                            </Menu.Item>
-
                         </Menu>
                     </div>
 

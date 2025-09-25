@@ -82,7 +82,11 @@ function SiderManager() {
     return (
         <>
             {contextHolder}
-            <Sider collapsed={collapsed} className="custom-sider" width={window.innerWidth * 0.17}
+            <Sider
+                collapsed={collapsed}
+                className="custom-sider"
+                width={Math.min(Math.max(window.innerWidth * 0.15, 200), 300)}
+                collapsedWidth={120}
                 style={{
                     height: "100vh",
                     overflowY: "auto",
@@ -96,9 +100,36 @@ function SiderManager() {
                     }}
                 >
                     <div style={{ position: "relative" }}>
-                        <Button onClick={toggleCollapsed} className="toggle-button">
-                            {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                        </Button>
+                        <Menu style={{ backgroundColor: "#8c8c8c" }} mode="inline" inlineCollapsed={collapsed}>
+                            <Menu.Item
+                                key="toggleMenuBottom"
+                                icon={
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                            height: "100%",
+                                        }}
+                                    >
+                                        {collapsed ? <MenuUnfoldOutlined style={{ fontSize: 26, color: "black" }} /> : <MenuFoldOutlined style={{ fontSize: 26, color: "black" }} />}
+                                    </div>
+                                }
+                                onClick={toggleCollapsed}
+                                style={{
+                                    color: "black",
+                                    fontWeight: "bold",
+                                    border: "none",
+                                    borderRadius: "4px",
+                                    margin: "4px",
+                                }}
+                                className="custom-toggle-button"
+                            >
+                                <span style={{ fontSize: 16, color: "black", fontWeight: "bold" }}>
+                                    {collapsed ? "ขยายเมนู" : "ย่อเมนู"}
+                                </span>
+                            </Menu.Item>
+                        </Menu>
 
                         <div className="profile-container">
                             <img
@@ -106,8 +137,8 @@ function SiderManager() {
                                 alt="Profile"
                                 className={`profile-image ${collapsed ? "small" : "large"}`}
                                 style={{
-                                    width: collapsed ? "50px" : "100px",
-                                    height: collapsed ? "50px" : "100px",
+                                    width: collapsed ? "100px" : "100px",
+                                    height: collapsed ? "100px" : "100px",
                                 }}
                             />
                         </div>

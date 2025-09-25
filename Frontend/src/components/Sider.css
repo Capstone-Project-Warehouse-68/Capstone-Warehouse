@@ -26,3 +26,51 @@
   background-color: #1890ff; 
   border-radius: 3px;
 } */
+
+/* เพิ่ม CSS นี้ในไฟล์ CSS ของคุณ */
+
+.custom-toggle-button {
+    transition: all 0.3s ease;
+}
+
+.custom-toggle-button:hover {
+    opacity: 0.8 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.custom-toggle-button:active {
+    transform: translateY(0px);
+}
+
+/* Override Ant Design default menu item styles for toggle button */
+.custom-toggle-button.ant-menu-item-selected {
+    background-color: inherit !important;
+}
+
+.custom-toggle-button.ant-menu-item:after {
+    display: none !important; /* ซ่อนเส้นขีดด้านขวาของ Ant Design */
+}
+
+/* เพิ่ม effect เมื่อ collapsed/expanded */
+.custom-toggle-button.collapsed-state {
+    background: linear-gradient(45deg, #1890ff, #40a9ff) !important;
+    animation: pulseBlue 2s infinite;
+}
+
+.custom-toggle-button.expanded-state {
+    background: linear-gradient(45deg, #52c41a, #73d13d) !important;
+    animation: pulseGreen 2s infinite;
+}
+
+@keyframes pulseBlue {
+    0% { box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.4); }
+    70% { box-shadow: 0 0 0 5px rgba(24, 144, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(24, 144, 255, 0); }
+}
+
+@keyframes pulseGreen {
+    0% { box-shadow: 0 0 0 0 rgba(82, 196, 26, 0.4); }
+    70% { box-shadow: 0 0 0 5px rgba(82, 196, 26, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(82, 196, 26, 0); }
+}

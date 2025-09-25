@@ -590,7 +590,7 @@ function ImportProduct() {
                     alignItems: "center",
                     borderRadius: "50px",
                 }}>
-                <span style={{ fontSize: 28, color: "white" }}>
+                <span style={{ fontSize: 26, color: "white" }}>
                     <FileAddOutlined style={{ marginRight: 8, color: "white" }} />
                     นำเข้าข้อมูลสินค้า
                 </span>
@@ -712,7 +712,7 @@ function ImportProduct() {
             </Row>
 
             <div style={{ width: "100%" }}>
-                <Card style={{ width: "95%", margin: "0 auto" }}>
+                <Card className="background-card" style={{ width: "95%", margin: "0 auto" }}>
                     <Title level={3} style={{ marginTop: "0", marginBottom: "2%" }}>ประวัติการนำเข้าใบสั่งซื้อ</Title>
 
                     <TableContainer
