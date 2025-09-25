@@ -22,7 +22,7 @@ import { Link } from "react-router-dom";
 import { GetEmployeeById } from "../services/https";
 import type { EmployeeInterface } from "../interfaces/Employee";
 import './Sider.css'
-
+  
 function SiderOwner() {
   const page = localStorage.getItem("page");
   const { Sider } = Layout;

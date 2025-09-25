@@ -514,7 +514,7 @@ function Employee() {
                                         <Text strong>ตำแหน่งงาน</Text>
                                     </Col>
                                     <Col xl={8}>
-                                        <Text strong>อีเมลล์</Text>
+                                        <Text strong>อีเมล</Text>
                                     </Col>
                                 </Row>
                             </Card>
@@ -944,8 +944,13 @@ function Employee() {
                                 ]}
                             >
                                 <Input
-                                    maxLength={15}
-                                    type="text"
+                                    type="bank" // Tel type, which may help prevent cookie-based autofill
+                                    autoComplete="new-password" // Prevent browser autofill
+                                    onKeyPress={(event) => {
+                                        if (!/[0-9]/.test(event.key)) {
+                                        event.preventDefault();
+                                        }
+                                    }}
                                     onCopy={(e) => e.preventDefault()} // Prevent copy
                                     onCut={(e) => e.preventDefault()} // Prevent cut
                                     onPaste={(e) => e.preventDefault()} // Prevent paste
@@ -1288,9 +1293,14 @@ function Employee() {
                                     },
                                 ]}
                             >
-                                <Input
-                                    maxLength={15}
-                                    type="text"
+                                 <Input
+                                    type="bank" // Tel type, which may help prevent cookie-based autofill
+                                    autoComplete="new-password" // Prevent browser autofill
+                                    onKeyPress={(event) => {
+                                        if (!/[0-9]/.test(event.key)) {
+                                        event.preventDefault();
+                                        }
+                                    }}
                                     onCopy={(e) => e.preventDefault()} // Prevent copy
                                     onCut={(e) => e.preventDefault()} // Prevent cut
                                     onPaste={(e) => e.preventDefault()} // Prevent paste

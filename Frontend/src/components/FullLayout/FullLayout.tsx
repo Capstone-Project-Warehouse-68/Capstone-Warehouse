@@ -31,8 +31,6 @@ const FullLayout: React.FC = () => {
 
     const Role = localStorage.getItem("role") || "";
     const ID = localStorage.getItem("employeeID") || "";
-    console.log(Role);
-    console.log("EMP ID : ",ID);
 
     return (
         <>
