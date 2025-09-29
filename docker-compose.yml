@@ -1,0 +1,50 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: project_capstone
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - network_microservice
+
+  backend:
+    image: jarntae/backend:3.0.0
+    container_name: backend
+    restart: unless-stopped
+    env_file:
+      - ./Backend/.env
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+    networks:
+      - network_microservice
+      - network_webapp
+
+  nginx:
+    image: jarntae/nginx:3.0.0
+    container_name: nginx
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - network_webapp
+      - network_microservice
+
+networks:
+  network_webapp:
+  network_microservice:
+
+volumes:
+  postgres_data:

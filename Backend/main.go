@@ -14,9 +14,10 @@ import (
 const PORT = "8000"
 
 func main() {
-	err := godotenv.Load(".env")
+	// โหลด .env จาก folder ปัจจุบัน (Backend/)
+	err := godotenv.Load()
 	if err != nil {
-		log.Println("No .env file found or failed to load")
+		log.Println("No .env file found (using container environment variables)")
 	}
 
 	// open connection database
@@ -104,7 +105,7 @@ func main() {
 	})
 
 	// Run the server
-	r.Run("localhost:" + PORT)
+	r.Run("0.0.0.0:" + PORT)
 }
 
 func CORSMiddleware() gin.HandlerFunc {
