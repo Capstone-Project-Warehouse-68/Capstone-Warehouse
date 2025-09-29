@@ -22,8 +22,6 @@ import {
 } from "@mui/material";
 import { Delete, Add, Info, Edit, MoreVert } from "@mui/icons-material";
 import React from "react";
-import SimpleBar from 'simplebar-react';
-import 'simplebar-react/dist/simplebar.min.css';
 import type { SupplyInterface } from "../../interfaces/Supply";
 
 const { Title } = Typography;
@@ -34,6 +32,7 @@ function ImportProduct() {
     const [Units, setUnitData] = useState<UnitPerQuantityInterface[]>([]);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isModalDataOpen, setIsModalDataOpen] = useState(false);
+    const [isManualCreate, setIsManualCreate] = useState(false);
     const [Supplyer, setSupplyer] = useState<SupplyInterface[]>([]);
     const [currentStep, setCurrentStep] = useState(0);
     const [form] = Form.useForm();
@@ -56,11 +55,27 @@ function ImportProduct() {
             const data = new Uint8Array(e.target?.result as ArrayBuffer);
             const workbook = XLSX.read(data, { type: "array" });
             const formValues: any = { bills: [] };
+            let hasError = false;
 
             workbook.SheetNames.forEach((sheetName) => {
                 const worksheet = workbook.Sheets[sheetName];
                 let jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                 jsonData = jsonData.filter(row => row && row.length > 0);
+
+                // ตรวจสอบ sheet เปล่า
+                if (jsonData.length === 0) {
+                    messageApi.error("พบ sheet เปล่า กรุณาตรวจสอบไฟล์ Excel");
+                    hasError = true;
+                    return;
+                }
+
+                // ตรวจสอบ bill ซ้ำใน sheet เดียว
+                const billTitleCount = jsonData.filter(row => row[0] === "ชื่อใบสั่งซื้อ").length;
+                if (billTitleCount > 1) {
+                    messageApi.error("1 sheet : 1 ใบสั่งซื้อสินค้า กรุณาตรวจสอบไฟล์ Excel");
+                    hasError = true;
+                    return;
+                }
 
                 const bill: any = {
                     Title: "",
@@ -105,7 +120,6 @@ function ImportProduct() {
                                 PricePerPiece: row[6] ?? 0,
                                 Discount: row[7] ?? 0,
                                 SumPriceProduct: row[8] ?? 0,
-                                Description: row[10] ?? "",
                             };
                         })
                         .filter(p => p !== null);
@@ -115,6 +129,11 @@ function ImportProduct() {
 
                 formValues.bills.push(bill);
             });
+
+            if (hasError) {
+                setIsCreateModalOpen(false);
+                return;
+            }
 
             if (formValues.bills.length === 0) return; // ไม่มีบิลถูกต้อง
 
@@ -433,10 +452,11 @@ function ImportProduct() {
                     Title: item.Title || "-",
                     DateImport: dayjs(item.DateImport).format("DD-MM-YYYY"),
                     Supply: item.Supply?.SupplyName || "-",
-                    Employee: item.Employee?.FirstName || "-",
+                    SummaryPrice: item.SummaryPrice || 0,
+                    Employee: item.Employee ? `${item.Employee.FirstName} ${item.Employee.LastName}` : "-",
                 }));
                 setBillData(bills);
-                setPage(1);
+                // setPage(1);
             } else {
                 messageApi.error(res.data.error || "ไม่สามารถดึงข้อมูลรายการสินค้าได้");
             }
@@ -646,6 +666,7 @@ function ImportProduct() {
                             });
 
                             // เปิด modal
+                            setIsManualCreate(true);
                             setIsCreateModalOpen(true);
                         }}
                         className="button-import" style={{
@@ -729,6 +750,7 @@ function ImportProduct() {
                                     <TableCell>ชื่อรายการ</TableCell>
                                     <TableCell>วันที่นำเข้าสินค้า</TableCell>
                                     <TableCell>บริษัทขายส่ง</TableCell>
+                                    <TableCell>มูลค่ารวม</TableCell>
                                     <TableCell>พนักงานที่นำเข้า</TableCell>
                                     <TableCell align="center">จัดการ</TableCell>
                                 </TableRow>
@@ -738,8 +760,19 @@ function ImportProduct() {
                                     <TableRow key={row.ID} style={{ height: 53 }}>
                                         <TableCell>{row.ID}</TableCell>
                                         <TableCell>{row.Title}</TableCell>
-                                        <TableCell>{row.DateImport}</TableCell>
+                                        <TableCell>
+                                            {(() => {
+                                                const date = dayjs(row.DateImport, "DD-MM-YYYY");
+                                                const currentYear = dayjs().year();
+                                                let displayYear = date.year();
+                                                if (displayYear <= currentYear) {
+                                                    displayYear += 543;
+                                                }
+                                                return `${date.date()} ${date.format("MMMM")} ${displayYear}`;
+                                            })()}
+                                        </TableCell>
                                         <TableCell>{row.Supply}</TableCell>
+                                        <TableCell>{row.SummaryPrice}</TableCell>
                                         <TableCell>{row.Employee}</TableCell>
                                         <TableCell align="center">
                                             <IconButton onClick={(e) => handleMenuClick(e, row)}>
@@ -814,110 +847,90 @@ function ImportProduct() {
                 cancelText="ยกเลิก"
                 width="90%"
                 centered
-                footer={[
-                    <Button key="cancel" onClick={() => setIsCreateModalOpen(false)}>ยกเลิก</Button>,
-                    <Button
-                        key="prev"
-                        disabled={currentStep === 0}
-                        onClick={() => {
-                            const values = form.getFieldsValue(true);
-                            const updatedBills = [...tempBills];
-                            updatedBills[currentStep] = values; // save ปัจจุบัน
-                            saveTempBills(updatedBills);
+                footer={
+                    isManualCreate
+                        ? [
+                            <Button key="cancel" onClick={() => setIsCreateModalOpen(false)}>ยกเลิก</Button>,
+                            <Button key="save" type="primary" onClick={handleSaveAll}>บันทึก</Button>
+                        ]
+                        : [
+                            <Button key="cancel" onClick={() => setIsCreateModalOpen(false)}>ยกเลิก</Button>,
+                            <Button
+                                key="prev"
+                                disabled={currentStep === 0}
+                                onClick={() => {
+                                    const values = form.getFieldsValue(true);
+                                    const updatedBills = [...tempBills];
+                                    updatedBills[currentStep] = values;
+                                    saveTempBills(updatedBills);
 
-                            const prevStep = currentStep - 1;
-                            setCurrentStep(prevStep);
+                                    const prevStep = currentStep - 1;
+                                    setCurrentStep(prevStep);
+                                    form.setFieldsValue(updatedBills[prevStep]);
+                                }}
+                            >ย้อนกลับ</Button>,
+                            <Button
+                                key="next"
+                                type="primary"
+                                onClick={() => {
+                                    const values = form.getFieldsValue(true);
+                                    const updatedBills = [...tempBills];
+                                    updatedBills[currentStep] = values;
+                                    saveTempBills(updatedBills);
 
-                            // โหลดบิลปัจจุบันลง form
-                            form.setFieldsValue(updatedBills[prevStep]);
-                        }}
-                    >
-                        ย้อนกลับ
-                    </Button>,
+                                    const nextStep = currentStep + 1;
+                                    setCurrentStep(nextStep);
+                                    form.setFieldsValue(updatedBills[nextStep]);
+                                }}
+                                disabled={currentStep === tempBills.length - 1}
+                            >ถัดไป</Button>,
+                            <Button
+                                key="addBill"
+                                onClick={() => {
+                                    const values = form.getFieldsValue(true);
+                                    const updatedBills = [...tempBills];
+                                    updatedBills[currentStep] = values;
 
-                    // ปุ่มถัดไป
-                    <Button
-                        key="next"
-                        type="primary"
-                        onClick={() => {
-                            const values = form.getFieldsValue(true);
-                            const updatedBills = [...tempBills];
-                            updatedBills[currentStep] = values; // save ปัจจุบัน
-                            saveTempBills(updatedBills);
+                                    const defaultProduct = {
+                                        ProductName: "",
+                                        ProductCode: "",
+                                        SupplyProductCode: "",
+                                        ManufacturerCode: "",
+                                        Description: "",
+                                        Quantity: undefined,
+                                        UnitPerQuantityID: "",
+                                        PricePerPiece: undefined,
+                                        Discount: undefined,
+                                        SumPriceProduct: undefined,
+                                    };
 
-                            const nextStep = currentStep + 1;
-                            setCurrentStep(nextStep);
+                                    const newBill = {
+                                        Title: "",
+                                        SupplyName: "",
+                                        DateImport: null,
+                                        SummaryPrice: undefined,
+                                        products: [defaultProduct]
+                                    };
 
-                            // โหลดบิลถัดไปลง form
-                            form.setFieldsValue(updatedBills[nextStep]);
-                        }}
-                        disabled={currentStep === tempBills.length - 1}
-                    >
-                        ถัดไป
-                    </Button>,
-
-
-                    <Button
-                        key="addBill"
-                        onClick={() => {
-                            // ดึงค่าปัจจุบันจากฟอร์ม
-                            const values = form.getFieldsValue(true);
-                            console.log("Current form values before adding new bill:", values);
-
-                            // อัปเดต tempBills
-                            const updatedBills = [...tempBills];
-                            updatedBills[currentStep] = values;
-
-                            // สร้าง default product 1 รายการ
-                            const defaultProduct = {
-                                ProductName: "",
-                                ProductCode: "",
-                                SupplyProductCode: "",
-                                ManufacturerCode: "",
-                                Description: "",
-                                Quantity: undefined,
-                                UnitPerQuantityID: "",
-                                PricePerPiece: undefined,
-                                Discount: undefined,
-                                SumPriceProduct: undefined,
-                            };
-
-                            //  newBill มี product = 1 รายการเริ่มต้น
-                            const newBill = {
-                                Title: "",
-                                SupplyName: "",
-                                DateImport: null,
-                                SummaryPrice: undefined,
-                                products: [defaultProduct]
-                            };
-
-                            updatedBills.push(newBill);
-
-                            // บันทึกลง localStorage
-                            saveTempBills(updatedBills);
-
-                            // เปลี่ยน currentStep ไปบิลใหม่
-                            setCurrentStep(updatedBills.length - 1);
-
-                            // โหลดบิลใหม่ลงฟอร์ม
-                            form.setFieldsValue({
-                                bills: updatedBills
-                            });
-
-                            console.log("Added new bill with default product. Updated tempBills:", updatedBills);
-                        }}
-                    >
-                        เพิ่มบิล
-                    </Button>,
-                    <Button key="save" type="primary" onClick={handleSaveAll}>บันทึก</Button>
-                ]}
-
+                                    updatedBills.push(newBill);
+                                    saveTempBills(updatedBills);
+                                    setCurrentStep(updatedBills.length - 1);
+                                    form.setFieldsValue({ bills: updatedBills });
+                                }}
+                            >เพิ่มบิล</Button>,
+                            <Button key="save" type="primary" onClick={handleSaveAll}>บันทึก</Button>
+                        ]
+                }
             >
 
                 <Form form={form} layout="vertical" name="form">
                     {/* Bill List */}
                     <Card
-                        title={`บิลที่ ${currentStep + 1}`}
+                        title={
+                            <Title level={4}>
+                                {`บิลที่ ${currentStep + 1}`}
+                            </Title>
+                        }
                         extra={
                             (form.getFieldValue("bills") || []).length > 1 && (
                                 <Button
@@ -930,9 +943,21 @@ function ImportProduct() {
                                 </Button>
                             )
                         }
+                        style={{
+                            border: "none",
+                            marginTop: -20,
+                            maxHeight: "250px",
+                            // marginBottom: -16,
+                            padding: 0,
+                            background: "#fff"        // สีพื้นหลังขาว
+                        }}
+                        headStyle={{
+                            borderBottom: "none", // << เอาเส้นแบ่งออก
+                            paddingBottom: 0
+                        }}
                     >
 
-                        <Row gutter={[8, 0]}>
+                        <Row gutter={[8, 0]} style={{ marginTop: -12 }}>
                             <Col xl={12}>
                                 <Form.Item
                                     name={['bills', currentStep, 'Title']}
@@ -970,7 +995,7 @@ function ImportProduct() {
                                 >
                                     <DatePicker
                                         style={{ width: "100%" }}
-                                        format="YYYY-MM-DD"
+                                        format="DD-MM-YYYY"
                                         placeholder="เลือกวันที่นำเข้าสินค้า"
                                         disabledDate={(current) => current && current > dayjs().endOf("day")}
                                     />
@@ -988,183 +1013,188 @@ function ImportProduct() {
                         </Row>
                     </Card>
 
-                    <SimpleBar style={{ maxHeight: 500, maxWidth: "100%" }} autoHide={false}>
-                        <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 500 }}>
-                            <Table stickyHeader>
-                                <TableHead>
-                                    <TableRow sx={{ bgcolor: "#f5f5f5" }}>
-                                        <TableCell>ลำดับ</TableCell>
-                                        <TableCell>ชื่อสินค้า</TableCell>
-                                        <TableCell>รหัสบริษัทสั่งซื้อ</TableCell>
-                                        <TableCell>รหัสผู้ผลิต</TableCell>
-                                        <TableCell>จำนวน</TableCell>
-                                        <TableCell>หน่วย</TableCell>
-                                        <TableCell>ราคาต่อชิ้น</TableCell>
-                                        <TableCell>ส่วนลด (%)</TableCell>
-                                        <TableCell>ราคารวม</TableCell>
-                                        <TableCell align="center">จัดการ</TableCell>
-                                    </TableRow>
-                                </TableHead>
+                    <TableContainer
+                        component={Paper}
+                        sx={{
+                            borderRadius: 2,
+                            maxHeight: 450,
+                            border: "1px solid rgba(0,0,0,0.3)",
+                        }}
+                    >
+                        <Table stickyHeader>
+                            <TableHead>
+                                <TableRow sx={{ bgcolor: "#f5f5f5" }}>
+                                    <TableCell>ลำดับ</TableCell>
+                                    <TableCell>ชื่อสินค้า</TableCell>
+                                    <TableCell>รหัสบริษัทสั่งซื้อ</TableCell>
+                                    <TableCell>รหัสผู้ผลิต</TableCell>
+                                    <TableCell>จำนวน</TableCell>
+                                    <TableCell>หน่วย</TableCell>
+                                    <TableCell>ราคาต่อชิ้น</TableCell>
+                                    <TableCell>ส่วนลด (%)</TableCell>
+                                    <TableCell>ราคารวม</TableCell>
+                                    <TableCell align="center">จัดการ</TableCell>
+                                </TableRow>
+                            </TableHead>
 
-                                <TableBody>
-                                    {products.map((_, index) => (
-                                        <TableRow key={index}>
-                                            <TableCell>{index + 1}</TableCell>
-                                            {/* ชื่อสินค้า */}
-                                            <TableCell>
-                                                <Form.Item
-                                                    name={['bills', currentStep, 'products', index, 'ProductName']}
-                                                    rules={[{ required: true, message: 'กรุณากรอกชื่อสินค้า' }]}
-                                                >
-                                                    <TextField
-                                                        label="ชื่อสินค้า"
-                                                        variant="standard"
-                                                        fullWidth
-                                                        required
-                                                    />
-                                                </Form.Item>
-                                            </TableCell>
+                            <TableBody>
+                                {products.map((_, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell>{index + 1}</TableCell>
+                                        {/* ชื่อสินค้า */}
+                                        <TableCell>
+                                            <Form.Item
+                                                name={['bills', currentStep, 'products', index, 'ProductName']}
+                                                rules={[{ required: true, message: 'กรุณากรอกชื่อสินค้า' }]}
+                                            >
+                                                <TextField
+                                                    label="ชื่อสินค้า"
+                                                    variant="standard"
+                                                    fullWidth
+                                                    required
+                                                />
+                                            </Form.Item>
+                                        </TableCell>
 
-                                            {/* รหัสบริษัทสั่งซื้อ */}
-                                            <TableCell>
-                                                <Form.Item
-                                                    name={['bills', currentStep, 'products', index, 'SupplyProductCode']}
-                                                >
-                                                    <TextField label="รหัสบริษัทสั่งซื้อ" variant="standard" fullWidth />
-                                                </Form.Item>
-                                            </TableCell>
+                                        {/* รหัสบริษัทสั่งซื้อ */}
+                                        <TableCell>
+                                            <Form.Item
+                                                name={['bills', currentStep, 'products', index, 'SupplyProductCode']}
+                                            >
+                                                <TextField label="รหัสบริษัทสั่งซื้อ" variant="standard" fullWidth />
+                                            </Form.Item>
+                                        </TableCell>
 
-                                            {/* รหัสผู้ผลิต */}
-                                            <TableCell>
-                                                <Form.Item
-                                                    name={['bills', currentStep, 'products', index, 'ManufacturerCode']}
-                                                >
-                                                    <TextField label="รหัสผู้ผลิต" variant="standard" fullWidth />
-                                                </Form.Item>
-                                            </TableCell>
+                                        {/* รหัสผู้ผลิต */}
+                                        <TableCell>
+                                            <Form.Item
+                                                name={['bills', currentStep, 'products', index, 'ManufacturerCode']}
+                                            >
+                                                <TextField label="รหัสผู้ผลิต" variant="standard" fullWidth />
+                                            </Form.Item>
+                                        </TableCell>
 
-                                            {/* จำนวน */}
-                                            <TableCell>
-                                                <Form.Item
-                                                    name={['bills', currentStep, 'products', index, 'Quantity']}
-                                                    rules={[{ required: true, message: 'กรุณากรอกจำนวน' }]}
-                                                    getValueFromEvent={e => Number(e.target.value)}
-                                                >
-                                                    <TextField
-                                                        variant="standard"
-                                                        type="number"
-                                                        fullWidth
-                                                        required
-                                                        label="จำนวน"
-                                                        inputProps={{
-                                                            min: 1,       // กำหนดขั้นต่ำเป็น 1
-                                                            step: 1       // กำหนดเป็นจำนวนเต็ม
-                                                        }}
-                                                    />
-                                                </Form.Item>
-                                            </TableCell>
+                                        {/* จำนวน */}
+                                        <TableCell>
+                                            <Form.Item
+                                                name={['bills', currentStep, 'products', index, 'Quantity']}
+                                                rules={[{ required: true, message: 'กรุณากรอกจำนวน' }]}
+                                                getValueFromEvent={e => Number(e.target.value)}
+                                            >
+                                                <TextField
+                                                    variant="standard"
+                                                    type="number"
+                                                    fullWidth
+                                                    required
+                                                    label="จำนวน"
+                                                    inputProps={{
+                                                        min: 1,       // กำหนดขั้นต่ำเป็น 1
+                                                        step: 1       // กำหนดเป็นจำนวนเต็ม
+                                                    }}
+                                                />
+                                            </Form.Item>
+                                        </TableCell>
 
-                                            {/* หน่วย */}
-                                            <TableCell>
-                                                <Form.Item
-                                                    name={['bills', currentStep, 'products', index, 'UnitPerQuantityID']}
-                                                    rules={[{ required: true, message: 'กรุณาเลือกหน่วย' }]}
-                                                >
-                                                    <Select label="หน่วย" required variant="standard" fullWidth>
-                                                        {Units.map(u => (
-                                                            <MenuItem key={u.ID} value={u.ID}>{u.NameOfUnit}</MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </Form.Item>
-                                            </TableCell>
+                                        {/* หน่วย */}
+                                        <TableCell>
+                                            <Form.Item
+                                                name={['bills', currentStep, 'products', index, 'UnitPerQuantityID']}
+                                                rules={[{ required: true, message: 'กรุณาเลือกหน่วย' }]}
+                                            >
+                                                <Select label="หน่วย" required variant="standard" fullWidth>
+                                                    {Units.map(u => (
+                                                        <MenuItem key={u.ID} value={u.ID}>{u.NameOfUnit}</MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </Form.Item>
+                                        </TableCell>
 
-                                            {/* ราคาต่อชิ้น */}
-                                            <TableCell>
-                                                <Form.Item
-                                                    name={['bills', currentStep, 'products', index, 'PricePerPiece']}
-                                                    rules={[{ required: true, message: 'กรุณากรอกราคาต่อชิ้น' }]}
-                                                    getValueFromEvent={e => Number(e.target.value)}
-                                                >
-                                                    <TextField label="ราคาต่อชิ้น" required variant="standard" type="number" fullWidth />
-                                                </Form.Item>
-                                            </TableCell>
+                                        {/* ราคาต่อชิ้น */}
+                                        <TableCell>
+                                            <Form.Item
+                                                name={['bills', currentStep, 'products', index, 'PricePerPiece']}
+                                                rules={[{ required: true, message: 'กรุณากรอกราคาต่อชิ้น' }]}
+                                                getValueFromEvent={e => Number(e.target.value)}
+                                            >
+                                                <TextField label="ราคาต่อชิ้น" required variant="standard" type="number" fullWidth />
+                                            </Form.Item>
+                                        </TableCell>
 
-                                            {/* ส่วนลด */}
-                                            <TableCell>
-                                                <Form.Item
-                                                    name={['bills', currentStep, 'products', index, 'Discount']}
-                                                    rules={[
-                                                        {
-                                                            type: 'number',
-                                                            min: 0,
-                                                            max: 100,
-                                                            message: 'ส่วนลดต้องอยู่ระหว่าง 0–100',
-                                                        },
-                                                    ]}
-                                                >
-                                                    <TextField
-                                                        label="ส่วนลด (%)"
-                                                        variant="standard"
-                                                        type="number"
-                                                        fullWidth
-                                                        inputProps={{
-                                                            min: 0,
-                                                            max: 100,
-                                                            step: 0.01
-                                                        }}
-                                                        onChange={e => {
-                                                            let value = Number(e.target.value);
-                                                            if (value < 0) value = 0;
-                                                            if (value > 100) value = 100;
-                                                            form.setFieldValue(['bills', currentStep, 'products', index, 'Discount'], value);
-                                                        }}
-                                                    />
-                                                </Form.Item>
-                                            </TableCell>
+                                        {/* ส่วนลด */}
+                                        <TableCell>
+                                            <Form.Item
+                                                name={['bills', currentStep, 'products', index, 'Discount']}
+                                                rules={[
+                                                    {
+                                                        type: 'number',
+                                                        min: 0,
+                                                        max: 100,
+                                                        message: 'ส่วนลดต้องอยู่ระหว่าง 0–100',
+                                                    },
+                                                ]}
+                                            >
+                                                <TextField
+                                                    label="ส่วนลด (%)"
+                                                    variant="standard"
+                                                    type="number"
+                                                    fullWidth
+                                                    inputProps={{
+                                                        min: 0,
+                                                        max: 100,
+                                                        step: 0.01
+                                                    }}
+                                                    onChange={e => {
+                                                        let value = Number(e.target.value);
+                                                        if (value < 0) value = 0;
+                                                        if (value > 100) value = 100;
+                                                        form.setFieldValue(['bills', currentStep, 'products', index, 'Discount'], value);
+                                                    }}
+                                                />
+                                            </Form.Item>
+                                        </TableCell>
 
-                                            {/* ราคารวม */}
-                                            <TableCell>
-                                                <Form.Item
-                                                    name={['bills', currentStep, 'products', index, 'SumPriceProduct']}
-                                                    rules={[{ required: true, message: 'กรุณากรอกราคารวม' }]}
-                                                >
-                                                    <TextField
-                                                        label="ราคารวม"
-                                                        variant="standard"
-                                                        fullWidth
-                                                        type="number"
-                                                        inputProps={{ min: 0, step: 0.01 }}
-                                                        required
-                                                    />
-                                                </Form.Item>
-                                            </TableCell>
+                                        {/* ราคารวม */}
+                                        <TableCell>
+                                            <Form.Item
+                                                name={['bills', currentStep, 'products', index, 'SumPriceProduct']}
+                                                rules={[{ required: true, message: 'กรุณากรอกราคารวม' }]}
+                                            >
+                                                <TextField
+                                                    label="ราคารวม"
+                                                    variant="standard"
+                                                    fullWidth
+                                                    type="number"
+                                                    inputProps={{ min: 0, step: 0.01 }}
+                                                    required
+                                                />
+                                            </Form.Item>
+                                        </TableCell>
 
-                                            {/* ลบ */}
-                                            <TableCell align="center">
-                                                <IconButton
-                                                    color="error"
-                                                    onClick={() => handleRemoveProduct(index)}
-                                                    disabled={products.length === 1}
-                                                >
-                                                    <Delete />
-                                                </IconButton>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-
-                                    {/* ปุ่มเพิ่มสินค้า */}
-                                    <TableRow>
-                                        <TableCell colSpan={15} align="center">
-                                            <IconButton color="primary" onClick={handleAddProduct}>
-                                                <Add /> เพิ่มสินค้า
+                                        {/* ลบ */}
+                                        <TableCell align="center">
+                                            <IconButton
+                                                color="error"
+                                                onClick={() => handleRemoveProduct(index)}
+                                                disabled={products.length === 1}
+                                            >
+                                                <Delete />
                                             </IconButton>
                                         </TableCell>
                                     </TableRow>
-                                </TableBody>
+                                ))}
 
-                            </Table>
-                        </TableContainer>
-                    </SimpleBar>
+                                {/* ปุ่มเพิ่มสินค้า */}
+                                <TableRow>
+                                    <TableCell colSpan={15} align="center">
+                                        <IconButton color="primary" onClick={handleAddProduct}>
+                                            <Add /> เพิ่มสินค้า
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+
+                        </Table>
+                    </TableContainer>
 
                 </Form>
             </Modal >
@@ -1246,6 +1276,7 @@ function ImportProduct() {
             <Modal
                 open={isUpdateModalOpen}
                 onCancel={() => setIsUpdateModalOpen(false)}
+                centered
                 title="แก้ไขบิล"
                 width="90%"
                 footer={[
@@ -1325,7 +1356,7 @@ function ImportProduct() {
                                 label="บริษัทที่สั่งซื้อ"
                                 rules={[{ required: true, message: "กรุณาเลือกบริษัทที่มีอยู่" }]}
                             >
-                                <AntdSelect placeholder="เลือกบริษัทที่มีอยู่" showSearch optionFilterProp="children">
+                                <AntdSelect placeholder="เลือกบริษัทที่มีอยู่" showSearch optionFilterProp="children" disabled>
                                     {Supplyer.map(s => (
                                         <AntdSelect.Option key={s.ID} value={s.ID}>
                                             {s.SupplyName}
@@ -1346,6 +1377,7 @@ function ImportProduct() {
                                     format="YYYY-MM-DD"
                                     placeholder="เลือกวันที่นำเข้าสินค้า"
                                     disabledDate={(current) => current && current > dayjs().endOf("day")}
+                                    disabled
                                 />
                             </Form.Item>
                         </Col>
@@ -1363,39 +1395,45 @@ function ImportProduct() {
                     {/* Products Table using Form.List */}
                     <Form.List name={['bills', currentStep, 'products']}>
                         {(fields, { add, remove }) => (
-                            <SimpleBar style={{ maxHeight: 500, maxWidth: "100%" }} autoHide={false}>
-                                <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 500 }}>
-                                    <Table stickyHeader>
-                                        <TableHead>
-                                            <TableRow sx={{ bgcolor: "#f5f5f5" }}>
-                                                <TableCell>ลำดับ</TableCell>
-                                                <TableCell>ชื่อสินค้า</TableCell>
-                                                <TableCell>รหัสบริษัทสั่งซื้อ</TableCell>
-                                                <TableCell>รหัสผู้ผลิต</TableCell>
-                                                <TableCell>จำนวน</TableCell>
-                                                <TableCell>หน่วย</TableCell>
-                                                <TableCell>ราคาต่อชิ้น</TableCell>
-                                                <TableCell>ส่วนลด (%)</TableCell>
-                                                <TableCell>ราคารวม</TableCell>
-                                                <TableCell align="center">จัดการ</TableCell>
-                                            </TableRow>
-                                        </TableHead>
+                            <TableContainer component={Paper} sx={{ borderRadius: 2, maxHeight: 450, border: "1px solid rgba(0,0,0,0.3)", }}>
+                                <Table stickyHeader>
+                                    <TableHead>
+                                        <TableRow sx={{ bgcolor: "#f5f5f5" }}>
+                                            <TableCell>ลำดับ</TableCell>
+                                            <TableCell>ชื่อสินค้า</TableCell>
+                                            <TableCell>รหัสบริษัทสั่งซื้อ</TableCell>
+                                            <TableCell>รหัสผู้ผลิต</TableCell>
+                                            <TableCell>จำนวน</TableCell>
+                                            <TableCell>หน่วย</TableCell>
+                                            <TableCell>ราคาต่อชิ้น</TableCell>
+                                            <TableCell>ส่วนลด (%)</TableCell>
+                                            <TableCell>ราคารวม</TableCell>
+                                            <TableCell align="center">จัดการ</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {fields.map((field, index) => {
+                                            // ตรวจสอบว่าเป็นข้อมูลที่ get มาจาก backend หรือเพิ่มใหม่
+                                            const products = form.getFieldValue(['bills', currentStep, 'products']) || [];
+                                            const isFetched = !!products[index]?.ID; // ถ้ามี ID แปลว่ามาจาก backend
 
-                                        <TableBody>
-                                            {fields.map((field, index) => (
+                                            return (
                                                 <TableRow key={field.key}>
                                                     <TableCell>{index + 1}</TableCell>
-
                                                     <TableCell>
                                                         <Form.Item
                                                             {...field}
                                                             name={[field.name, 'ProductName']}
                                                             rules={[{ required: true, message: 'กรุณากรอกชื่อสินค้า' }]}
                                                         >
-                                                            <TextField label="ชื่อสินค้า" variant="standard" fullWidth disabled />
+                                                            <TextField
+                                                                label="ชื่อสินค้า"
+                                                                variant="standard"
+                                                                fullWidth
+                                                                disabled={isFetched}
+                                                            />
                                                         </Form.Item>
                                                     </TableCell>
-
                                                     <TableCell>
                                                         <Form.Item
                                                             {...field}
@@ -1404,7 +1442,6 @@ function ImportProduct() {
                                                             <TextField label="รหัสบริษัทสั่งซื้อ" variant="standard" fullWidth />
                                                         </Form.Item>
                                                     </TableCell>
-
                                                     <TableCell>
                                                         <Form.Item
                                                             {...field}
@@ -1413,7 +1450,6 @@ function ImportProduct() {
                                                             <TextField label="รหัสผู้ผลิต" variant="standard" fullWidth />
                                                         </Form.Item>
                                                     </TableCell>
-
                                                     <TableCell>
                                                         <Form.Item
                                                             {...field}
@@ -1424,21 +1460,23 @@ function ImportProduct() {
                                                             <TextField label="จำนวน" variant="standard" type="number" fullWidth />
                                                         </Form.Item>
                                                     </TableCell>
-
                                                     <TableCell>
                                                         <Form.Item
                                                             {...field}
                                                             name={[field.name, 'UnitPerQuantityID']}
                                                             rules={[{ required: true, message: 'กรุณาเลือกหน่วย' }]}
                                                         >
-                                                            <Select variant="standard" fullWidth>
+                                                            <Select
+                                                                variant="standard"
+                                                                fullWidth
+                                                                disabled={isFetched}
+                                                            >
                                                                 {Units.map(u => (
                                                                     <MenuItem key={u.ID} value={u.ID}>{u.NameOfUnit}</MenuItem>
                                                                 ))}
                                                             </Select>
                                                         </Form.Item>
                                                     </TableCell>
-
                                                     <TableCell>
                                                         <Form.Item
                                                             {...field}
@@ -1449,7 +1487,6 @@ function ImportProduct() {
                                                             <TextField label="ราคาต่อชิ้น" variant="standard" type="number" fullWidth />
                                                         </Form.Item>
                                                     </TableCell>
-
                                                     <TableCell>
                                                         <Form.Item
                                                             {...field}
@@ -1464,7 +1501,6 @@ function ImportProduct() {
                                                             />
                                                         </Form.Item>
                                                     </TableCell>
-
                                                     <TableCell>
                                                         <Form.Item
                                                             {...field}
@@ -1474,27 +1510,29 @@ function ImportProduct() {
                                                             <TextField label="ราคารวม" variant="standard" type="number" fullWidth inputProps={{ min: 0, step: 0.01 }} />
                                                         </Form.Item>
                                                     </TableCell>
-
                                                     <TableCell align="center">
-                                                        <IconButton color="error" onClick={() => remove(field.name)}>
+                                                        <IconButton
+                                                            color="error"
+                                                            onClick={() => !isFetched && remove(field.name)}
+                                                            disabled={isFetched}
+                                                        >
                                                             <Delete />
                                                         </IconButton>
                                                     </TableCell>
                                                 </TableRow>
-                                            ))}
-
-                                            {/* เพิ่มสินค้า */}
-                                            <TableRow>
-                                                <TableCell colSpan={16} align="center">
-                                                    <IconButton color="primary" onClick={() => add({ Quantity: 1 })}>
-                                                        <Add /> เพิ่มสินค้า
-                                                    </IconButton>
-                                                </TableCell>
-                                            </TableRow>
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
-                            </SimpleBar>
+                                            );
+                                        })}
+                                        {/* เพิ่มสินค้า */}
+                                        <TableRow>
+                                            <TableCell colSpan={16} align="center">
+                                                <IconButton color="primary" onClick={() => add({ Quantity: 1 })}>
+                                                    <Add /> เพิ่มสินค้า
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
                         )}
                     </Form.List>
                 </Form>

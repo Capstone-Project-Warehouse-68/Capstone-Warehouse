@@ -149,6 +149,33 @@ func RestoreBills(c *gin.Context) {
 		return
 	}
 
+	// 0. ตรวจสอบ Title ซ้ำกับ Bill ที่ยังไม่ถูกลบ
+	var restoreBills []entity.Bill
+	if err := tx.Unscoped().Where("id IN ?", req.BillIDs).Find(&restoreBills).Error; err != nil {
+		tx.Rollback()
+		log.Printf("[RestoreBills] ดึงข้อมูล Bill ที่จะ restore ไม่สำเร็จ: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงข้อมูล Bill ที่จะ restore ไม่สำเร็จ"})
+		return
+	}
+
+	for _, rb := range restoreBills {
+		var count int64
+		if err := tx.Model(&entity.Bill{}).
+			Where("title = ? AND deleted_at IS NULL", rb.Title).
+			Count(&count).Error; err != nil {
+			tx.Rollback()
+			log.Printf("[RestoreBills] ตรวจสอบ Title ซ้ำไม่สำเร็จ: %v\n", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ตรวจสอบ Title ซ้ำไม่สำเร็จ"})
+			return
+		}
+		if count > 0 {
+			tx.Rollback()
+			log.Printf("[RestoreBills] พบ Bill ที่ยังไม่ถูกลบ Title ซ้ำ: %s\n", rb.Title)
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("ไม่สามารถกู้คืนบิล Title '%s' เพราะมีบิลที่ยังไม่ถูกลบอยู่แล้ว", rb.Title)})
+			return
+		}
+	}
+
 	// 1. ดึง ProductOfBill ทั้งหมดของ bill_ids
 	var pobList []entity.ProductOfBill
 	if err := tx.Unscoped().Where("bill_id IN ?", req.BillIDs).Find(&pobList).Error; err != nil {
@@ -210,7 +237,7 @@ func RestoreBills(c *gin.Context) {
 		return
 	}
 
-	log.Println("[RestoreBills] กู้คืนบิลและสินค้าที่เกี่ยวข้องเรียบร้อย ✅")
+	log.Println("[RestoreBills] กู้คืนบิลและสินค้าที่เกี่ยวข้องเรียบร้อย")
 	c.JSON(http.StatusOK, gin.H{"message": "กู้คืนบิลและสินค้าที่เกี่ยวข้องเรียบร้อย"})
 }
 

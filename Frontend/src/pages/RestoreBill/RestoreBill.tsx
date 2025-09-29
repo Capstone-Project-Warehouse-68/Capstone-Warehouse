@@ -99,10 +99,14 @@ function RestoreBill() {
                 getBillAll();
                 setSelectedBillIds([]);
             } else {
-                messageApi.error(res.data.error || "ไม่สามารถกู้คืนบิลได้");
+                messageApi.error(res.data?.error || "ไม่สามารถกู้คืนบิลได้");
             }
-        } catch (error) {
-            messageApi.error("เกิดข้อผิดพลาดในการกู้คืนบิล");
+        } catch (error: any) {
+            if (error?.response?.data?.error) {
+                messageApi.error(error.response.data.error);
+            } else {
+                messageApi.error("เกิดข้อผิดพลาดในการกู้คืนบิล");
+            }
         }
     };
 
@@ -159,7 +163,7 @@ function RestoreBill() {
                                         </TableCell>
                                         <TableCell>{row.ID}</TableCell>
                                         <TableCell>{row.Title}</TableCell>
-                                        <TableCell>{row.DateImport ? dayjs(row.DateImport).format("YYYY-MM-DD") : "-"}</TableCell>
+                                        <TableCell>{row.DateImport ? dayjs(row.DateImport).format("DD-MM-YYYY") : "-"}</TableCell>
                                         <TableCell>{row.SupplyName}</TableCell>
                                         <TableCell>
                                             {row.Employee

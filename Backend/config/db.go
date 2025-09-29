@@ -243,6 +243,7 @@ func SetupDatabase() {
 		ManufacturerCode: "MNFC-12346",
 		PricePerPiece:    1000,
 		Discount:         5,
+		Quantity:         5,
 		// UnitPerQuantityID: unit2.ID,
 	}
 	db.FirstOrCreate(&productOfBill2, entity.ProductOfBill{ManufacturerCode: "MNFC-12346"})
@@ -331,7 +332,7 @@ func SetupDatabase() {
 	bill4 := entity.Bill{
 		Title:        "Test Bill 4 (2 เดือนก่อน)",
 		SupplyID:     supply2.ID,
-		DateImport:   time.Now().AddDate(0, -2, 0), // 2 เดือนก่อน
+		DateImport:   time.Now().AddDate(0, -2, 0).Add(7 * time.Hour), // 2 เดือนก่อน
 		SummaryPrice: 30000,
 		EmployeeID:   1,
 	}
