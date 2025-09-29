@@ -11,7 +11,7 @@ import type { BillInterface } from "../../interfaces/Bill";
 import type { ZoneInterface } from "../../interfaces/Zone";
 import type { ShelfInterface } from "../../interfaces/Shelf";
 
-const apiUrl = "http://localhost:8000";
+const apiUrl = "/api";
 const Authorization = localStorage.getItem("token");
 const Bearer = localStorage.getItem("token_type");
 

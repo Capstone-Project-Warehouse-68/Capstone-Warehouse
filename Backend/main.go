@@ -105,9 +105,8 @@ func main() {
 	r.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "API RUNNING... PORT: %s", PORT)
 	})
-
-	// Run the server
-	r.Run("localhost:" + PORT)
+	r.Run("0.0.0.0:" + PORT)
+	
 }
 
 func CORSMiddleware() gin.HandlerFunc {

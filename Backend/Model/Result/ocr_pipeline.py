@@ -11,42 +11,59 @@ from google.oauth2 import service_account
 from pdf2image import convert_from_path
 
 # =========================================================
-# CONFIG (แก้เฉพาะส่วนนี้)
+# CONFIG (can be overridden by environment variables)
+# - MODEL_SA_JSON: path inside container to Google service account JSON
+# - PDF_PATH, OUT_DIR, POPPLER_PATH and BILLING_PROJECT_ID can also be set
 # =========================================================
 CONFIG = {
-    "service_account_json": r"D:\Project\Capstone-Warehouse\Backend\Model\ServiceAcc\CapStoneKEY.json",
-    "pdf_path": r"D:\Project\Capstone-Warehouse\Backend\Model\Data\8.pdf",
-    "out_dir": r"D:\Project\Capstone-Warehouse\Backend\Model\Result\output",
+    # default values (sane defaults for running inside container)
+    "service_account_json": os.getenv("MODEL_SA_JSON", "./ServiceAcc/CapStoneKEY.json"),
+    "pdf_path": os.getenv("PDF_PATH", "./Data/8.pdf"),
+    "out_dir": os.getenv("OUT_DIR", "./Result/output"),
 
-    "dpi": 400,                 # 300–400 แนะนำ
-    "lang_hints": ["th","en"],  # ไทย+อังกฤษ
-    "billing_project_id": None,
+    "dpi": int(os.getenv("OCR_DPI", "400")),                 # 300–400 recommended
+    "lang_hints": [h for h in os.getenv("OCR_LANG_HINTS", "th,en").split(",") if h],
+    "billing_project_id": os.getenv("BILLING_PROJECT_ID", None),
 
-    "y_tol": 14,
+    "y_tol": int(os.getenv("OCR_Y_TOL", "14")),
     "split_columns": False,
-    "col_gap_px": 220,
+    "col_gap_px": int(os.getenv("OCR_COL_GAP", "220")),
     "pages": None,
     "save_intermediate_images": False,
     "fix_spacing": True,
 
-    # *** Windows only ***
-    "poppler_path": r"C:\poppler-24.02.0\Library\bin"  # <- Path ไปที่ poppler/bin
+    # container-friendly default for poppler (can be overridden)
+    "poppler_path": os.getenv("POPPLER_PATH", "")
 }
 
 os.makedirs(CONFIG["out_dir"], exist_ok=True)
 
+
 # =========================================================
-# GOOGLE VISION CLIENT
+# GOOGLE VISION CLIENT (lazy initialization)
+# - do NOT create the client at import time; create it on-demand and cache it
+# - this lets the process start even if the service account file is not mounted yet
 # =========================================================
+_vision_client = None
+
 def make_vision_client(sa_json: str, quota_project: Optional[str] = None):
+    if not sa_json:
+        raise FileNotFoundError("service account path is empty; set MODEL_SA_JSON environment variable or update CONFIG")
     if not os.path.exists(sa_json):
-        raise FileNotFoundError(f"ไม่พบไฟล์ Service Account: {sa_json}")
+        raise FileNotFoundError(f"Service account file not found: {sa_json}")
     creds = service_account.Credentials.from_service_account_file(sa_json)
     if quota_project:
         creds = creds.with_quota_project(quota_project)
     return vision.ImageAnnotatorClient(credentials=creds)
 
-client = make_vision_client(CONFIG["service_account_json"], CONFIG["billing_project_id"])
+def get_vision_client():
+    global _vision_client
+    if _vision_client is not None:
+        return _vision_client
+    sa = CONFIG.get("service_account_json") or os.getenv("MODEL_SA_JSON")
+    billing = CONFIG.get("billing_project_id")
+    _vision_client = make_vision_client(sa, billing)
+    return _vision_client
 
 # =========================================================
 # HELPER CLASS
@@ -83,13 +100,15 @@ def pdf_to_images(pdf_path: str, dpi: int, pages: Optional[List[int]]):
 # STEP 2 : OCR
 # =========================================================
 def annotate_image(pil_image, lang_hints: List[str]):
+    # create client lazily (may raise FileNotFoundError if SA JSON not provided)
+    client = get_vision_client()
     with io.BytesIO() as buf:
         pil_image.save(buf, format="PNG")
         content = buf.getvalue()
     img = vision.Image(content=content)
     ctx = vision.ImageContext(language_hints=lang_hints) if lang_hints else None
     resp = client.document_text_detection(image=img, image_context=ctx)
-    if resp.error.message:
+    if getattr(resp, "error", None) and getattr(resp.error, "message", None):
         raise RuntimeError(resp.error.message)
 
     # boxes = []
