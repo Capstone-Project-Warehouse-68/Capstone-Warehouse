@@ -209,11 +209,14 @@ func GetProductOfBillByProductID(c *gin.Context) {
 	ProductID := c.Param("id")
 
 	type ProductBillResponse struct {
-		ID          uint      `json:"ID"`
-		ProductName string    `json:"ProductName"`
-		ProductCode string    `json:"ProductCode"`
-		Quantity    int       `json:"Quantity"`
-		DateImport  time.Time `json:"DateImport"`
+		ID              uint      `json:"ID"`
+		ProductName     string    `json:"ProductName"`
+		ProductCode     string    `json:"ProductCode"`
+		Quantity        int       `json:"Quantity"`
+		PricePerPiece   float32   `json:"PricePerPiece"`
+		Discount        float32   `json:"Discount"`
+		SumPriceProduct float64   `json:"SumPriceProduct"`
+		DateImport      time.Time `json:"DateImport"`
 	}
 
 	var result []ProductBillResponse
@@ -224,7 +227,10 @@ func GetProductOfBillByProductID(c *gin.Context) {
             p.product_name,
             pob.product_code,
             pob.quantity,
-            b.date_import
+            b.date_import,
+			pob.price_per_piece,
+			pob.discount,
+			pob.sum_price_product
         `).
 		Joins("JOIN products p ON p.id = pob.product_id").
 		Joins("JOIN bills b ON b.id = pob.bill_id").
@@ -409,11 +415,14 @@ func GetProductsforShowlist(c *gin.Context) {
 		NameOfUnit        string    `json:"NameOfUnit"`
 		SupplyProductCode string    `json:"SupplyProductCode"`
 		SupplyName        string    `json:"SupplyName"`
+		ShelfID           *uint     `json:"ShelfID"` // เพิ่ม
 		Shelf             string    `json:"Shelf"`
+		ZoneID            *uint     `json:"ZoneID"` // เพิ่ม
 		Zone              string    `json:"Zone"`
 		UpdatedAt         time.Time `json:"UpdatedAt"`
 		SalePrice         float32   `json:"SalePrice"`
 		Description       string    `json:"Description"`
+		CategoryID        *uint     `json:"CategoryID"` // เพิ่ม
 		CategoryName      string    `json:"CategoryName"`
 	}
 
@@ -435,11 +444,14 @@ func GetProductsforShowlist(c *gin.Context) {
 		p.quantity,
 		p.supply_product_code,
 		COALESCE(u.name_of_unit, '') AS name_of_unit,
+		s.id AS shelf_id,
 		COALESCE(s.shelf_name, '') AS shelf,
+		z.id AS zone_id,
 		COALESCE(z.zone_name, '') AS zone,
 		p.updated_at,
 		p.sale_price,
 		COALESCE(p.description, '') AS description,
+		c.id AS category_id,
 		COALESCE(c.category_name, '') AS category_name,
 		COALESCE(ls.supply_name, '') AS supply_name
 	`).
