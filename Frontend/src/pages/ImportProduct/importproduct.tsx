@@ -12,6 +12,7 @@ import {
 } from "@ant-design/icons";
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 import { CreateBillwithProduct, DeleteBill, DownloadTemplateFile, GetAllBills, GetBillAllDataById, GetSupply, GetUnitPerQuantity, UpdateBillWithProduct } from "../../services/https";
+import { uploadPdfForOcr , downloadExcel , downloadBlobAsFile } from "../../services/https/Model/index"
 import type { BillInterface, ProductInterface } from "../../interfaces/Bill";
 import type { UnitPerQuantityInterface } from "../../interfaces/UnitPerQuantity";
 import {
@@ -591,6 +592,36 @@ function ImportProduct() {
         }
     }, [currentStep, tempBills, selectedBillId]);
 
+    const [loading, setLoading] = useState(false);
+
+    const handleUpload = async (file: File) => {
+        setLoading(true);
+        try {
+        // 1️⃣ Upload PDF
+        const uploadRes = await uploadPdfForOcr(file) as any;
+        if (uploadRes.status !== "OCR: Already") {
+            message.error("เกิดข้อผิดพลาด OCR");
+            setLoading(false);
+            return;
+        }
+
+        message.success("OCR เสร็จแล้ว กำลังดาวน์โหลด Excel");
+
+        // 2️⃣ Download Excel
+        const excelBlob = await downloadExcel();
+        downloadBlobAsFile(excelBlob, "DataImport.xlsx");
+
+        } catch (err: any) {
+        console.error(err);
+        message.error(err.message || "เกิดข้อผิดพลาด");
+        } finally {
+        setLoading(false);
+        }
+
+        // Prevent Upload from auto uploading file to AntD
+        return false;
+    };
+
     return (
         <>
             {contextHolder}
@@ -716,7 +747,29 @@ function ImportProduct() {
                 </Col>
 
                 <Col>
-                    <Button
+                    <Upload
+                        accept=".pdf"
+                        showUploadList={false}
+                        customRequest={({ file }) => handleUpload(file as File)}
+                        >
+                        <Button
+                            className="button-import"
+                            type="primary"
+                            icon={<FilePdfOutlined />}
+                            loading={loading}
+                            style={{
+                            height: "auto",
+                            width: "auto",
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            fontSize: 20,
+                            }}
+                        >
+                            {loading ? "กำลังแปลง..." : "แปลง PDF เป็น Excel"}
+                        </Button>
+                    </Upload>
+                    {/* <Button
                         className="button-import" style={{
                             height: "auto",
                             width: "auto",
@@ -726,9 +779,9 @@ function ImportProduct() {
                         }}>
                         <span style={{ fontSize: 20, color: "white" }}>
                             <FilePdfOutlined style={{ marginRight: 8, color: "white" }} />
-                            เพิ่มข้อมูลด้วย PDF
+                            แปลง PDF เป็น Excel
                         </span>
-                    </Button>
+                    </Button> */}
                 </Col>
             </Row>
 
