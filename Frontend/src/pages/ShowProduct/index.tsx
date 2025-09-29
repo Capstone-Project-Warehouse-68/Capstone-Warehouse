@@ -20,7 +20,7 @@ import "./index.css";
 
 import dayjs from "dayjs";
 import "dayjs/locale/th";
-import { GetProductOfBillsByProductID, GetShelf, GetZone, UpdateProduct } from "../../services/https";
+import { GetProductOfBillsByProductID, GetShelfByZoneID, GetZone, UpdateProduct } from "../../services/https";
 import { Table as MTable, Paper, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 dayjs.locale("th");
 
@@ -122,19 +122,28 @@ const ProductList = () => {
 
   const [selectedZone, setSelectedZone] = useState<number | null>(null);
   const [shelves, setShelves] = useState<any[]>([]);
-  const [allShelves, setAllShelves] = useState<any[]>([]);
   const [zones, setZones] = useState<any[]>([]);
 
   // เวลาเลือก Zone
-  const handleZoneChange = (zoneId: number) => {
+  // แก้ handleZoneChange ไปเรียก API โดยตรง
+  const handleZoneChange = async (zoneId: number) => {
     setSelectedZone(zoneId);
-
-    const filtered = allShelves.filter((shelf) => shelf.ZoneID === zoneId);
-    setShelves(filtered);
-
     form.setFieldsValue({ ShelfID: undefined });
-  };
 
+    try {
+      const res = await GetShelfByZoneID(zoneId);
+      if (res.status === 200) {
+        setShelves(res.data || []); 
+      } else {
+        setShelves([]);
+        message.error(res.data?.error || "ไม่สามารถดึงข้อมูลชั้นเก็บได้");
+      }
+    } catch (error) {
+      console.error("โหลด shelf ล้มเหลว:", error);
+      setShelves([]);
+      message.error("เกิดข้อผิดพลาดในการโหลดชั้นเก็บ");
+    }
+  };
 
   const handleViewProduct = async (record: any) => {
     setLoadingProduct(true);
@@ -350,13 +359,25 @@ const ProductList = () => {
 
   const handleEdit = (record: any) => {
     setSelectedProduct(record);
+
+    // เซ็ตค่า CategoryID + ZoneID ก่อน
     form.setFieldsValue({
       ProductName: record?.ProductName,
       Description: record?.Description,
       SalePrice: record?.SalePrice,
-      CategoryID: record?.CategoryID || undefined,
-      ShelfID: record?.ShelfID || undefined,
+      CategoryID: record?.CategoryID ? Number(record?.CategoryID) : undefined,
+      ZoneID: record?.ZoneID ? Number(record?.ZoneID) : undefined,
     });
+
+    setSelectedZone(record?.ZoneID);
+    handleZoneChange(record?.ZoneID);
+
+    setTimeout(() => {
+      form.setFieldsValue({
+        ShelfID: record?.ShelfID ? Number(record?.ShelfID) : undefined,
+      });
+    }, 0);
+
     setModalUpdateOpen(true);
   };
 
@@ -388,44 +409,43 @@ const ProductList = () => {
   };
 
   const fetchAll = async () => {
-      try {
-        const [categoriesRes, supplyRes, productsRes] = await Promise.all([
-          GetCategory(),
-          GetSupplySelect(),
-          GetProductsforShowlist(),
-        ]);
+    try {
+      const [categoriesRes, supplyRes, productsRes] = await Promise.all([
+        GetCategory(),
+        GetSupplySelect(),
+        GetProductsforShowlist(),
+      ]);
 
-        // set categories
-        if (categoriesRes?.data && Array.isArray(categoriesRes.data)) {
-          setCategories(categoriesRes.data);
-        } else {
-          message.error("ไม่สามารถดึงข้อมูลประเภทสินค้าได้");
-        }
-
-        // set supply
-        if (supplyRes && Array.isArray(supplyRes)) {
-          setSupplySelect(supplyRes);
-        } else {
-          message.error("ไม่สามารถดึงข้อมูลบริษัทได้");
-        }
-
-        // set products
-        if (productsRes?.data && Array.isArray(productsRes.data)) {
-          setDataSource(productsRes.data);
-        } else {
-          message.error("ไม่สามารถดึงข้อมูลสินค้าได้");
-        }
-      } catch (error) {
-        console.error(error);
-        message.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
+      // set categories
+      if (categoriesRes?.data && Array.isArray(categoriesRes.data)) {
+        setCategories(categoriesRes.data);
+      } else {
+        message.error("ไม่สามารถดึงข้อมูลประเภทสินค้าได้");
       }
-    };
+
+      // set supply
+      if (supplyRes && Array.isArray(supplyRes)) {
+        setSupplySelect(supplyRes);
+      } else {
+        message.error("ไม่สามารถดึงข้อมูลบริษัทได้");
+      }
+
+      // set products
+      if (productsRes?.data && Array.isArray(productsRes.data)) {
+        setDataSource(productsRes.data);
+      } else {
+        message.error("ไม่สามารถดึงข้อมูลสินค้าได้");
+      }
+    } catch (error) {
+      console.error(error);
+      message.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
+    }
+  };
 
   const fetchData = async () => {
     try {
-      const [zoneRes, shelfRes] = await Promise.all([
+      const [zoneRes] = await Promise.all([
         GetZone(),
-        GetShelf(),
       ]);
 
       if (zoneRes.status === 200) {
@@ -434,16 +454,8 @@ const ProductList = () => {
         setZones([]);
         message.error(zoneRes.data.error || "ไม่สามารถดึงข้อมูลโซนได้");
       }
-
-      if (shelfRes.status === 200) {
-        setAllShelves(shelfRes.data || []); // เก็บ shelf ทั้งหมดก่อน
-      } else {
-        setAllShelves([]);
-        message.error(shelfRes.data.error || "ไม่สามารถดึงข้อมูลชั้นเก็บได้");
-      }
     } catch (error) {
       setZones([]);
-      setAllShelves([]);
       message.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
     }
   };
@@ -589,6 +601,9 @@ const ProductList = () => {
                       <TableCell>ชื่อสินค้า</TableCell>
                       <TableCell>รหัสสินค้า</TableCell>
                       <TableCell>จำนวน</TableCell>
+                      <TableCell>ราคาต่อชิ้น</TableCell>
+                      <TableCell>ส่วนลด (%)</TableCell>
+                      <TableCell>ราคารวม</TableCell>
                       <TableCell>วันที่นำเข้า</TableCell>
                     </TableRow>
                   </TableHead>
@@ -600,6 +615,9 @@ const ProductList = () => {
                           <TableCell>{p.ProductName}</TableCell>
                           <TableCell>{p.ProductCode}</TableCell>
                           <TableCell>{p.Quantity}</TableCell>
+                          <TableCell>{p.PricePerPiece}</TableCell>
+                          <TableCell>{p.Discount}</TableCell>
+                          <TableCell>{p.SumPriceProduct}</TableCell>
                           <TableCell>
                             {dayjs(p.DateImport).format("DD MMMM YYYY")}
                           </TableCell>
@@ -724,6 +742,7 @@ const ProductList = () => {
                     ))}
                   </Select>
                 </Form.Item>
+
               </Col>
             </Row>
           </Form>
