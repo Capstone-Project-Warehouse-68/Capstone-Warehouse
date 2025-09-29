@@ -13,6 +13,35 @@ import (
 	"gorm.io/gorm"
 )
 
+func CalculateEAN13CheckDigit(code string) string {
+	sum := 0
+	for i, c := range code {
+		n := int(c - '0')
+		if (i+1)%2 == 0 {
+			sum += n * 3
+		} else {
+			sum += n
+		}
+	}
+	check := (10 - (sum % 10)) % 10
+	return code + strconv.Itoa(check)
+}
+
+func ProductNameToNumber(name string) string {
+	num := ""
+	for _, c := range name {
+		num += fmt.Sprintf("%d", int(c))
+		if len(num) >= 6 {
+			break
+		}
+	}
+	// เติม 0 ถ้ายังไม่ครบ 6 หลัก
+	for len(num) < 6 {
+		num += "0"
+	}
+	return num[:6]
+}
+
 type BillResponse struct {
 	ID           uint      `json:"ID"`
 	Title        string    `json:"Title"`
@@ -25,6 +54,7 @@ type BillResponse struct {
 
 type ProductResponse struct {
 	ID                uint    `json:"ID"`
+	ProductCode       string  `json:"ProductCode"`
 	SupplyProductCode string  `json:"SupplyProductCode"`
 	ProductName       string  `json:"ProductName"`
 	Description       string  `json:"Description"`
@@ -92,7 +122,7 @@ func CreateBillWithProducts(c *gin.Context) {
 		return
 	}
 
-	// ✅ บันทึก Bill
+	// บันทึก Bill
 	bill := entity.Bill{
 		Title:        req.Bill.Title,
 		SupplyID:     req.Bill.SupplyID,
@@ -106,17 +136,16 @@ func CreateBillWithProducts(c *gin.Context) {
 		return
 	}
 
-	// ✅ บันทึก Product และ ProductOfBill
+	//  บันทึก Product และ ProductOfBill
 	for i, p := range req.Products {
 		var product entity.Product
-		// ตรวจสอบว่ามีสินค้านี้อยู่แล้วหรือยัง (SupplyID + ProductName)
-		if err := tx.Where("supply_id = ? AND product_name = ?", req.Bill.SupplyID, p.ProductName).First(&product).Error; err != nil {
+		// ตรวจสอบว่ามีสินค้านี้อยู่แล้วหรือยัง (SupplyID + ProductName + UnitPerQuantityID)
+		if err := tx.Where("supply_id = ? AND product_name = ? AND unit_per_quantity_id = ?", req.Bill.SupplyID, p.ProductName, p.UnitPerQuantityID).First(&product).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
 				// สินค้าใหม่ → สร้าง Product
 				product = entity.Product{
 					SupplyProductCode: p.SupplyProductCode,
 					ProductName:       p.ProductName,
-					Description:       p.Description,
 					Picture:           p.Picture,
 					Quantity:          p.Quantity,
 					UnitPerQuantityID: &p.UnitPerQuantityID,
@@ -162,6 +191,21 @@ func CreateBillWithProducts(c *gin.Context) {
 			}
 		}
 
+		// ดึง SupplyAbbrev
+		var supply entity.Supply
+		if err := tx.Select("supply_abbrev").First(&supply, req.Bill.SupplyID).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่พบ Supply"})
+			return
+		}
+
+		// สร้าง ProductCode แบบ EAN-13
+		supplyCode := supply.SupplyAbbrev                      // สมมติเป็นตัวเลข 3 หลัก เช่น "101"
+		dateStr := req.Bill.DateImport.Format("060102")        // YYMMDD เช่น "250927"
+		productNum := ProductNameToNumber(product.ProductName) // 6 หลักจากชื่อสินค้า
+		eanBase := supplyCode + dateStr + productNum           // 12 หลัก
+		productCode := CalculateEAN13CheckDigit(eanBase)       // 13 หลัก
+
 		// คำนวณ SumPriceProduct
 		calculatedSum := float64(req.ProductsOfBill[i].PricePerPiece) * float64(req.ProductsOfBill[i].Quantity) * (1 - float64(req.ProductsOfBill[i].Discount)/100)
 		if req.ProductsOfBill[i].SumPriceProduct != calculatedSum {
@@ -179,6 +223,7 @@ func CreateBillWithProducts(c *gin.Context) {
 		productOfBill := entity.ProductOfBill{
 			ProductID:        product.ID,
 			BillID:           bill.ID,
+			ProductCode:      productCode,
 			ManufacturerCode: req.ProductsOfBill[i].ManufacturerCode,
 			Quantity:         req.ProductsOfBill[i].Quantity,
 			PricePerPiece:    req.ProductsOfBill[i].PricePerPiece,
@@ -225,7 +270,7 @@ func UpdateBillWithProducts(c *gin.Context) {
 		return
 	}
 
-	// ✅ ดึง Bill เดิม
+	//  ดึง Bill เดิม
 	var bill entity.Bill
 	if err := tx.First(&bill, billID).Error; err != nil {
 		tx.Rollback()
@@ -233,7 +278,7 @@ func UpdateBillWithProducts(c *gin.Context) {
 		return
 	}
 
-	// ✅ อัปเดตข้อมูลบิล
+	//  อัปเดตข้อมูลบิล
 	bill.Title = req.Bill.Title
 	bill.SupplyID = req.Bill.SupplyID
 	bill.DateImport = req.Bill.DateImport
@@ -256,7 +301,6 @@ func UpdateBillWithProducts(c *gin.Context) {
 				product = entity.Product{
 					SupplyProductCode: p.SupplyProductCode,
 					ProductName:       p.ProductName,
-					Description:       p.Description,
 					Picture:           p.Picture,
 					Quantity:          p.Quantity,
 					UnitPerQuantityID: &p.UnitPerQuantityID,
@@ -295,7 +339,6 @@ func UpdateBillWithProducts(c *gin.Context) {
 		} else {
 			// สินค้ามีอยู่แล้ว → อัปเดตรายละเอียด + ปรับ Quantity
 			product.SupplyProductCode = p.SupplyProductCode
-			product.Description = p.Description
 			product.Picture = p.Picture
 			product.UnitPerQuantityID = &p.UnitPerQuantityID
 			product.LimitQuantity = p.LimitQuantity
@@ -336,7 +379,20 @@ func UpdateBillWithProducts(c *gin.Context) {
 		calculatedSumRounded := math.Round(calculatedSum*100) / 100
 		sumPriceRounded := math.Round(req.ProductsOfBill[i].SumPriceProduct*100) / 100
 
-		fmt.Println("DEBUG:", "Price:", price, "Qty:", qty, "Discount:", discount, "SumPriceRounded:", sumPriceRounded, "CalculatedRounded:", calculatedSumRounded)
+		// ดึง SupplyAbbrev
+		var supply entity.Supply
+		if err := tx.Select("supply_abbrev").First(&supply, req.Bill.SupplyID).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่พบ Supply"})
+			return
+		}
+
+		// สร้าง ProductCode แบบ EAN-13
+		supplyCode := supply.SupplyAbbrev                      // สมมติเป็นตัวเลข 3 หลัก เช่น "101"
+		dateStr := req.Bill.DateImport.Format("060102")        // YYMMDD เช่น "250927"
+		productNum := ProductNameToNumber(product.ProductName) // 6 หลักจากชื่อสินค้า
+		eanBase := supplyCode + dateStr + productNum           // 12 หลัก
+		productCode := CalculateEAN13CheckDigit(eanBase)       // 13 หลัก
 
 		// ✅ เช็คกับค่าที่ frontend ส่งมา
 		if sumPriceRounded != calculatedSumRounded {
@@ -358,6 +414,7 @@ func UpdateBillWithProducts(c *gin.Context) {
 				pob = entity.ProductOfBill{
 					ProductID:        product.ID,
 					BillID:           bill.ID,
+					ProductCode:      productCode,
 					ManufacturerCode: req.ProductsOfBill[i].ManufacturerCode,
 					Quantity:         req.ProductsOfBill[i].Quantity,
 					PricePerPiece:    req.ProductsOfBill[i].PricePerPiece,
@@ -480,6 +537,7 @@ func GetBillAllDataByBillID(c *gin.Context) {
 	if err := db.Raw(`
 		SELECT 
 			p.id AS id, 
+			pob.product_code,
 			p.supply_product_code, 
 			p.product_name, 
 			p.description, 

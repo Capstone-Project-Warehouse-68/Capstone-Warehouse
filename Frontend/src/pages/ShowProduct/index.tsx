@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Input, Table, message, Select } from "antd";
+import { Input, Table, message, Select, Button, Dropdown, Modal, Spin, Form, InputNumber, Row, Col } from "antd";
 import {
   SearchOutlined,
   FilterOutlined,
   CloseOutlined,
+  EditOutlined,
+  MoreOutlined,
 } from "@ant-design/icons";
 import { GetCategory } from "../../services/https/NotificaltionProduct/index";
 import type { Category } from "../../interfaces/Category";
@@ -13,21 +15,18 @@ import type { ProductItem } from "../../interfaces/Product";
 import { GetProductsforShowlist } from "../../services/https/ShowProduct/index";
 import NotificationBell from "../../components/NotificationBell";
 import FeaturedPlayListIcon from '@mui/icons-material/FeaturedPlayList';
+import { Info } from "@mui/icons-material";
 import "./index.css";
 
 import dayjs from "dayjs";
 import "dayjs/locale/th";
+import { GetProductOfBillsByProductID, GetShelf, GetZone, UpdateProduct } from "../../services/https";
+import { Table as MTable, Paper, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 dayjs.locale("th");
 
 const { Option } = Select;
 
 const allColumns = [
-  {
-    title: "รหัสสินค้า",
-    dataIndex: "ProductCode",
-    key: "ProductCode",
-    render: (text: string | null | undefined) => text || "-",
-  },
   {
     title: "ชื่อสินค้า",
     dataIndex: "ProductName",
@@ -72,11 +71,19 @@ const allColumns = [
     key: "UpdatedAt",
     render: (text: string) => {
       const date = dayjs(text);
-      const buddhistYear = date.year() + 543;
-      return `${date.date()} ${date.format(
-        "MMMM"
-      )} ${buddhistYear} เวลา ${date.format("HH:mm")} น.`;
+      const currentYear = dayjs().year();
+      let displayYear = date.year();
+      if (displayYear <= currentYear) {
+        displayYear += 543;
+      }
+      return `${date.date()} ${date.format("MMMM")} ${displayYear} เวลา ${date.format("HH:mm")} น.`;
     },
+  },
+  {
+    title: "ราคาขาย",
+    dataIndex: "SalePrice",
+    key: "SalePrice",
+    render: (text: string | null | undefined) => text || "-",
   },
   {
     title: "รายละเอียด",
@@ -97,12 +104,52 @@ const ProductList = () => {
   >();
   const [selectedSupply, setSelectedSupply] = useState<string | undefined>();
 
+  const [modalUpdateOpen, setModalUpdateOpen] = useState(false); // เปลี่ยนชื่อ
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [ProductID, setProductID] = useState(0);
+
   // เก็บสถานะของคอลัมน์ที่แสดงผล
   const [visibleKeys, setVisibleKeys] = useState(
     allColumns.map((col) => col.key)
   );
   // เก็บสถานะของคอลัมน์ที่ถูก hover
   const [hoveredCol, setHoveredCol] = useState<string | null>(null);
+
+  const [isModalDataOpen, setIsModalDataOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const [loadingProduct, setLoadingProduct] = useState(false);
+
+  const [selectedZone, setSelectedZone] = useState<number | null>(null);
+  const [shelves, setShelves] = useState<any[]>([]);
+  const [allShelves, setAllShelves] = useState<any[]>([]);
+  const [zones, setZones] = useState<any[]>([]);
+
+  // เวลาเลือก Zone
+  const handleZoneChange = (zoneId: number) => {
+    setSelectedZone(zoneId);
+
+    const filtered = allShelves.filter((shelf) => shelf.ZoneID === zoneId);
+    setShelves(filtered);
+
+    form.setFieldsValue({ ShelfID: undefined });
+  };
+
+
+  const handleViewProduct = async (record: any) => {
+    setLoadingProduct(true);
+    try {
+      const res = await GetProductOfBillsByProductID(record.ID);
+      if (res.status === 200) {
+        setSelectedProduct(res.data.data);
+        setIsModalDataOpen(true);
+      }
+    } catch (error) {
+      console.error("โหลดข้อมูลบิลล้มเหลว", error);
+    } finally {
+      setLoadingProduct(false);
+    }
+  };
 
   // const fetchCategory = async () => {
   //   try {
@@ -172,42 +219,9 @@ const ProductList = () => {
   // };
 
   useEffect(() => {
-  const fetchAll = async () => {
-    try {
-      const [categoriesRes, supplyRes, productsRes] = await Promise.all([
-        GetCategory(),
-        GetSupplySelect(),
-        GetProductsforShowlist(),
-      ]);
-
-      // set categories
-      if (categoriesRes?.data && Array.isArray(categoriesRes.data)) {
-        setCategories(categoriesRes.data);
-      } else {
-        message.error("ไม่สามารถดึงข้อมูลประเภทสินค้าได้");
-      }
-
-      // set supply
-      if (supplyRes && Array.isArray(supplyRes)) { 
-        setSupplySelect(supplyRes);
-      } else {
-        message.error("ไม่สามารถดึงข้อมูลบริษัทได้");
-      }
-
-      // set products
-      if (productsRes?.data && Array.isArray(productsRes.data)) {
-        setDataSource(productsRes.data);
-      } else {
-        message.error("ไม่สามารถดึงข้อมูลสินค้าได้");
-      }
-    } catch (error) {
-      console.error(error);
-      message.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
-    }
-  };
-
-  fetchAll();
-}, []);
+    fetchAll();
+    fetchData();
+  }, []);
 
 
   // filter function
@@ -258,13 +272,18 @@ const ProductList = () => {
 
   // เพิ่มปุ่ม ❌ บน header ของแต่ละ column
   const enhancedColumns = useMemo(() => {
-    return allColumns
+    const baseCols = allColumns
       .filter((col) => visibleKeys.includes(col.key))
       .map((col) => ({
         ...col,
         title: (
           <div
-            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              position: "relative",
+            }}
             onMouseEnter={() => handleMouseEnter(col.key)}
             onMouseLeave={handleMouseLeave}
           >
@@ -281,7 +300,154 @@ const ProductList = () => {
           </div>
         ),
       }));
+
+    // เพิ่ม actions column ตายตัว
+    const actionCol = {
+      title: "จัดการ",
+      key: "actions",
+      fixed: "right" as const,
+      render: (_: any, record: any) => {
+        const items = [
+          {
+            key: "view",
+            label: "ดูรายละเอียด",
+            icon: <Info style={{ fontSize: 18 }} />,
+            onClick: () => {
+              console.log("ดูรายละเอียด", record);
+              handleViewProduct(record); // ส่ง ID เข้าไป
+            },
+          },
+          {
+            key: "edit",
+            label: "แก้ไขข้อมูลสินค้า",
+            icon: <EditOutlined style={{ fontSize: 18 }} />,
+            onClick: () => {
+              setProductID(record.ID);
+              handleEdit(record); // ส่ง ID เข้าไป
+            },
+          },
+        ];
+        return (
+          <Dropdown
+            menu={{
+              items,
+              onClick: (info) => {
+                const action = items.find((i) => i.key === info.key);
+                action?.onClick?.();
+              },
+            }}
+            trigger={["hover"]}
+            placement="bottomRight"
+          >
+            <Button type="text" icon={<MoreOutlined />} style={{ color: "black" }} />
+          </Dropdown>
+        );
+      },
+    };
+
+    return [...baseCols, actionCol];
   }, [visibleKeys, hoveredCol, handleMouseEnter, handleMouseLeave, handleRemoveColumn]);
+
+  const handleEdit = (record: any) => {
+    setSelectedProduct(record);
+    form.setFieldsValue({
+      ProductName: record?.ProductName,
+      Description: record?.Description,
+      SalePrice: record?.SalePrice,
+      CategoryID: record?.CategoryID || undefined,
+      ShelfID: record?.ShelfID || undefined,
+    });
+    setModalUpdateOpen(true);
+  };
+
+  const handleSubmitUpdate = async () => {
+    try {
+      const values = await form.validateFields();
+      setLoading(true);
+
+      const res = await UpdateProduct(ProductID, {
+        Description: values.Description,
+        SalePrice: values.SalePrice,
+        CategoryID: values.CategoryID,
+        ShelfID: values.ShelfID,
+      });
+
+      if (res.status === 200) {
+        message.success("อัปเดตสินค้าสำเร็จ");
+        await fetchAll();
+        setModalUpdateOpen(false);
+      } else {
+        message.error(res.data?.error || "อัปเดตสินค้าไม่สำเร็จ");
+      }
+    } catch (error) {
+      console.error(error);
+      message.error("เกิดข้อผิดพลาด");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAll = async () => {
+      try {
+        const [categoriesRes, supplyRes, productsRes] = await Promise.all([
+          GetCategory(),
+          GetSupplySelect(),
+          GetProductsforShowlist(),
+        ]);
+
+        // set categories
+        if (categoriesRes?.data && Array.isArray(categoriesRes.data)) {
+          setCategories(categoriesRes.data);
+        } else {
+          message.error("ไม่สามารถดึงข้อมูลประเภทสินค้าได้");
+        }
+
+        // set supply
+        if (supplyRes && Array.isArray(supplyRes)) {
+          setSupplySelect(supplyRes);
+        } else {
+          message.error("ไม่สามารถดึงข้อมูลบริษัทได้");
+        }
+
+        // set products
+        if (productsRes?.data && Array.isArray(productsRes.data)) {
+          setDataSource(productsRes.data);
+        } else {
+          message.error("ไม่สามารถดึงข้อมูลสินค้าได้");
+        }
+      } catch (error) {
+        console.error(error);
+        message.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
+      }
+    };
+
+  const fetchData = async () => {
+    try {
+      const [zoneRes, shelfRes] = await Promise.all([
+        GetZone(),
+        GetShelf(),
+      ]);
+
+      if (zoneRes.status === 200) {
+        setZones(zoneRes.data || []);
+      } else {
+        setZones([]);
+        message.error(zoneRes.data.error || "ไม่สามารถดึงข้อมูลโซนได้");
+      }
+
+      if (shelfRes.status === 200) {
+        setAllShelves(shelfRes.data || []); // เก็บ shelf ทั้งหมดก่อน
+      } else {
+        setAllShelves([]);
+        message.error(shelfRes.data.error || "ไม่สามารถดึงข้อมูลชั้นเก็บได้");
+      }
+    } catch (error) {
+      setZones([]);
+      setAllShelves([]);
+      message.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
+    }
+  };
+
 
   return (
     <div
@@ -312,7 +478,7 @@ const ProductList = () => {
               flexShrink: 0, // ป้องกัน title ย่อเกินไป
             }}
           >
-            <FeaturedPlayListIcon style={{ fontSize: "36px",marginRight:10}}/>
+            <FeaturedPlayListIcon style={{ fontSize: "36px", marginRight: 10 }} />
             <h1 style={{ margin: 0, fontSize: "36px" }}>แสดงรายการสินค้า</h1>
           </div>
           <div
@@ -399,8 +565,171 @@ const ProductList = () => {
           // rowClassName={() => "custom-row"}
           className="custom-table"
         />
+        <Modal
+          open={isModalDataOpen}
+          onCancel={() => setIsModalDataOpen(false)}
+          title="รายละเอียดบิล"
+          width={1000}
+          footer={[
+            <Button key="cancel" onClick={() => setIsModalDataOpen(false)}>
+              ปิด
+            </Button>,
+          ]}
+        >
+          {loadingProduct ? (
+            <Spin />
+          ) : (
+            <>
+              {console.log("selectedProduct", selectedProduct)}
+              <TableContainer component={Paper}>
+                <MTable>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>ลำดับ</TableCell>
+                      <TableCell>ชื่อสินค้า</TableCell>
+                      <TableCell>รหัสสินค้า</TableCell>
+                      <TableCell>จำนวน</TableCell>
+                      <TableCell>วันที่นำเข้า</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {Array.isArray(selectedProduct) && selectedProduct.length > 0 ? (
+                      selectedProduct.map((p, index) => (
+                        <TableRow key={p.ID}>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell>{p.ProductName}</TableCell>
+                          <TableCell>{p.ProductCode}</TableCell>
+                          <TableCell>{p.Quantity}</TableCell>
+                          <TableCell>
+                            {dayjs(p.DateImport).format("DD MMMM YYYY")}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} align="center">
+                          ไม่มีข้อมูล
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </MTable>
+              </TableContainer>
+            </>
+          )}
+        </Modal>
+
+        <Modal
+          title={
+            <span style={{ fontSize: "18px", fontWeight: "bold" }}>
+              แก้ไขสินค้า: {selectedProduct?.ProductName || ""}
+            </span>
+          }
+          open={modalUpdateOpen}
+          onCancel={() => setModalUpdateOpen(false)}
+          width="60%"
+          footer={[
+            <Button key="cancel" onClick={() => setModalUpdateOpen(false)}>
+              ยกเลิก
+            </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              loading={loading}
+              onClick={handleSubmitUpdate}
+            >
+              บันทึก
+            </Button>,
+          ]}
+        >
+          <Form form={form} layout="vertical">
+            <Row gutter={[8, 8]}>
+
+              <Col xl={24}>
+                <Form.Item
+                  name="Description"
+                  label="รายละเอียดสินค้า"
+                  rules={[{ required: true, message: "กรุณากรอกรายละเอียดสินค้า" }]}
+                >
+                  <Input.TextArea rows={3} placeholder="กรอกรายละเอียดสินค้า" />
+                </Form.Item>
+              </Col>
+
+              <Col xl={24}>
+                <Form.Item
+                  name="SalePrice"
+                  label="ราคาขาย"
+                  rules={[{ required: true, message: "กรอกราคาขาย" }]}
+                >
+                  <InputNumber<number>
+                    style={{ width: "100%" }}
+                    min={0}
+                    step={0.01}
+                    placeholder="กรอกราคาขาย"
+                    onKeyPress={(e) => {
+                      const allowed = /[0-9.]/
+                      if (!allowed.test(e.key)) {
+                        e.preventDefault()
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (["e", "E", "+", "-", " "].includes(e.key)) {
+                        e.preventDefault()
+                      }
+                    }}
+                    formatter={(value) => {
+                      if (!value) return ""
+                      return `${value}`.replace(/(\.\d{2})\d+$/, "$1") // จำกัดทศนิยม 2 ตำแหน่ง
+                    }}
+                    parser={(value) => {
+                      const cleaned = value?.replace(/[^\d.]/g, "")
+                      return cleaned ? parseFloat(cleaned) : 0 //  ต้อง return number เสมอ
+                    }}
+                  />
+                </Form.Item>
+
+              </Col>
+
+              <Col xl={24}>
+                <Form.Item name="CategoryID" label="หมวดหมู่">
+                  <Select placeholder="เลือกหมวดหมู่">
+                    {categories.map((cat) => (
+                      <Option key={cat.id} value={cat.id}>
+                        {cat.category_name}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              <Col xl={12}>
+                <Form.Item name="ZoneID" label="โซนจัดเก็บสินค้า">
+                  <Select placeholder="เลือกโซน" onChange={handleZoneChange}>
+                    {zones.map((z) => (
+                      <Select.Option key={z.ID} value={z.ID}>
+                        {z.ZoneName}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              <Col xl={12}>
+                <Form.Item name="ShelfID" label="ชั้นจัดเก็บสินค้า">
+                  <Select placeholder="เลือกชั้นเก็บ" disabled={!selectedZone}>
+                    {shelves.map((s) => (
+                      <Select.Option key={s.ID} value={s.ID}>
+                        {s.ShelfName}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+          </Form>
+        </Modal>
       </div>
-    </div>
+    </div >
   );
 };
 

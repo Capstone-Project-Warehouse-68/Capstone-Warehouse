@@ -158,6 +158,89 @@ type Limituantity struct {
 // 	c.JSON(http.StatusOK, gin.H{"message": "ลบข้อมูลอาจารย์สำเร็จ (Soft Delete พร้อมสำรองข้อมูล)"})
 // }
 
+func UpdateProduct(c *gin.Context) {
+	productID := c.Param("id")
+	var req struct {
+		Description string  `json:"Description"`
+		CategoryID  uint    `json:"CategoryID"`
+		ShelfID     uint    `json:"ShelfID"`
+		SalePrice   float32 `json:"SalePrice"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	db := config.DB()
+
+	var product entity.Product
+	if err := db.First(&product, productID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบสินค้า"})
+		return
+	}
+
+	// ✅ อัปเดตเฉพาะฟิลด์ที่ต้องการ
+	product.Description = req.Description
+	product.SalePrice = req.SalePrice
+
+	if req.CategoryID != 0 {
+		product.CategoryID = &req.CategoryID
+	} else {
+		product.CategoryID = nil
+	}
+
+	if req.ShelfID != 0 {
+		product.ShelfID = &req.ShelfID
+	} else {
+		product.ShelfID = nil
+	}
+
+	if err := db.Save(&product).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "อัปเดต Product ล้มเหลว"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "อัปเดตสินค้าสำเร็จ", "product": product})
+}
+
+func GetProductOfBillByProductID(c *gin.Context) {
+	db := config.DB()
+	ProductID := c.Param("id")
+
+	type ProductBillResponse struct {
+		ID          uint      `json:"ID"`
+		ProductName string    `json:"ProductName"`
+		ProductCode string    `json:"ProductCode"`
+		Quantity    int       `json:"Quantity"`
+		DateImport  time.Time `json:"DateImport"`
+	}
+
+	var result []ProductBillResponse
+
+	err := db.Table("product_of_bills pob").
+		Select(`
+            pob.id,
+            p.product_name,
+            pob.product_code,
+            pob.quantity,
+            b.date_import
+        `).
+		Joins("JOIN products p ON p.id = pob.product_id").
+		Joins("JOIN bills b ON b.id = pob.bill_id").
+		Where("pob.product_id = ?", ProductID).
+		Scan(&result).Error
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "ดึงข้อมูลล้มเหลว: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": result})
+}
+
 func UpdateLimitQuantity(c *gin.Context) {
 	db := config.DB()
 	var LimituantityAPI Limituantity
@@ -329,6 +412,7 @@ func GetProductsforShowlist(c *gin.Context) {
 		Shelf             string    `json:"Shelf"`
 		Zone              string    `json:"Zone"`
 		UpdatedAt         time.Time `json:"UpdatedAt"`
+		SalePrice         float32   `json:"SalePrice"`
 		Description       string    `json:"Description"`
 		CategoryName      string    `json:"CategoryName"`
 	}
@@ -354,6 +438,7 @@ func GetProductsforShowlist(c *gin.Context) {
 		COALESCE(s.shelf_name, '') AS shelf,
 		COALESCE(z.zone_name, '') AS zone,
 		p.updated_at,
+		p.sale_price,
 		COALESCE(p.description, '') AS description,
 		COALESCE(c.category_name, '') AS category_name,
 		COALESCE(ls.supply_name, '') AS supply_name
@@ -383,7 +468,7 @@ func GetProductPDF(c *gin.Context) {
 		SupplyProductCode string    `json:"supply_product_code"`
 		ProductName       string    `json:"product_name"`
 		Quantity          int       `json:"quantity"`
-		LimitQuantity    int       `json:"limit_quantity"`
+		LimitQuantity     int       `json:"limit_quantity"`
 		NameOfUnit        string    `json:"name_of_unit"`
 		SupplyName        string    `json:"supply_name"`
 		DateImport        time.Time `json:"date_import"`
