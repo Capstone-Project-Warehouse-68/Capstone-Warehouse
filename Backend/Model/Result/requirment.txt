@@ -1,0 +1,19 @@
+# Core libraries
+numpy>=1.25.0
+pandas>=2.1.0
+tqdm>=4.65.0
+
+# Flask web server
+Flask>=2.4.0
+Flask-Cors>=3.1.0
+
+# Google Cloud Vision
+google-cloud-vision>=3.3.0
+google-auth>=2.22.0
+
+# PDF processing
+pdf2image>=1.16.0
+pytz>=2025.3
+
+# Excel handling
+openpyxl>=3.2.0
