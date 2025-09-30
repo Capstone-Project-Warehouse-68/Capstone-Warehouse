@@ -373,7 +373,7 @@ function ImportProduct() {
             for (const bill of parsedBills) {
                 const billData = {
                     Bill: {
-                        Title: bill.Title,
+                        Title: (bill.Title).toString(),
                         SummaryPrice: Number(bill.SummaryPrice || 0),
                         EmployeeID: Number(localStorage.getItem("employeeID")),
                         SupplyID: Number(bill.SupplyID),
