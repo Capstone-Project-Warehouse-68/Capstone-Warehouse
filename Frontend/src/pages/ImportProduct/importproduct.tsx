@@ -919,12 +919,16 @@ function ImportProduct() {
                                 onClick={() => {
                                     const values = form.getFieldsValue(true);
                                     const updatedBills = [...tempBills];
-                                    updatedBills[currentStep] = values;
+
+                                    //  update แค่ bill ปัจจุบัน
+                                    updatedBills[currentStep] = values.bills[currentStep];
                                     saveTempBills(updatedBills);
 
                                     const prevStep = currentStep - 1;
                                     setCurrentStep(prevStep);
-                                    form.setFieldsValue(updatedBills[prevStep]);
+
+                                    //  ต้อง setFieldsValue ในรูปแบบ { bills: [...] }
+                                    form.setFieldsValue({ bills: updatedBills });
                                 }}
                             >ย้อนกลับ</Button>,
                             <Button
@@ -933,12 +937,16 @@ function ImportProduct() {
                                 onClick={() => {
                                     const values = form.getFieldsValue(true);
                                     const updatedBills = [...tempBills];
-                                    updatedBills[currentStep] = values;
+
+                                    //  update แค่ bill ปัจจุบัน
+                                    updatedBills[currentStep] = values.bills[currentStep];
                                     saveTempBills(updatedBills);
 
                                     const nextStep = currentStep + 1;
                                     setCurrentStep(nextStep);
-                                    form.setFieldsValue(updatedBills[nextStep]);
+
+                                    //  ต้อง setFieldsValue ในรูปแบบ { bills: [...] }
+                                    form.setFieldsValue({ bills: updatedBills });
                                 }}
                                 disabled={currentStep === tempBills.length - 1}
                             >ถัดไป</Button>,
@@ -947,7 +955,7 @@ function ImportProduct() {
                                 onClick={() => {
                                     const values = form.getFieldsValue(true);
                                     const updatedBills = [...tempBills];
-                                    updatedBills[currentStep] = values;
+                                    updatedBills[currentStep] = values.bills[currentStep];
 
                                     const defaultProduct = {
                                         ProductName: "",
