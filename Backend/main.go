@@ -80,7 +80,7 @@ func main() {
 
 		r.GET("/getproductofbillbyid/:id", controller.GetProductOfBillByProductID)
 
-		// controller.StartHardDeleteScheduler()
+		controller.StartHardDeleteScheduler()
 
 		r.POST("/signin", controller.SignIn)
 		r.GET("/GetLimitQuantity",controller.GetLimitQuantity)

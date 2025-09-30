@@ -12,22 +12,21 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-// StartHardDeleteScheduler เรียกใช้ cron เพื่อลบบิลแบบ hard delete
 func StartHardDeleteScheduler() {
 	c := cron.New(cron.WithSeconds()) // ใช้ seconds field
 	fmt.Println("[HardDeleteScheduler] เริ่ม scheduler...")
 
-	// ทุก 1 นาที (สามารถปรับให้เป็น 1 วันจริงได้)
-	c.AddFunc("0 */1 * * * *", func() {
+	// รันทุกวันตอนเที่ยงคืน 00:00:00
+	_, err := c.AddFunc("0 0 0 * * *", func() {
 		fmt.Println("[HardDeleteScheduler] Trigger cron job เวลา:", time.Now().Format("2006-01-02 15:04:05"))
 
 		db := config.DB()
-		oneMinuteAgo := time.Now().Add(-1 * time.Minute)
-		fmt.Println("[HardDeleteScheduler] ลบบิลที่ deleted_at <= ", oneMinuteAgo)
+		ninetyDaysAgo := time.Now().Add(-90 * 24 * time.Hour)
+		fmt.Println("[HardDeleteScheduler] ลบบิลที่ deleted_at <= ", ninetyDaysAgo)
 
 		var bills []entity.Bill
 		if err := db.Unscoped().
-			Where("deleted_at IS NOT NULL AND deleted_at <= ?", oneMinuteAgo).
+			Where("deleted_at IS NOT NULL AND deleted_at <= ?", ninetyDaysAgo).
 			Find(&bills).Error; err != nil {
 			fmt.Println("[HardDeleteScheduler] Error ดึง bills:", err)
 			return
@@ -86,8 +85,13 @@ func StartHardDeleteScheduler() {
 		}
 	})
 
+	if err != nil {
+		fmt.Println("[HardDeleteScheduler] Error add cron job:", err)
+		return
+	}
+
 	c.Start()
-	fmt.Println("[HardDeleteScheduler] Scheduler started!")
+	fmt.Println("[HardDeleteScheduler] Scheduler started! จะรันทุกวันตอนเที่ยงคืน")
 }
 
 func GetAllBill(c *gin.Context) {
