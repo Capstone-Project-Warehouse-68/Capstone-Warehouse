@@ -1,3 +1,5 @@
 # Ignore SQLite database file
 Project_Capstone.db
 .env
+
+Backend/Model/ServiceAcc/CapStoneKEY.json
