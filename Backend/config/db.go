@@ -15,6 +15,7 @@ func DB() *gorm.DB {
 	return db
 }
 
+
 func ConnectionDB() {
 	// ดึงค่าจาก environment variables
 	host := os.Getenv("DB_HOST")
@@ -30,14 +31,24 @@ func ConnectionDB() {
 		host, port, user, password, dbname, sslmode,
 	)
 
-	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		panic("failed to connect database: " + err.Error())
+	var database *gorm.DB
+	var err error
+	maxRetries := 15
+	for i := 0; i < maxRetries; i++ {
+		database, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		if err == nil {
+			fmt.Println("connected database")
+			db = database
+			break
+		}
+		fmt.Printf("failed to connect database (attempt %d/%d): %v\n", i+1, maxRetries, err)
+		time.Sleep(2 * time.Second)
 	}
-
-	fmt.Println("connected database")
-	db = database
+	if db == nil {
+		panic("failed to connect database after retries: " + err.Error())
+	}
 }
+
 
 func SetupDatabase() {
 	db.AutoMigrate(

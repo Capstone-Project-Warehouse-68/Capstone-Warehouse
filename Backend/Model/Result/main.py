@@ -103,4 +103,8 @@ def download_excel():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    host = os.getenv("MODEL_HOST", "0.0.0.0")
+    port = int(os.getenv("MODEL_PORT", "8001"))
+    debug = os.getenv("FLASK_DEBUG", "false").lower() in ("1", "true", "yes")
+    # Use a production-ready bind so the container port mapping works
+    app.run(host=host, port=port, debug=debug)
