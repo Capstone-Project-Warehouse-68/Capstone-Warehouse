@@ -211,7 +211,7 @@ func SetupDatabase() {
 		Title:        "Test Bill",
 		SupplyID:     supply.ID,
 		DateImport:   time.Now(),
-		SummaryPrice: 17000,
+		SummaryPrice: 3800,
 		EmployeeID:   1,
 	}
 	db.FirstOrCreate(&bill, entity.Bill{Title: "Test Bill"})
@@ -219,7 +219,7 @@ func SetupDatabase() {
 		Title:        "Test Bill 2",
 		SupplyID:     supply2.ID,
 		DateImport:   time.Now(),
-		SummaryPrice: 17000,
+		SummaryPrice: 4750,
 		EmployeeID:   1,
 	}
 	db.FirstOrCreate(&bill2, entity.Bill{Title: "Test Bill 2"})
@@ -233,6 +233,7 @@ func SetupDatabase() {
 		PricePerPiece:    800,
 		Quantity:         5,
 		Discount:         5,
+		SumPriceProduct: 3800, // (800*5) - 5%
 	}
 	db.FirstOrCreate(&productOfBill, entity.ProductOfBill{ManufacturerCode: "MNFC-12345"})
 	productOfBill2 := entity.ProductOfBill{
@@ -244,6 +245,7 @@ func SetupDatabase() {
 		PricePerPiece:    1000,
 		Discount:         5,
 		Quantity:         5,
+		SumPriceProduct: 4750, // (1000*5) - 5%
 		// UnitPerQuantityID: unit2.ID,
 	}
 	db.FirstOrCreate(&productOfBill2, entity.ProductOfBill{ManufacturerCode: "MNFC-12346"})
@@ -324,7 +326,7 @@ func SetupDatabase() {
 		Title:        "Test Bill 3 (เดือนก่อน)",
 		SupplyID:     supply.ID,
 		DateImport:   time.Now().AddDate(0, -1, 0), // เดือนก่อน
-		SummaryPrice: 25000,
+		SummaryPrice: 11500,
 		EmployeeID:   1,
 	}
 	db.FirstOrCreate(&bill3, entity.Bill{Title: "Test Bill 3 (เดือนก่อน)"})
@@ -333,7 +335,7 @@ func SetupDatabase() {
 		Title:        "Test Bill 4 (2 เดือนก่อน)",
 		SupplyID:     supply2.ID,
 		DateImport:   time.Now().AddDate(0, -2, 0).Add(7 * time.Hour), // 2 เดือนก่อน
-		SummaryPrice: 30000,
+		SummaryPrice: 28000,
 		EmployeeID:   1,
 	}
 	db.FirstOrCreate(&bill4, entity.Bill{Title: "Test Bill 4 (2 เดือนก่อน)"})
@@ -347,6 +349,7 @@ func SetupDatabase() {
 		PricePerPiece:    1150, // กำหนดราคาซื้อต่อชิ้น
 		Quantity:         10,
 		Discount:         0,
+		SumPriceProduct: 11500, // 1150 * 10
 	}
 	db.FirstOrCreate(&productOfBill3, entity.ProductOfBill{ManufacturerCode: "MNFC-12347"})
 
@@ -359,6 +362,7 @@ func SetupDatabase() {
 		PricePerPiece:    7000, // กำหนดราคาซื้อต่อชิ้น
 		Quantity:         4,
 		Discount:         0,
+		SumPriceProduct: 28000, // 7000 * 4
 	}
 	db.FirstOrCreate(&productOfBill4, entity.ProductOfBill{ManufacturerCode: "MNFC-12348"})
 

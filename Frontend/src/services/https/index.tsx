@@ -339,6 +339,13 @@ async function UpdateProduct(id: number, data: any) {
     .catch((e) => e.response);
 }
 
+async function CalculatePrice(data: any) {
+  return await axios
+    .post(`${apiUrl}/calculate-price`, data, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
 export {
   SignIn,
   CreateEmployee,
@@ -382,4 +389,5 @@ export {
   UpdateShelf,
   GetProductOfBillsByProductID,
   UpdateProduct,
+  CalculatePrice,
 };
