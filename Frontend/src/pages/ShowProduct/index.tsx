@@ -709,7 +709,8 @@ const ProductList = () => {
               </Col>
 
               <Col xl={24}>
-                <Form.Item name="CategoryID" label="หมวดหมู่">
+                <Form.Item name="CategoryID" label="หมวดหมู่" required
+                rules={[{ required: true, message: "กรุณาเลือกหมวดหมู่" }]}>
                   <Select placeholder="เลือกหมวดหมู่">
                     {categories.map((cat) => (
                       <Option key={cat.id} value={cat.id}>
@@ -721,7 +722,7 @@ const ProductList = () => {
               </Col>
 
               <Col xl={12}>
-                <Form.Item name="ZoneID" label="โซนจัดเก็บสินค้า">
+                <Form.Item name="ZoneID" label="โซนจัดเก็บสินค้า" required rules={[{ required: true, message: "กรุณาเลือกโซนจัดเก็บสินค้า" }]}>
                   <Select placeholder="เลือกโซน" onChange={handleZoneChange}>
                     {zones.map((z) => (
                       <Select.Option key={z.ID} value={z.ID}>
@@ -733,7 +734,7 @@ const ProductList = () => {
               </Col>
 
               <Col xl={12}>
-                <Form.Item name="ShelfID" label="ชั้นจัดเก็บสินค้า">
+                <Form.Item name="ShelfID" label="ชั้นจัดเก็บสินค้า" required rules={[{ required: true, message: "กรุณาเลือกชั้นจัดเก็บสินค้า" }]}>
                   <Select placeholder="เลือกชั้นเก็บ" disabled={!selectedZone}>
                     {shelves.map((s) => (
                       <Select.Option key={s.ID} value={s.ID}>

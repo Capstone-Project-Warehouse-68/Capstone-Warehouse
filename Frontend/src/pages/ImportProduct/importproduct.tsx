@@ -49,7 +49,10 @@ function ImportProduct() {
     const [selectedBill, setSelectedBill] = useState<BillInterface | null>(null);
     const [selectedBillId, setSelectedBillId] = useState<number | null>(null);
 
-    const handleExcelUpload = (file: File) => {
+    const handleExcelUpload = async (file: File) => {
+        if (!Units || Units.length === 0) {
+            await getUnitperQuantity();
+        }
         const reader = new FileReader();
         reader.onload = (e) => {
             const data = new Uint8Array(e.target?.result as ArrayBuffer);
@@ -114,6 +117,13 @@ function ImportProduct() {
 
                             const unitName = normalize(row[5]);
                             const unit = Units.find(u => normalize(u.NameOfUnit) === unitName);
+
+                            if (unitName && !unit) {
+                                messageApi.error({
+                                    content: `ไม่พบหน่วย "${unitName}" ในฐานข้อมูล กรุณาเพิ่มก่อน`,
+                                    duration: 3,
+                                });
+                            }
 
                             return {
                                 ManufacturerCode: row[1] ?? "",
