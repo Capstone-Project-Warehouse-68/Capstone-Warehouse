@@ -1,21 +1,14 @@
 package controller
 
 import (
-	"path/filepath"
-
+	_ "embed"
 	"github.com/gin-gonic/gin"
 )
 
+var templateFile []byte
+
 func DownloadTemplate(c *gin.Context) {
-	// ชื่อไฟล์ fix
 	fileName := "Format_file_DataImport.xlsx"
-
-	// path เดียวกับ main.go
-	filePath := filepath.Join(".", fileName)
-
-	c.Header("Content-Description", "File Transfer")
 	c.Header("Content-Disposition", "attachment; filename="+fileName)
-	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
-	c.File(filePath)
+	c.Data(200, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", templateFile)
 }

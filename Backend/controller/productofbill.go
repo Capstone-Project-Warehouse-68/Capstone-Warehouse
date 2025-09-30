@@ -2,7 +2,6 @@ package controller
 
 import (
 	"fmt"
-	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -206,19 +205,6 @@ func CreateBillWithProducts(c *gin.Context) {
 		eanBase := supplyCode + dateStr + productNum           // 12 หลัก
 		productCode := CalculateEAN13CheckDigit(eanBase)       // 13 หลัก
 
-		// คำนวณ SumPriceProduct
-		calculatedSum := float64(req.ProductsOfBill[i].PricePerPiece) * float64(req.ProductsOfBill[i].Quantity) * (1 - float64(req.ProductsOfBill[i].Discount)/100)
-		if req.ProductsOfBill[i].SumPriceProduct != calculatedSum {
-			tx.Rollback()
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": fmt.Sprintf(
-					"บิล %s สินค้า %s: SumPriceProduct ไม่ถูกต้อง (ส่ง %v, ควรเป็น %v)",
-					bill.Title, p.ProductName, req.ProductsOfBill[i].SumPriceProduct, calculatedSum,
-				),
-			})
-			return
-		}
-
 		// สร้าง ProductOfBill
 		productOfBill := entity.ProductOfBill{
 			ProductID:        product.ID,
@@ -370,15 +356,7 @@ func UpdateBillWithProducts(c *gin.Context) {
 			}
 		}
 
-		price := float64(req.ProductsOfBill[i].PricePerPiece)
-		qty := float64(req.ProductsOfBill[i].Quantity)
-		discount := float64(req.ProductsOfBill[i].Discount) // ถ้า nil → จะเป็น 0
-		calculatedSum := price * qty * (1 - discount/100)
-
 		// ปัดค่าทศนิยม 2 ตำแหน่ง
-		calculatedSumRounded := math.Round(calculatedSum*100) / 100
-		sumPriceRounded := math.Round(req.ProductsOfBill[i].SumPriceProduct*100) / 100
-
 		// ดึง SupplyAbbrev
 		var supply entity.Supply
 		if err := tx.Select("supply_abbrev").First(&supply, req.Bill.SupplyID).Error; err != nil {
@@ -393,18 +371,6 @@ func UpdateBillWithProducts(c *gin.Context) {
 		productNum := ProductNameToNumber(product.ProductName) // 6 หลักจากชื่อสินค้า
 		eanBase := supplyCode + dateStr + productNum           // 12 หลัก
 		productCode := CalculateEAN13CheckDigit(eanBase)       // 13 หลัก
-
-		// ✅ เช็คกับค่าที่ frontend ส่งมา
-		if sumPriceRounded != calculatedSumRounded {
-			tx.Rollback()
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": fmt.Sprintf(
-					"บิล %s สินค้า %s: SumPriceProduct ไม่ถูกต้อง (ส่ง %v, ควรเป็น %v)",
-					bill.Title, p.ProductName, req.ProductsOfBill[i].SumPriceProduct, calculatedSumRounded,
-				),
-			})
-			return
-		}
 
 		// ✅ สร้างหรืออัปเดต ProductOfBill
 		var pob entity.ProductOfBill
