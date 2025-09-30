@@ -82,6 +82,8 @@ const OrderTable = () => {
 
   const [draftProducts, setDraftProducts] = useState<ProductPDF[]>([]);
 
+  const employeeID = Number(localStorage.getItem("employeeID") || "1");
+
   // ฟังก์ชันดึงข้อมูล
   // const fetchCategory = async () => {
   //   try {
@@ -395,7 +397,7 @@ const OrderTable = () => {
               onClick={() =>
                 setSelectedOrders((prev) => [
                   ...prev,
-                  { ...record, orderQuantity: 1, unit: undefined },
+                  { ...record, orderQuantity: 1, unit: record.name_of_unit || undefined},
                 ])
               }
             >
@@ -454,7 +456,7 @@ const OrderTable = () => {
       });
 
       const multiOrderData: MultiOrderBillInput = {
-        employee_id: 1, // ตัวอย่าง
+        employee_id: employeeID, // ตัวอย่าง
         orders: Object.values(
           selectedOrders.reduce(
             (acc: Record<string, typeof selectedOrders>, o) => {
@@ -470,7 +472,7 @@ const OrderTable = () => {
           );
 
           return {
-            employee_id: 1,
+            employee_id: employeeID,
             supply_id: supplierInfo?.ID ?? 0,
             description: `สั่งซื้อจาก supplier ${
               supplierInfo?.SupplyName ?? ""

@@ -12,22 +12,21 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-// StartHardDeleteScheduler เรียกใช้ cron เพื่อลบบิลแบบ hard delete
 func StartHardDeleteScheduler() {
 	c := cron.New(cron.WithSeconds()) // ใช้ seconds field
 	fmt.Println("[HardDeleteScheduler] เริ่ม scheduler...")
 
-	// ทุก 1 นาที (สามารถปรับให้เป็น 1 วันจริงได้)
-	c.AddFunc("0 */1 * * * *", func() {
+	// รันทุกวันตอนเที่ยงคืน 00:00:00
+	_, err := c.AddFunc("0 0 0 * * *", func() {
 		fmt.Println("[HardDeleteScheduler] Trigger cron job เวลา:", time.Now().Format("2006-01-02 15:04:05"))
 
 		db := config.DB()
-		oneMinuteAgo := time.Now().Add(-1 * time.Minute)
-		fmt.Println("[HardDeleteScheduler] ลบบิลที่ deleted_at <= ", oneMinuteAgo)
+		ninetyDaysAgo := time.Now().Add(-90 * 24 * time.Hour)
+		fmt.Println("[HardDeleteScheduler] ลบบิลที่ deleted_at <= ", ninetyDaysAgo)
 
 		var bills []entity.Bill
 		if err := db.Unscoped().
-			Where("deleted_at IS NOT NULL AND deleted_at <= ?", oneMinuteAgo).
+			Where("deleted_at IS NOT NULL AND deleted_at <= ?", ninetyDaysAgo).
 			Find(&bills).Error; err != nil {
 			fmt.Println("[HardDeleteScheduler] Error ดึง bills:", err)
 			return
@@ -86,8 +85,13 @@ func StartHardDeleteScheduler() {
 		}
 	})
 
+	if err != nil {
+		fmt.Println("[HardDeleteScheduler] Error add cron job:", err)
+		return
+	}
+
 	c.Start()
-	fmt.Println("[HardDeleteScheduler] Scheduler started!")
+	fmt.Println("[HardDeleteScheduler] Scheduler started! จะรันทุกวันตอนเที่ยงคืน")
 }
 
 func GetAllBill(c *gin.Context) {
@@ -147,6 +151,33 @@ func RestoreBills(c *gin.Context) {
 		log.Println("[RestoreBills] เริ่ม transaction ไม่สำเร็จ")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "เริ่ม transaction ไม่ได้"})
 		return
+	}
+
+	// 0. ตรวจสอบ Title ซ้ำกับ Bill ที่ยังไม่ถูกลบ
+	var restoreBills []entity.Bill
+	if err := tx.Unscoped().Where("id IN ?", req.BillIDs).Find(&restoreBills).Error; err != nil {
+		tx.Rollback()
+		log.Printf("[RestoreBills] ดึงข้อมูล Bill ที่จะ restore ไม่สำเร็จ: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงข้อมูล Bill ที่จะ restore ไม่สำเร็จ"})
+		return
+	}
+
+	for _, rb := range restoreBills {
+		var count int64
+		if err := tx.Model(&entity.Bill{}).
+			Where("title = ? AND deleted_at IS NULL", rb.Title).
+			Count(&count).Error; err != nil {
+			tx.Rollback()
+			log.Printf("[RestoreBills] ตรวจสอบ Title ซ้ำไม่สำเร็จ: %v\n", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ตรวจสอบ Title ซ้ำไม่สำเร็จ"})
+			return
+		}
+		if count > 0 {
+			tx.Rollback()
+			log.Printf("[RestoreBills] พบ Bill ที่ยังไม่ถูกลบ Title ซ้ำ: %s\n", rb.Title)
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("ไม่สามารถกู้คืนบิล Title '%s' เพราะมีบิลที่ยังไม่ถูกลบอยู่แล้ว", rb.Title)})
+			return
+		}
 	}
 
 	// 1. ดึง ProductOfBill ทั้งหมดของ bill_ids
@@ -210,7 +241,7 @@ func RestoreBills(c *gin.Context) {
 		return
 	}
 
-	log.Println("[RestoreBills] กู้คืนบิลและสินค้าที่เกี่ยวข้องเรียบร้อย ✅")
+	log.Println("[RestoreBills] กู้คืนบิลและสินค้าที่เกี่ยวข้องเรียบร้อย")
 	c.JSON(http.StatusOK, gin.H{"message": "กู้คืนบิลและสินค้าที่เกี่ยวข้องเรียบร้อย"})
 }
 

@@ -75,8 +75,13 @@ func main() {
 		r.GET("/getBillDeleted", controller.GetBillDeleted)
 
 		r.PATCH("/restoreBill", controller.RestoreBills)
+		r.PATCH("/updateproduct/:id", controller.UpdateProduct)
 
-		// controller.StartHardDeleteScheduler()
+		r.POST("/calculate-price", controller.CalculatePriceHandler)
+
+		r.GET("/getproductofbillbyid/:id", controller.GetProductOfBillByProductID)
+
+		controller.StartHardDeleteScheduler()
 
 		r.POST("/signin", controller.SignIn)
 		r.GET("/GetLimitQuantity",controller.GetLimitQuantity)

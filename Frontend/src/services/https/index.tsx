@@ -296,6 +296,7 @@ async function CreateShelf(data: ShelfInterface) {
     .then((res) => res)
     .catch((e) => e.response);
 }
+
 async function UpdateShelf(id: number, data: ShelfInterface) {
   return await axios
     .patch(`${apiUrl}/UpdateShelf/${id}`, data, requestOptions)
@@ -322,6 +323,27 @@ async function DownloadTemplateFile() {
   } catch (err: any) {
     console.error("Download failed:", err);
   }
+}
+
+async function GetProductOfBillsByProductID(id: number) {
+  return await axios
+    .get(`${apiUrl}/getproductofbillbyid/${id}`, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function UpdateProduct(id: number, data: any) {
+  return await axios
+    .patch(`${apiUrl}/updateproduct/${id}`, data, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
+}
+
+async function CalculatePrice(data: any) {
+  return await axios
+    .post(`${apiUrl}/calculate-price`, data, requestOptions)
+    .then((res) => res)
+    .catch((e) => e.response);
 }
 
 export {
@@ -365,4 +387,7 @@ export {
   UpdateZone,
   CreateShelf,
   UpdateShelf,
+  GetProductOfBillsByProductID,
+  UpdateProduct,
+  CalculatePrice,
 };
