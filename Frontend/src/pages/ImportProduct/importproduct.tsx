@@ -7,10 +7,11 @@ import {
     FilePdfOutlined,
     DeleteOutlined,
     FileExcelOutlined,
-    DownloadOutlined,
+    DownloadOutlined
+
 } from "@ant-design/icons";
 import KeyboardIcon from '@mui/icons-material/Keyboard';
-import { CalculatePrice, CreateBillwithProduct, DeleteBill, DownloadTemplateFile, GetAllBills, GetBillAllDataById, GetSupply, GetUnitPerQuantity, UpdateBillWithProduct } from "../../services/https";
+import { CreateBillwithProduct, DeleteBill, DownloadTemplateFile, GetAllBills, GetBillAllDataById, GetSupply, GetUnitPerQuantity, UpdateBillWithProduct } from "../../services/https";
 import type { BillInterface, ProductInterface } from "../../interfaces/Bill";
 import { uploadPdfForOcr, downloadExcel, downloadBlobAsFile } from "../../services/https/Model/index"
 import type { UnitPerQuantityInterface } from "../../interfaces/UnitPerQuantity";
@@ -23,7 +24,6 @@ import {
 import { Delete, Add, Info, Edit, MoreVert } from "@mui/icons-material";
 import React from "react";
 import type { SupplyInterface } from "../../interfaces/Supply";
-import DiscountField from "./handleInputNum"
 
 const { Title } = Typography;
 
@@ -50,10 +50,7 @@ function ImportProduct() {
     const [selectedBill, setSelectedBill] = useState<BillInterface | null>(null);
     const [selectedBillId, setSelectedBillId] = useState<number | null>(null);
 
-    const handleExcelUpload = async (file: File) => {
-        if (!Units || Units.length === 0) {
-            await getUnitperQuantity();
-        }
+    const handleExcelUpload = (file: File) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const data = new Uint8Array(e.target?.result as ArrayBuffer);
@@ -129,24 +126,13 @@ function ImportProduct() {
                                 summaryPrice = row[8] ? parseFloat(row[8].toString().replace(/,/g, "")) : 0;
                                 return null;
                             }
-                            const normalize = (val: any) => val?.toString().trim();
-
-                            const unitName = normalize(row[5]);
-                            const unit = Units.find(u => normalize(u.NameOfUnit) === unitName);
-
-                            if (unitName && !unit) {
-                                messageApi.error({
-                                    content: `ไม่พบหน่วย "${unitName}" ในฐานข้อมูล กรุณาเพิ่มก่อน`,
-                                    duration: 3,
-                                });
-                            }
-
+                            const unit = Units.find(u => u.NameOfUnit === row[5]);
                             return {
                                 ManufacturerCode: row[1] ?? "",
                                 SupplyProductCode: row[2] ?? "",
                                 ProductName: row[3] ?? "",
                                 Quantity: row[4] ?? 0,
-                                UnitPerQuantityID: unit?.ID ?? undefined, //  เก็บเป็น ID
+                                UnitPerQuantityID: unit?.ID || "",
                                 PricePerPiece: row[6] ?? 0,
                                 Discount: row[7] ?? 0,
                                 SumPriceProduct: row[8] ?? 0,
@@ -166,7 +152,6 @@ function ImportProduct() {
             }
 
             if (formValues.bills.length === 0) return; // ไม่มีบิลถูกต้อง
-            console.log("Parsed Excel Data:", formValues.bills);
 
             setTempBills(formValues.bills);
             saveTempBills(formValues.bills);
@@ -178,7 +163,6 @@ function ImportProduct() {
                     DateImport: b.DateImport || null
                 }))
             });
-            setIsManualCreate(false);
             setIsCreateModalOpen(true);
         };
         reader.readAsArrayBuffer(file);
@@ -242,7 +226,7 @@ function ImportProduct() {
                 ManufacturerCode: "",
                 Description: "",
                 Quantity: undefined,
-                UnitPerQuantityID: undefined,
+                UnitPerQuantityID: "",
                 PricePerPiece: undefined,
                 Discount: undefined,
                 SumPriceProduct: undefined,
@@ -289,58 +273,6 @@ function ImportProduct() {
 
     const handleCreateCancel = () => setIsCreateModalOpen(false);
 
-    const recalcBill = async () => {
-        const values = form.getFieldsValue(true);
-        const currentBill = values?.bills?.[currentStep];
-        if (!currentBill || !Array.isArray(currentBill.products)) return;
-
-        const payloadProducts = currentBill.products.map((p: any) => ({
-            ProductName: p?.ProductName ?? "",
-            ProductCode: p?.ProductCode ?? "",
-            Quantity: Number(p?.Quantity) || 0,
-            PricePerPiece: parseFloat(String(p?.PricePerPiece || 0)),
-            Discount: parseFloat(String(p?.Discount || 0)),
-        }));
-
-        try {
-            const res = await CalculatePrice({ products: payloadProducts });
-            if (res?.status === 200 && res.data) {
-                const updatedProducts = (res.data.products || []).map(
-                    (apiP: any, idx: number) => {
-                        const original = currentBill.products[idx];
-                        return {
-                            ...original, // เก็บค่าที่กรอกไว้
-                            SumPriceProduct: apiP.SumPriceProduct ?? original.SumPriceProduct,
-                            // ถ้า API คืน 0/undefined อย่าไป overwrite Quantity/Discount
-                            Quantity: original.Quantity,
-                            Discount: original.Discount,
-                            PricePerPiece: original.PricePerPiece,
-                        };
-                    }
-                );
-
-                const summary = res.data.SummaryPrice ?? currentBill.SummaryPrice ?? 0;
-
-                const updatedBills = [...values.bills];
-                updatedBills[currentStep] = {
-                    ...currentBill,
-                    products: updatedProducts,
-                    SummaryPrice: summary,
-                };
-
-                form.setFieldsValue({ bills: updatedBills });
-                setTempBills(updatedBills);
-            } else {
-                message.error(res?.data?.message || "ไม่สามารถคำนวณราคาได้");
-            }
-        } catch (err: any) {
-            console.error("calc error", err);
-            message.error(
-                err?.response?.data?.message || "เกิดข้อผิดพลาดในการคำนวณราคา"
-            );
-        }
-    };
-
     const handleSaveAll = async () => {
         try {
             // Validate ทั้งหมด
@@ -357,7 +289,6 @@ function ImportProduct() {
                 if (!bill.Title) missingBillFields.push("ชื่อบิล");
                 if (!bill.SupplyID) missingBillFields.push("บริษัทผู้สั่งซื้อ");
                 if (!bill.DateImport) missingBillFields.push("วันที่นำเข้า");
-                console.log(bill);
 
                 if (missingBillFields.length > 0) {
                     message.error(
@@ -372,6 +303,7 @@ function ImportProduct() {
 
                     if (!p.ProductName) missingProductFields.push("ชื่อสินค้า");
                     if (p.Quantity == null || p.Quantity <= 0) missingProductFields.push("จำนวน");
+                    if (!p.UnitPerQuantityID) missingProductFields.push("หน่วย");
                     if (p.PricePerPiece == null || p.PricePerPiece <= 0) missingProductFields.push("ราคาต่อชิ้น");
 
                     if (missingProductFields.length > 0) {
@@ -399,7 +331,7 @@ function ImportProduct() {
             for (const bill of parsedBills) {
                 const billData = {
                     Bill: {
-                        Title: (bill.Title).toString(),
+                        Title: bill.Title,
                         SummaryPrice: Number(bill.SummaryPrice || 0),
                         EmployeeID: Number(localStorage.getItem("employeeID")),
                         SupplyID: Number(bill.SupplyID),
@@ -764,7 +696,7 @@ function ImportProduct() {
                             // สร้างบิลเริ่มต้น 1 ใบ
                             const newBill = {
                                 Title: "",
-                                SupplyID: "",
+                                SupplyName: "",
                                 DateImport: null,
                                 SummaryPrice: undefined,
                                 products: [defaultProduct]
@@ -984,16 +916,12 @@ function ImportProduct() {
                                 onClick={() => {
                                     const values = form.getFieldsValue(true);
                                     const updatedBills = [...tempBills];
-
-                                    //  update แค่ bill ปัจจุบัน
-                                    updatedBills[currentStep] = values.bills[currentStep];
+                                    updatedBills[currentStep] = values;
                                     saveTempBills(updatedBills);
 
                                     const prevStep = currentStep - 1;
                                     setCurrentStep(prevStep);
-
-                                    //  ต้อง setFieldsValue ในรูปแบบ { bills: [...] }
-                                    form.setFieldsValue({ bills: updatedBills });
+                                    form.setFieldsValue(updatedBills[prevStep]);
                                 }}
                             >ย้อนกลับ</Button>,
                             <Button
@@ -1002,16 +930,12 @@ function ImportProduct() {
                                 onClick={() => {
                                     const values = form.getFieldsValue(true);
                                     const updatedBills = [...tempBills];
-
-                                    //  update แค่ bill ปัจจุบัน
-                                    updatedBills[currentStep] = values.bills[currentStep];
+                                    updatedBills[currentStep] = values;
                                     saveTempBills(updatedBills);
 
                                     const nextStep = currentStep + 1;
                                     setCurrentStep(nextStep);
-
-                                    //  ต้อง setFieldsValue ในรูปแบบ { bills: [...] }
-                                    form.setFieldsValue({ bills: updatedBills });
+                                    form.setFieldsValue(updatedBills[nextStep]);
                                 }}
                                 disabled={currentStep === tempBills.length - 1}
                             >ถัดไป</Button>,
@@ -1020,7 +944,7 @@ function ImportProduct() {
                                 onClick={() => {
                                     const values = form.getFieldsValue(true);
                                     const updatedBills = [...tempBills];
-                                    updatedBills[currentStep] = values.bills[currentStep];
+                                    updatedBills[currentStep] = values;
 
                                     const defaultProduct = {
                                         ProductName: "",
@@ -1029,7 +953,7 @@ function ImportProduct() {
                                         ManufacturerCode: "",
                                         Description: "",
                                         Quantity: undefined,
-                                        UnitPerQuantityID: undefined,
+                                        UnitPerQuantityID: "",
                                         PricePerPiece: undefined,
                                         Discount: undefined,
                                         SumPriceProduct: undefined,
@@ -1037,7 +961,7 @@ function ImportProduct() {
 
                                     const newBill = {
                                         Title: "",
-                                        SupplyID: "",
+                                        SupplyName: "",
                                         DateImport: null,
                                         SummaryPrice: undefined,
                                         products: [defaultProduct]
@@ -1054,11 +978,7 @@ function ImportProduct() {
                 }
             >
 
-                <Form
-                    form={form}
-                    layout="vertical"
-                    name="form"
-                >
+                <Form form={form} layout="vertical" name="form">
                     {/* Bill List */}
                     <Card
                         title={
@@ -1138,27 +1058,11 @@ function ImportProduct() {
                             </Col>
                             <Col xl={12}>
                                 <Form.Item
-                                    label="มูลค่ารวม"
-                                    required
-                                    shouldUpdate={(prev, curr) =>
-                                        prev.bills?.[currentStep]?.SummaryPrice !==
-                                        curr.bills?.[currentStep]?.SummaryPrice
-                                    }
+                                    name={['bills', currentStep, 'SummaryPrice']}
+                                    label="มูลค่ารวม (บาท)"
+                                    rules={[{ required: true, message: "กรุณากรอกมูลค่ารวม" }]}
                                 >
-                                    {({ getFieldValue }) => {
-                                        const value = getFieldValue(["bills", currentStep, "SummaryPrice"]) ?? 0;
-                                        return (
-                                            <InputNumber
-                                                min={0}
-                                                step={0.01}
-                                                precision={2}
-                                                style={{ width: "100%" }}
-                                                value={parseFloat(Number(value).toFixed(2))}
-                                                disabled
-                                                required
-                                            />
-                                        );
-                                    }}
+                                    <InputNumber min={0} step={0.01} style={{ width: "100%" }} placeholder="กรอกมูลค่ารวม" precision={2} />
                                 </Form.Item>
                             </Col>
                         </Row>
@@ -1242,7 +1146,6 @@ function ImportProduct() {
                                                         min: 1,       // กำหนดขั้นต่ำเป็น 1
                                                         step: 1       // กำหนดเป็นจำนวนเต็ม
                                                     }}
-                                                    onBlur={recalcBill}
                                                 />
                                             </Form.Item>
                                         </TableCell>
@@ -1252,7 +1155,6 @@ function ImportProduct() {
                                             <Form.Item
                                                 name={['bills', currentStep, 'products', index, 'UnitPerQuantityID']}
                                                 rules={[{ required: true, message: 'กรุณาเลือกหน่วย' }]}
-                                                getValueFromEvent={(e) => Number(e.target.value)}
                                             >
                                                 <Select label="หน่วย" required variant="standard" fullWidth>
                                                     {Units.map(u => (
@@ -1269,53 +1171,57 @@ function ImportProduct() {
                                                 rules={[{ required: true, message: 'กรุณากรอกราคาต่อชิ้น' }]}
                                                 getValueFromEvent={e => Number(e.target.value)}
                                             >
-                                                <TextField
-                                                    label="ราคาต่อชิ้น"
-                                                    required
-                                                    variant="standard"
-                                                    type="number"
-                                                    fullWidth
-                                                    onBlur={recalcBill} />
+                                                <TextField label="ราคาต่อชิ้น" required variant="standard" type="number" fullWidth />
                                             </Form.Item>
                                         </TableCell>
 
                                         {/* ส่วนลด */}
                                         <TableCell>
-                                            <DiscountField name={['bills', currentStep, 'products', index, 'Discount']}
-                                                onBlur={recalcBill}
-                                            />
+                                            <Form.Item
+                                                name={['bills', currentStep, 'products', index, 'Discount']}
+                                                rules={[
+                                                    {
+                                                        type: 'number',
+                                                        min: 0,
+                                                        max: 100,
+                                                        message: 'ส่วนลดต้องอยู่ระหว่าง 0–100',
+                                                    },
+                                                ]}
+                                            >
+                                                <TextField
+                                                    label="ส่วนลด (%)"
+                                                    variant="standard"
+                                                    type="number"
+                                                    fullWidth
+                                                    inputProps={{
+                                                        min: 0,
+                                                        max: 100,
+                                                        step: 0.01
+                                                    }}
+                                                    onChange={e => {
+                                                        let value = Number(e.target.value);
+                                                        if (value < 0) value = 0;
+                                                        if (value > 100) value = 100;
+                                                        form.setFieldValue(['bills', currentStep, 'products', index, 'Discount'], value);
+                                                    }}
+                                                />
+                                            </Form.Item>
                                         </TableCell>
 
                                         {/* ราคารวม */}
                                         <TableCell>
                                             <Form.Item
-                                                shouldUpdate={(prev, curr) =>
-                                                    prev.bills?.[currentStep]?.products?.[index]?.SumPriceProduct !==
-                                                    curr.bills?.[currentStep]?.products?.[index]?.SumPriceProduct
-                                                }
+                                                name={['bills', currentStep, 'products', index, 'SumPriceProduct']}
+                                                rules={[{ required: true, message: 'กรุณากรอกราคารวม' }]}
                                             >
-                                                {({ getFieldValue }) => {
-                                                    const value =
-                                                        getFieldValue([
-                                                            "bills",
-                                                            currentStep,
-                                                            "products",
-                                                            index,
-                                                            "SumPriceProduct",
-                                                        ]) ?? 0;
-
-                                                    return (
-                                                        <TextField
-                                                            label="ราคารวม"
-                                                            variant="standard"
-                                                            fullWidth
-                                                            type="number"
-                                                            inputProps={{ min: 0, step: 0.01 }}
-                                                            value={Number(value).toFixed(2)}
-                                                            disabled
-                                                        />
-                                                    );
-                                                }}
+                                                <TextField
+                                                    label="ราคารวม"
+                                                    variant="standard"
+                                                    fullWidth
+                                                    type="number"
+                                                    inputProps={{ min: 0, step: 0.01 }}
+                                                    required
+                                                />
                                             </Form.Item>
                                         </TableCell>
 
@@ -1447,6 +1353,47 @@ function ImportProduct() {
                             }
                         ]
                     }}
+                    onValuesChange={(_, allValues) => {
+                        const bills = allValues.bills || [];
+                        if (bills.length === 0) return;
+
+                        const products = bills[currentStep]?.products || [];
+                        let summaryTotal = 0;
+
+                        const newProducts = products.map((p: any) => {
+                            const quantity = Number(p.Quantity) || 0;
+                            const pricePerPiece = Number(p.PricePerPiece) || 0;
+                            const discount = Number(p.Discount) || 0;
+
+                            // คำนวณราคารวมก่อนหักส่วนลด
+                            const subtotal = quantity * pricePerPiece;
+
+                            // คำนวณส่วนลดเป็นเปอร์เซ็นต์
+                            const discountAmount = (subtotal * discount) / 100;
+
+                            // ราคารวมหลังหักส่วนลด
+                            const sumPrice = subtotal - discountAmount;
+
+                            summaryTotal += sumPrice;
+
+                            return {
+                                ...p,
+                                SumPriceProduct: Math.round(sumPrice * 100) / 100, // ปัดทศนิยม 2 ตำแหน่ง
+                            };
+                        });
+
+                        // อัปเดตเฉพาะ step ปัจจุบัน
+                        const updatedBills = [...bills];
+                        updatedBills[currentStep] = {
+                            ...updatedBills[currentStep],
+                            products: newProducts,
+                        };
+
+                        form.setFieldsValue({
+                            bills: updatedBills,
+                            SummaryPrice: Math.round(summaryTotal * 100) / 100, // ปัดทศนิยม 2 ตำแหน่ง
+                        });
+                    }}
                 >
                     <Row gutter={[8, 8]}>
                         <Col xl={12}>
@@ -1482,7 +1429,7 @@ function ImportProduct() {
                             >
                                 <DatePicker
                                     style={{ width: "100%" }}
-                                    format="DD-MM-YYYY"
+                                    format="YYYY-MM-DD"
                                     placeholder="เลือกวันที่นำเข้าสินค้า"
                                     disabledDate={(current) => current && current > dayjs().endOf("day")}
                                     disabled
@@ -1495,7 +1442,7 @@ function ImportProduct() {
                                 label="มูลค่ารวม (บาท)"
                                 rules={[{ required: true, message: "กรุณากรอกมูลค่ารวม" }]}
                             >
-                                <InputNumber min={0} step={0.01} style={{ width: "100%" }} placeholder="กรอกมูลค่ารวม" precision={2} onBlur={recalcBill} disabled />
+                                <InputNumber min={0} step={0.01} style={{ width: "100%" }} placeholder="กรอกมูลค่ารวม" precision={2} />
                             </Form.Item>
                         </Col>
                     </Row>
@@ -1565,7 +1512,7 @@ function ImportProduct() {
                                                             rules={[{ required: true, message: 'กรุณากรอกจำนวน' }]}
                                                             getValueFromEvent={e => Number(e.target.value)}
                                                         >
-                                                            <TextField label="จำนวน" variant="standard" type="number" fullWidth onBlur={recalcBill} />
+                                                            <TextField label="จำนวน" variant="standard" type="number" fullWidth />
                                                         </Form.Item>
                                                     </TableCell>
                                                     <TableCell>
@@ -1592,62 +1539,20 @@ function ImportProduct() {
                                                             rules={[{ required: true, message: 'กรุณากรอกราคาต่อชิ้น' }]}
                                                             getValueFromEvent={e => Number(e.target.value)}
                                                         >
-                                                            <TextField label="ราคาต่อชิ้น" variant="standard" type="number" fullWidth onBlur={recalcBill} />
+                                                            <TextField label="ราคาต่อชิ้น" variant="standard" type="number" fullWidth />
                                                         </Form.Item>
                                                     </TableCell>
                                                     <TableCell>
                                                         <Form.Item
                                                             {...field}
-                                                            name={[field.name, "Discount"]}
-                                                            rules={[
-                                                                {
-                                                                    validator: (_, value) => {
-                                                                        if (value === undefined || value === "") {
-                                                                            return Promise.resolve();
-                                                                        }
-                                                                        const num = parseFloat(value);
-                                                                        if (isNaN(num) || num < 0 || num > 100) {
-                                                                            return Promise.reject("ส่วนลดต้องอยู่ระหว่าง 0–100");
-                                                                        }
-                                                                        return Promise.resolve();
-                                                                    },
-                                                                },
-                                                            ]}
-                                                            getValueFromEvent={(e) => e.target.value}
+                                                            name={[field.name, 'Discount']}
                                                         >
                                                             <TextField
                                                                 label="ส่วนลด (%)"
                                                                 variant="standard"
-                                                                type="text" // ใช้ text เพื่อให้ regex คุม input เอง
+                                                                type="number"
                                                                 fullWidth
-                                                                inputProps={{
-                                                                    inputMode: "decimal",
-                                                                }}
-                                                                onBeforeInput={(e) => {
-                                                                    const inputEl = (e.currentTarget as HTMLElement).querySelector(
-                                                                        "input"
-                                                                    ) as HTMLInputElement;
-                                                                    if (!inputEl) return;
-
-                                                                    const data = (e as unknown as InputEvent).data || "";
-                                                                    const newValue =
-                                                                        inputEl.value.substring(0, inputEl.selectionStart || 0) +
-                                                                        data +
-                                                                        inputEl.value.substring(inputEl.selectionEnd || 0);
-
-                                                                    // ✅ regex: 0–100 และทศนิยมไม่เกิน 2 หลัก
-                                                                    const regex = /^(100(\.0{0,2})?|(\d{1,2})(\.\d{0,2})?)?$/;
-
-                                                                    if (!regex.test(newValue)) {
-                                                                        e.preventDefault();
-                                                                    }
-                                                                }}
-                                                                onKeyDown={(e) => {
-                                                                    if (["e", "E", "+", "-", " "].includes(e.key)) {
-                                                                        e.preventDefault();
-                                                                    }
-                                                                }}
-                                                                onBlur={recalcBill}
+                                                                inputProps={{ min: 0, max: 100, step: 0.01 }}
                                                             />
                                                         </Form.Item>
                                                     </TableCell>
@@ -1657,7 +1562,7 @@ function ImportProduct() {
                                                             name={[field.name, 'SumPriceProduct']}
                                                             rules={[{ required: true, message: 'กรุณากรอกราคารวม' }]}
                                                         >
-                                                            <TextField label="ราคารวม" variant="standard" type="number" fullWidth inputProps={{ min: 0, step: 0.01 }} disabled />
+                                                            <TextField label="ราคารวม" variant="standard" type="number" fullWidth inputProps={{ min: 0, step: 0.01 }} />
                                                         </Form.Item>
                                                     </TableCell>
                                                     <TableCell align="center">
