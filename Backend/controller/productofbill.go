@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -102,6 +103,10 @@ type BillAllDataResponse struct {
 	Products     []ProductResponse `json:"Products" gorm:"-"`
 }
 
+func roundToTwoDecimalPlaces(value float64) float64 {
+	return math.Round(value*100) / 100
+}
+
 func CreateBillWithProducts(c *gin.Context) {
 	var req struct {
 		Bill           BillResponse
@@ -126,7 +131,7 @@ func CreateBillWithProducts(c *gin.Context) {
 		Title:        req.Bill.Title,
 		SupplyID:     req.Bill.SupplyID,
 		DateImport:   req.Bill.DateImport,
-		SummaryPrice: req.Bill.SummaryPrice,
+		SummaryPrice: float32(roundToTwoDecimalPlaces(float64(req.Bill.SummaryPrice))),
 		EmployeeID:   req.Bill.EmployeeID,
 	}
 	if err := tx.Create(&bill).Error; err != nil {
@@ -214,7 +219,7 @@ func CreateBillWithProducts(c *gin.Context) {
 			Quantity:         req.ProductsOfBill[i].Quantity,
 			PricePerPiece:    req.ProductsOfBill[i].PricePerPiece,
 			Discount:         req.ProductsOfBill[i].Discount,
-			SumPriceProduct:  req.ProductsOfBill[i].SumPriceProduct,
+			SumPriceProduct:  roundToTwoDecimalPlaces(req.ProductsOfBill[i].SumPriceProduct),
 		}
 		if err := tx.Create(&productOfBill).Error; err != nil {
 			tx.Rollback()
@@ -268,7 +273,7 @@ func UpdateBillWithProducts(c *gin.Context) {
 	bill.Title = req.Bill.Title
 	bill.SupplyID = req.Bill.SupplyID
 	bill.DateImport = req.Bill.DateImport
-	bill.SummaryPrice = req.Bill.SummaryPrice
+	bill.SummaryPrice = float32(roundToTwoDecimalPlaces(float64(req.Bill.SummaryPrice)))
 	bill.EmployeeID = req.Bill.EmployeeID
 
 	if err := tx.Save(&bill).Error; err != nil {
@@ -385,7 +390,7 @@ func UpdateBillWithProducts(c *gin.Context) {
 					Quantity:         req.ProductsOfBill[i].Quantity,
 					PricePerPiece:    req.ProductsOfBill[i].PricePerPiece,
 					Discount:         req.ProductsOfBill[i].Discount,
-					SumPriceProduct:  req.ProductsOfBill[i].SumPriceProduct,
+					SumPriceProduct:  roundToTwoDecimalPlaces(req.ProductsOfBill[i].SumPriceProduct),
 				}
 				if err := tx.Create(&pob).Error; err != nil {
 					tx.Rollback()
@@ -403,7 +408,7 @@ func UpdateBillWithProducts(c *gin.Context) {
 			pob.Quantity = req.ProductsOfBill[i].Quantity
 			pob.PricePerPiece = req.ProductsOfBill[i].PricePerPiece
 			pob.Discount = req.ProductsOfBill[i].Discount
-			pob.SumPriceProduct = req.ProductsOfBill[i].SumPriceProduct
+			pob.SumPriceProduct = roundToTwoDecimalPlaces(req.ProductsOfBill[i].SumPriceProduct)
 
 			if err := tx.Save(&pob).Error; err != nil {
 				tx.Rollback()

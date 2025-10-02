@@ -30,6 +30,7 @@ function CreateBankType() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [Banks, setBanks] = useState<BankTypeInterface[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form] = Form.useForm();
   const [updateForm] = Form.useForm();
   const [fileLists, setFileLists] = useState<{ [key: number]: UploadFile[] }>(
@@ -43,6 +44,7 @@ function CreateBankType() {
   // Update
   const openUpdateModal = (bank: BankTypeInterface) => {
     setSelectedBank(bank);
+    setEditingId(bank.ID);
     setIsUpdateModalOpen(true);
     updateForm.setFieldsValue({
       BankTypeName: bank.BankTypeName,
@@ -211,8 +213,8 @@ function CreateBankType() {
             chunk.length === 1
               ? "center"
               : chunk.length === 2
-              ? "center"
-              : "start"
+                ? "center"
+                : "start"
           }
         >
           {chunk.map((card, idx) => (
@@ -241,9 +243,9 @@ function CreateBankType() {
         className="Card-Header"
         style={{
           height: 50,
-          margin:0,
+          margin: 0,
           marginBottom: 16,
-          width:"300px",
+          width: "300px",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
@@ -465,7 +467,28 @@ function CreateBankType() {
               <Form.Item
                 name="BankTypeName"
                 label="ชื่อธนาคาร"
-                rules={[{ required: true, message: "กรุณากรอกชื่อธนาคาร" }]}
+                rules={[
+                  { required: true, message: "กรุณากรอกชื่อธนาคาร" },
+                  {
+                    validator: async (_, value) => {
+                      if (!value) return Promise.resolve();
+
+                      const trimmed = value.trim();
+
+                      const exists = Banks.some(
+                        (b) =>
+                          b.BankTypeName.trim() === trimmed &&
+                          b.ID !== editingId // 👈 ข้ามตัวเอง (id ต้องเป็น unique key ของ bank)
+                      );
+
+                      if (exists) {
+                        return Promise.reject(new Error("มีธนาคารนี้อยู่แล้ว"));
+                      }
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
+
               >
                 <Input />
               </Form.Item>

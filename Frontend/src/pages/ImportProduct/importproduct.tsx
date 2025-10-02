@@ -12,6 +12,7 @@ import {
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 import { CalculatePrice, CreateBillwithProduct, DeleteBill, DownloadTemplateFile, GetAllBills, GetBillAllDataById, GetSupply, GetUnitPerQuantity, UpdateBillWithProduct } from "../../services/https";
 import type { BillInterface, ProductInterface } from "../../interfaces/Bill";
+import { uploadPdfForOcr, downloadExcel, downloadBlobAsFile } from "../../services/https/Model/index"
 import type { UnitPerQuantityInterface } from "../../interfaces/UnitPerQuantity";
 import {
     Table, TableHead, TableRow, TableCell, TableBody,
@@ -98,7 +99,22 @@ function ImportProduct() {
                         }
                         bill.SupplyID = supply.ID;
                     }
-                    if (row[0] === "วันที่นำเข้า") bill.DateImport = row[1] ? dayjs(row[1], "DD/MM/YYYY") : null;
+                    if (row[0] === "วันที่นำเข้า") {
+                        if (row[1]) {
+                            let parsed = dayjs(row[1], "DD/MM/YYYY");
+                            if (parsed.isValid()) {
+                                // ถ้าเป็น พ.ศ. (>= 2400 ป้องกันกรณี excel แปลก ๆ)
+                                if (parsed.year() > 2400) {
+                                    parsed = parsed.year(parsed.year() - 543);
+                                }
+                                bill.DateImport = parsed;
+                            } else {
+                                bill.DateImport = null;
+                            }
+                        } else {
+                            bill.DateImport = null;
+                        }
+                    }
                     if (row[0] === "ชื่อใบสั่งซื้อ") bill.Title = row[1];
                 });
 
@@ -659,6 +675,36 @@ function ImportProduct() {
         }
     }, [currentStep, tempBills, selectedBillId]);
 
+    const [loading, setLoading] = useState(false);
+
+    const handleUpload = async (file: File) => {
+        setLoading(true);
+        try {
+            // 1️⃣ Upload PDF
+            const uploadRes = await uploadPdfForOcr(file) as any;
+            if (uploadRes.status !== "OCR: Already") {
+                message.error("เกิดข้อผิดพลาด OCR");
+                setLoading(false);
+                return;
+            }
+
+            message.success("OCR เสร็จแล้ว กำลังดาวน์โหลด Excel");
+
+            // 2️⃣ Download Excel
+            const excelBlob = await downloadExcel();
+            downloadBlobAsFile(excelBlob, "DataImport.xlsx");
+
+        } catch (err: any) {
+            console.error(err);
+            message.error(err.message || "เกิดข้อผิดพลาด");
+        } finally {
+            setLoading(false);
+        }
+
+        // Prevent Upload from auto uploading file to AntD
+        return false;
+    };
+
     return (
         <>
             {contextHolder}
@@ -784,19 +830,28 @@ function ImportProduct() {
                 </Col>
 
                 <Col>
-                    <Button
-                        className="button-import" style={{
-                            height: "auto",
-                            width: "auto",
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                        }}>
-                        <span style={{ fontSize: 20, color: "white" }}>
-                            <FilePdfOutlined style={{ marginRight: 8, color: "white" }} />
-                            เพิ่มข้อมูลด้วย PDF
-                        </span>
-                    </Button>
+                    <Upload
+                        accept=".pdf"
+                        showUploadList={false}
+                        customRequest={({ file }) => handleUpload(file as File)}
+                    >
+                        <Button
+                            className="button-import"
+                            type="primary"
+                            icon={<FilePdfOutlined />}
+                            loading={loading}
+                            style={{
+                                height: "auto",
+                                width: "auto",
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                fontSize: 20,
+                            }}
+                        >
+                            {loading ? "กำลังแปลง..." : "แปลง PDF เป็น Excel"}
+                        </Button>
+                    </Upload>
                 </Col>
             </Row>
 

@@ -283,7 +283,7 @@ export default function Dashboard() {
             </Card>
           </Col>
           <Col span={12}>
-            <Card title="สัดส่วนตาม Supplier">
+            <Card title="สัดส่วนตามบริษัท">
               {loading ? (
                 <Spin tip="กำลังโหลด..." />
               ) : supplierData.length === 0 ? (
@@ -321,7 +321,7 @@ export default function Dashboard() {
         {/* Table */}
         <Row style={{ marginTop: 24 }}>
           <Col span={24}>
-            <Card title="ตาราง Supplier">
+            <Card title="ตารางบริษัท">
               <Table
                 dataSource={supplierData}
                 columns={supplierColumns}

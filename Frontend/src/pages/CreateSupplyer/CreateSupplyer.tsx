@@ -158,9 +158,9 @@ function CreateSupplyer() {
         className="Card-Header"
         style={{
           height: 50,
-          margin:0,
+          margin: 0,
           marginBottom: 16,
-          width:"300px",
+          width: "300px",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
@@ -171,9 +171,9 @@ function CreateSupplyer() {
           สร้างข้อมูลบริษัทสั่งซื้อ
         </span>
       </div>
-      <Button 
-      type="primary" 
-      onClick={showModal}
+      <Button
+        type="primary"
+        onClick={showModal}
         style={{ borderRadius: 50, }}
       >
         สร้างข้อมูลบริษัทสั่งซื้อ
@@ -268,7 +268,21 @@ function CreateSupplyer() {
               <Form.Item
                 label="ชื่อบริษัท"
                 name="SupplyName"
-                rules={[{ required: true, message: "กรุณากรอกชื่อบริษัท" }]}
+                rules={[
+                  { required: true, message: "กรุณากรอกชื่อบริษัท" },
+                  {
+                    validator: (_, value) => {
+                      if (!value) return Promise.resolve();
+                      const existingSupply = Supplyer.find(
+                        (supply) => supply.SupplyName.toLowerCase() === value.toLowerCase()
+                      );
+                      if (existingSupply) {
+                        return Promise.reject(new Error("ชื่อบริษัทนี้มีอยู่ในระบบแล้ว"));
+                      }
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
               >
                 <Input placeholder="กรอกชื่อบริษัท" />
               </Form.Item>
@@ -428,7 +442,24 @@ function CreateSupplyer() {
               <Form.Item
                 label="ชื่อบริษัท"
                 name="SupplyName"
-                rules={[{ required: true, message: "กรุณากรอกชื่อบริษัท" }]}
+                rules={[
+                  { required: true, message: "กรุณากรอกชื่อบริษัท" },
+                  {
+                    validator: (_, value) => {
+                      if (!value) return Promise.resolve();
+                      const existingSupply = Supplyer.find(
+                        (supply) =>
+                          supply.SupplyName &&
+                          supply.SupplyName.toLowerCase() === value.toLowerCase() &&
+                          supply.ID !== editingSupply?.ID
+                      );
+                      if (existingSupply) {
+                        return Promise.reject(new Error("ชื่อบริษัทนี้มีอยู่ในระบบแล้ว"));
+                      }
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
               >
                 <Input placeholder="กรอกชื่อบริษัท" />
               </Form.Item>

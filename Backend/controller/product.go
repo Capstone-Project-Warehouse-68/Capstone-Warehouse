@@ -548,13 +548,13 @@ func GetDashboardSummary(c *gin.Context) {
 	var yearSum *float64
 	if err := db.Table("bills").
 		Select("COALESCE(SUM(summary_price), 0)").
-		Where("EXTRACT(YEAR FROM date_import) = ?", year).
+		Where("EXTRACT(YEAR FROM date_import) = ? AND deleted_at IS NULL", year).
 		Scan(&yearSum).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	if yearSum != nil {
-		result.YearTotal = *yearSum
+		result.YearTotal = roundToTwoDecimalPlaces(*yearSum)
 	}
 
 	// เดือน (ถ้ามี)
@@ -562,20 +562,19 @@ func GetDashboardSummary(c *gin.Context) {
 		var monthSum *float64
 		if err := db.Table("bills").
 			Select("COALESCE(SUM(summary_price), 0)").
-			Where("EXTRACT(YEAR FROM date_import) = ? AND EXTRACT(MONTH FROM date_import) = ?", year, month).
+			Where("EXTRACT(YEAR FROM date_import) = ? AND EXTRACT(MONTH FROM date_import) = ? AND deleted_at IS NULL", year, month).
 			Scan(&monthSum).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		if monthSum != nil {
-			result.MonthTotal = *monthSum
+			result.MonthTotal = roundToTwoDecimalPlaces(*monthSum)
 		}
 	}
 
 	c.JSON(http.StatusOK, result)
 }
 
-// Supplier
 func GetDashboardSupplier(c *gin.Context) {
 	db := config.DB()
 
@@ -587,24 +586,28 @@ func GetDashboardSupplier(c *gin.Context) {
 	query := db.Table("bills").
 		Select("supplies.supply_name, SUM(bills.summary_price) as total").
 		Joins("JOIN supplies ON supplies.id = bills.supply_id").
-		Where("EXTRACT(YEAR FROM bills.date_import) = ?", year)
+		Where("EXTRACT(YEAR FROM bills.date_import) = ? AND bills.deleted_at IS NULL", year)
 
 	if month != "" {
 		query = query.Where("EXTRACT(MONTH FROM bills.date_import) = ?", month)
 	}
 
 	if err := query.Group("supplies.supply_name").
-		Having("SUM(bills.summary_price) > 0"). // <- filter ออกถ้าไม่มียอด
+		Having("SUM(bills.summary_price) > 0").
 		Order("total DESC").
 		Scan(&results).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	// Round totals to two decimal places
+	for i := range results {
+		results[i].Total = roundToTwoDecimalPlaces(results[i].Total)
+	}
+
 	c.JSON(http.StatusOK, results)
 }
 
-// Trend
 func GetDashboardTrend(c *gin.Context) {
 	db := config.DB()
 
@@ -613,12 +616,17 @@ func GetDashboardTrend(c *gin.Context) {
 
 	if err := db.Table("bills").
 		Select("EXTRACT(MONTH FROM date_import) AS month, SUM(summary_price) AS total").
-		Where("EXTRACT(YEAR FROM date_import) = ?", year).
+		Where("EXTRACT(YEAR FROM date_import) = ? AND deleted_at IS NULL", year).
 		Group("month").
 		Order("month").
 		Scan(&results).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+
+	// Round totals to two decimal places
+	for i := range results {
+		results[i].Total = roundToTwoDecimalPlaces(results[i].Total)
 	}
 
 	c.JSON(http.StatusOK, results)

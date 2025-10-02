@@ -685,6 +685,7 @@ function Employee() {
                                 label="อีเมล"
                                 name="Email"
                                 hasFeedback
+                                validateTrigger="onBlur"
                                 rules={[
                                     { required: true, message: "กรุณากรอกอีเมล!" },
                                     { type: "email", message: "รูปแบบอีเมลไม่ถูกต้อง!" },
@@ -847,6 +848,7 @@ function Employee() {
                                 label="เบอร์โทร"
                                 name="PhoneNumber"
                                 hasFeedback
+                                validateTrigger="onBlur"
                                 rules={[
                                     {
                                         required: true,
@@ -949,6 +951,11 @@ function Employee() {
                                 <Input
                                     maxLength={15}
                                     type="text"
+                                    onKeyPress={(event) => {
+                                        if (!/[0-9]/.test(event.key)) {
+                                        event.preventDefault();
+                                        }
+                                    }}
                                     onCopy={(e) => e.preventDefault()} // Prevent copy
                                     onCut={(e) => e.preventDefault()} // Prevent cut
                                     onPaste={(e) => e.preventDefault()} // Prevent paste
@@ -1190,6 +1197,7 @@ function Employee() {
                                 label="เบอร์โทร"
                                 name="PhoneNumber"
                                 hasFeedback
+                                validateTrigger="onBlur"
                                 rules={[
                                     {
                                         required: true,
@@ -1294,6 +1302,11 @@ function Employee() {
                                 <Input
                                     maxLength={15}
                                     type="text"
+                                    onKeyPress={(event) => {
+                                        if (!/[0-9]/.test(event.key)) {
+                                        event.preventDefault();
+                                        }
+                                    }}
                                     onCopy={(e) => e.preventDefault()} // Prevent copy
                                     onCut={(e) => e.preventDefault()} // Prevent cut
                                     onPaste={(e) => e.preventDefault()} // Prevent paste
