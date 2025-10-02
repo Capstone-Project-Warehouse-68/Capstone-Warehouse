@@ -271,13 +271,24 @@ const OrderTable = () => {
         dataIndex: "quantity",
         key: "quantity",
         width: 130,
+        sorter: (a: ProductPDF, b: ProductPDF) => {
+          const aLow = a.quantity < (a.limit_quantity ?? 0);
+          const bLow = b.quantity < (b.limit_quantity ?? 0);
+
+          // เอาตัวแดงขึ้นก่อน
+          if (aLow && !bLow) return -1;
+          if (!aLow && bLow) return 1;
+
+          // ถ้าอยู่กลุ่มเดียวกันแล้ว sort ตามจำนวนจริง
+          return a.quantity - b.quantity;
+        },
         render: (val: number, record: ProductPDF) => (
           <div
             style={{
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              height: "100%", // ให้กลาง cell
+              height: "100%",
             }}
           >
             {val < (record.limit_quantity ?? 0) ? (
